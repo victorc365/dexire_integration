@@ -1,3 +1,9 @@
+from api.v1 import bots, feedback, messages, status, user
 from fastapi import APIRouter
 
 api_router = APIRouter(prefix='/v1')
+api_router.include_router(bots.router)
+api_router.include_router(feedback.router)
+api_router.include_router(messages.router)
+api_router.include_router(status.router)
+api_router.include_router(user.router)
