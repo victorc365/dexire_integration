@@ -1,0 +1,52 @@
+version: '3.9'
+services:
+
+  mongo:
+    image: mongo
+    restart: always
+    ports:
+      - "${MONGODB_PORT}:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - "${MONGO_EXPRESS_PORT}:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGODB_USER}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGODB_PASSWORD}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@mongo:${MONGODB_PORT}
+      ME_CONFIG_BASICAUTH_USERNAME: ${MONGO_EXPRESS_USER}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${MONGO_EXPRESS_PASSWORD}
+
+  prosody:
+    image: unclev/prosody-docker-extended:0.11
+    volumes:
+      - './data/prosody/config:/etc/prosody'
+      - './data/prosody/domains:/var/lib/prosody'
+    environment:
+      LOCAL: spade
+      DOMAIN: ${XMPP_SERVER_URL}
+      PASSWORD: ${XMPP_SERVER_PASS}
+    ports:
+      - "8082:80"
+      - "5222:5222"
+      - "5269:5269"
+      - "5347:5347"
+      - "5280:5280"
+      - "5582:5582"
+
+  spade:
+    build:
+      dockerfile: docker/spade/Dockerfile.dev
+    ports:
+      - '${SPADE_PORT}:8080'
+    environment:
+      LOG_DIRECTORY_PATH: ${LOG_DIRECTORY_PATH}
+      LOG_LEVEL: ${LOG_LEVEL}
+    volumes:
+      - ${HOST_LOG_DIRECTORY_PATH}/logs/:${LOG_DIRECTORY_PATH}
+      - ./core/src:/app
