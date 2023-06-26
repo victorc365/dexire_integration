@@ -1,7 +1,7 @@
 import logging
 import os
 
-from api.v1 import router
+from api import router
 from enums.environment import Environment
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

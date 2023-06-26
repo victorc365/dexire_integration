@@ -1,4 +1,4 @@
-from api.v1 import bots, feedback, messages, status, user
+from api.routes.v1 import bots, feedback, messages, status, user
 from fastapi import APIRouter
 
 api_router = APIRouter(prefix='/v1')
