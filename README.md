@@ -17,7 +17,8 @@ EREBOTS 3.0 is a scenario and platform agnostic  multi-agent chatbot system. Abl
 | MONGO_EXPRESS_PORT          | DEV TOOLS             | Port on which mongo express web interface is exposed by the container   |
 |                             |                       |                                                                         |
 | XMPP_SERVER_URL             | CORE                  | URL of the XMPP server used for prosody                                 |
-| XMPP_SERVER_PASS            | CORE                  | Password to connect to the XMPP server                                  |
+| XMPP_ADMIN_PORT             | CORE                  | Port to connect to admin web interface. By default 9090                 |
+| XMPP_USER _PORT             | CORE                  | Port used for message exchange betwenn users. By default 5222           |
 |                             |                       |                                                                         |
 | LOG_DIRECTORY_PATH          | CORE                  | Path to the directory where to store logs in the container              |
 | HOST_LOG_DIRECTORY_PATH     | CORE                  | Path to the directory where the logs are stored on the host system.     |
