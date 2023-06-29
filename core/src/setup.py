@@ -5,6 +5,7 @@ from api import router
 from enums.environment import Environment
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from mas.core_engine import CoreEngine
 
 
 def init_logger() -> None:
@@ -26,3 +27,8 @@ def init_fast_api() -> FastAPI:
     )
     app.include_router(router.api_router)
     return app
+
+
+def init_mas() -> None:
+    engine = CoreEngine()
+    engine.start()
