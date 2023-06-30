@@ -2,6 +2,29 @@
 
 EREBOTS 3.0 is a scenario and platform agnostic multi-agent chatbot system. Able to implement different sets of behaviors and functions.
 
+## Requirements
+
+- [ ] Multi-Agent System (MAS)
+    - [ ] choose MAS System
+    - [ ] create basic implementation
+    - [ ] create Gateway Agent
+    - [ ] create Personalized Agent
+    - [ ] simultaneous users
+
+- [ ] Integration with Pryv
+    - [ ] registration
+    - [ ] authentication
+    - [ ] data storage
+    - [ ] data update
+    - [ ] data retrieval
+    - [ ] data consent
+
+- [ ] Front-end in Flutter
+    - [ ] Pryv / Erebots authentication
+    - [ ] basic chat interface
+    - [ ] bot selection screen
+    - [ ] profile screen
+
 ## Installation
 
 ## Environment Variables
