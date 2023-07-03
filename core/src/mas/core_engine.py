@@ -1,22 +1,24 @@
 import logging
 
 import spade
-from mas.agents.gateway_agent import GatewayAgent
+
+from ..enums.status import Status
+from .agents.gateway_agent import GatewayAgent
 
 
 class CoreEngine():
     def __init__(self):
+        self._status = Status.TURNED_OFF.value
         self.logger = logging.getLogger('[CoreEngine] ->')
         self.agents = []
-        self._setup()
-
-    def _setup(self):
-        gateway_agent = GatewayAgent('gateway_agent_1')
-        self.agents.append(gateway_agent)
 
     def start(self) -> None:
         spade.run(self._start())
+    
+    def add_agent(self, agent):
+        self.agents.append(agent)
 
     async def _start(self) -> None:
         for agent in self.agents:
             await agent.start()
+        self._status = Status.RUNNING.value
