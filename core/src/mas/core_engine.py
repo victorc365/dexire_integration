@@ -3,7 +3,6 @@ import logging
 import spade
 
 from ..enums.status import Status
-from .agents.gateway_agent import GatewayAgent
 
 
 class CoreEngine():
