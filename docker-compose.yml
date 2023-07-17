@@ -26,7 +26,7 @@ services:
     image: nasqueron/openfire:4.7.5
     volumes:
       - openfire-xmpp:/var/lib/openfire
-      - ${HOST_LOG_DIRECTORY_PATH}/logs/spade/:/var/logs/openfire
+      - ${HOST_LOG_DIRECTORY_PATH}/logs/openfire-xmpp/:/var/logs/openfire
     ports:
       - '${XMPP_ADMIN_PORT}:9090'
       - '${XMPP_USER_PORT}:5222'
