@@ -8,5 +8,5 @@ import setup
 nest_asyncio.apply()
 
 setup.init_logger()
-setup.init_fast_api()
+app = setup.init_fast_api()
 setup.init_mas()
