@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SideMenu extends StatelessWidget {
   const SideMenu({
@@ -15,21 +16,28 @@ class SideMenu extends StatelessWidget {
                 child: Image.asset("assets/images/aislab.png"),
             ),
             DrawerListTile(
-              title: 'Bots',
+              title: AppLocalizations.of(context)!.bots,
               press: () {
                 Navigator.pushNamed(context, '/bots');
               },
               icon: Icons.smart_toy,
             ),
             DrawerListTile(
-              title: 'Profile',
+              title: AppLocalizations.of(context)!.profile,
               press: () {
                 Navigator.pushNamed(context, '/profile');
               },
               icon: Icons.person,
             ),
             DrawerListTile(
-              title: 'Logout',
+              title: AppLocalizations.of(context)!.settings,
+              press: () {
+                Navigator.pushNamed(context, '/settings');
+              },
+              icon: Icons.settings,
+            ),
+            DrawerListTile(
+              title: AppLocalizations.of(context)!.logout,
               press: () {
                 //TODO - implement logout
               },

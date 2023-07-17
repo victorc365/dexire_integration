@@ -3,6 +3,6 @@
   "appName": "Hemerapp",
   "logout": "Esci",
   "profile": "Profilo",
-  "bots": "Bots"
-
+  "bots": "Bots",
+  "settings": "Impostazioni"
 }
