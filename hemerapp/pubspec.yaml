@@ -9,16 +9,17 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.5
+  flutter_localizations:
+    sdk: flutter
+  intl: any
   flutter_svg: ^2.0.6
   flutter_dotenv: ^5.1.0
-
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^2.0.0
+
 flutter:
   generate: true
   uses-material-design: true
