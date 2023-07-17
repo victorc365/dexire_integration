@@ -1,13 +1,12 @@
 import logging
 import os
 
+from api import router
+from enums.environment import Environment
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from .api import router
-from .enums.environment import Environment
-from .mas.agents.gateway_agent import GatewayAgent
-from .mas.core_engine import CoreEngine
+from mas.agents.gateway_agent import GatewayAgent
+from mas.core_engine import CoreEngine
 
 
 def init_logger() -> None:

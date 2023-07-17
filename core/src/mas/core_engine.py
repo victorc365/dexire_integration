@@ -1,8 +1,7 @@
 import logging
 
 import spade
-
-from ..enums.status import Status
+from enums.status import Status
 
 
 class CoreEngine():
@@ -13,7 +12,7 @@ class CoreEngine():
 
     def start(self) -> None:
         spade.run(self._start())
-    
+
     def add_agent(self, agent):
         self.agents.append(agent)
 

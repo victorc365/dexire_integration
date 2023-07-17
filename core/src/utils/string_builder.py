@@ -1,4 +1,4 @@
-from ..enums.environment import Environment
+from enums.environment import Environment
 
 
 class StringBuilder():

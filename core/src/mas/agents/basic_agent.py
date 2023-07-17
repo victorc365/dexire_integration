@@ -1,8 +1,7 @@
 import logging
 
 from spade.agent import Agent
-
-from ...utils.string_builder import create_jid
+from utils.string_builder import create_jid
 
 
 class BasicAgent(Agent):
