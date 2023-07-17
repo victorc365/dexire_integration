@@ -1,0 +1,9 @@
+{
+  "@@locale": "fr",
+  "appName": "Hemerapp",
+  "logout": "Déconnexion",
+  "profile": "Profil",
+  "bots": "Bots",
+  "settings": "Paramètres"
+
+}
