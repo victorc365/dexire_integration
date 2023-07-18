@@ -16,7 +16,7 @@ class CoreEngine():
     def add_agent(self, agent):
         self.agents.append(agent)
 
-    async def _start(self) -> None:
+    def _start(self) -> None:
         for agent in self.agents:
-            await agent.start()
+            agent.start()
         self._status = Status.RUNNING.value
