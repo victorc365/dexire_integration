@@ -19,7 +19,7 @@ def init_logger() -> None:
                         filename=f'{LOG_DIRECTORY_PATH}/logs.txt')
 
 
-async def init_api(loop) -> FastAPI:
+def init_api(loop) -> Server:
     api = FastAPI(docs_url='/docs', redoc_url=None)
     api.add_middleware(CORSMiddleware,
                        allow_origins=['*'],
@@ -32,8 +32,7 @@ async def init_api(loop) -> FastAPI:
                     host='0.0.0.0',
                     port=8080)
     server = Server(config)
-    await server.serve()
-    return api
+    return server
 
 
 def init_engine() -> None:

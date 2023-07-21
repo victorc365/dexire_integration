@@ -5,8 +5,8 @@ EREBOTS 3.0 is a scenario and platform agnostic multi-agent chatbot system. Able
 ## Requirements
 
 - [ ] Multi-Agent System (MAS)
-  - [ ] choose MAS System
-  - [ ] create basic implementation
+  - [x] choose MAS System
+  - [x] create basic implementation
   - [ ] create Gateway Agent
   - [ ] create Personalized Agent
   - [ ] simultaneous users
