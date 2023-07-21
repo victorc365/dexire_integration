@@ -7,4 +7,5 @@ module_service = ModuleService()
 
 @router.get('/')
 def get():
-    return module_service.get_module_descriptors()
+    modules = module_service.get_module_descriptors()
+    return [module.name for module in modules]
