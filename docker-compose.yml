@@ -45,7 +45,7 @@ services:
     volumes:
       - ${HOST_LOG_DIRECTORY_PATH}/logs/spade/:${LOG_DIRECTORY_PATH}
       - ./core/src:/app
-      - ./modules:/opt/modules
+      - ./modules:${MODULE_DIRECTORY_PATH}
 
 volumes:
   openfire-xmpp:
