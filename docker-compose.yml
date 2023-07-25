@@ -42,10 +42,11 @@ services:
       LOG_DIRECTORY_PATH: ${LOG_DIRECTORY_PATH}
       LOG_LEVEL: ${LOG_LEVEL}
       XMPP_SERVER_URL: ${XMPP_SERVER_URL}
+      MODULE_DIRECTORY_PATH: ${MODULE_DIRECTORY_PATH}
     volumes:
-      - ${HOST_LOG_DIRECTORY_PATH}/logs/spade/:${LOG_DIRECTORY_PATH}
+      - ${HOST_LOG_DIRECTORY_PATH}/logs/spade/:/app/${LOG_DIRECTORY_PATH}
       - ./core/src:/app
-      - ./modules:${MODULE_DIRECTORY_PATH}
+      - ./modules:/app/${MODULE_DIRECTORY_PATH}
 
 volumes:
   openfire-xmpp:
