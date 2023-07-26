@@ -9,7 +9,7 @@ from enums.status import Status
 from spade.agent import Agent
 
 
-class CoreEngine():
+class CoreEngine:
     def __init__(self, run_api=True):
         self._status = Status.TURNED_OFF.value
         self.logger = logging.getLogger('[CoreEngine]')
