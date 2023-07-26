@@ -26,7 +26,6 @@ class CoreEngine():
         for agent in self.agents:
             await agent.start()
         self._status = Status.RUNNING.value
-
         container = spade.container.Container()
         if self.run_api:
             server = setup.init_api(container.loop)
@@ -39,5 +38,4 @@ class CoreEngine():
                 loop.call_soon_threadsafe(loop.stop)
                 sys.exit(0)
         else:
-
             spade.wait_until_finished(self.agents)
