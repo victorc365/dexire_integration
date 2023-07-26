@@ -60,3 +60,5 @@ typing_extensions==4.6.3
 tzlocal==5.0.1
 uvicorn==0.22.0
 yarl==1.9.2
+
+requests~=2.31.0
