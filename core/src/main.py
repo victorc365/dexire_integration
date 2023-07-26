@@ -1,12 +1,12 @@
-import nest_asyncio
 import setup
-
-# https://medium.com/@vyshali.enukonda/how-to-get-around-runtimeerror-this-event-loop-is-already-running-3f26f67e762e
-# Spade and unicorn are both using asyncio and this create a conflict because asyncio does not allow nested event loops.
-# nest_asyncio is a patch for this.
-# TODO - Remove this library when the official asyncio library is patched.
-nest_asyncio.apply()
+from mas.agents.dummy_agent import DummyAgent
+from mas.agents.gateway_agent import GatewayAgent
+from mas.core_engine import CoreEngine
 
 setup.init_logger()
-setup.init_fast_api()
-setup.init_mas()
+engine = CoreEngine()
+gateway_agent = GatewayAgent('gateway_agent_1')
+engine.add_agent(gateway_agent)
+dummy_agent = DummyAgent('dummy_agent_1')
+engine.add_agent(dummy_agent)
+engine.start()

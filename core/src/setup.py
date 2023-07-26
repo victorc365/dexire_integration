@@ -1,13 +1,11 @@
 import logging
 import os
 
+from api import router
+from enums.environment import Environment
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from .api import router
-from .enums.environment import Environment
-from .mas.agents.gateway_agent import GatewayAgent
-from .mas.core_engine import CoreEngine
+from uvicorn import Config, Server
 
 
 def init_logger() -> None:
@@ -18,21 +16,22 @@ def init_logger() -> None:
                         filename=f'{LOG_DIRECTORY_PATH}/logs.txt')
 
 
-def init_fast_api() -> FastAPI:
-    app = FastAPI(docs_url='/docs', redoc_url=None)
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=['*'],
-        allow_credentials=True,
-        allow_methods=['*'],
-        allow_headers=['*'],
-    )
-    app.include_router(router.api_router)
-    return app
+def init_api(loop) -> Server:
+    app = _init_app()
+    config = Config(app=app,
+                    loop=loop,
+                    host='0.0.0.0',
+                    port=8080)
+    server = Server(config)
+    return server
 
 
-def init_mas() -> None:
-    engine = CoreEngine()
-    gateway_agent = GatewayAgent('gateway_agent_1')
-    engine.add_agent(gateway_agent)
-    engine.start()
+def _init_app() -> FastAPI:
+    api = FastAPI(docs_url='/docs', redoc_url=None)
+    api.add_middleware(CORSMiddleware,
+                       allow_origins=['*'],
+                       allow_credentials=True,
+                       allow_methods=['*'],
+                       allow_headers=['*'])
+    api.include_router(router.api_router)
+    return api

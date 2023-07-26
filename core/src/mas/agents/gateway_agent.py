@@ -1,5 +1,5 @@
 
-from .basic_agent import BasicAgent
+from mas.agents.basic_agent import BasicAgent
 
 
 class GatewayAgent(BasicAgent):
