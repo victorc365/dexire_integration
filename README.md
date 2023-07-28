@@ -47,11 +47,13 @@ EREBOTS 3.0 is a scenario and platform agnostic multi-agent chatbot system. Able
 
 ### XMPP Configuation
 
-| Name                        | Project               | Description                                                             |
-|-----------------------------|-----------------------|-------------------------------------------------------------------------|
-| XMPP_SERVER_URL             | CORE                  | URL of the XMPP server used for prosody                                 |
-| XMPP_ADMIN_PORT             | CORE                  | Port to connect to admin web interface. By default 9090                 |
-| XMPP_USER_PORT              | CORE                  | Port used for message exchange betwenn users. By default 5222           |
+| Name            | Project               | Description                                                   |
+|-----------------|-----------------------|---------------------------------------------------------------|
+| XMPP_SERVER_URL | CORE                  | URL of the XMPP server used for prosody                       |
+| XMPP_ADMIN_PORT | CORE                  | Port to connect to admin web interface. By default 9090       |
+| XMPP_USER_PORT  | CORE                  | Port used for message exchange between users. By default 5222 |
+| XMPP_SECRET_KEY | CORE                  | Secret key configured to access the user management rest API  |
+
 
 ### Log Configuration
 
