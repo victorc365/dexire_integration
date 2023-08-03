@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hemerapp/models/bot_model.dart';
+import 'package:hemerapp/models/pryv/authentication/authentication_response_model.dart';
+import 'package:hemerapp/models/pryv/service_info_model.dart';
 import 'package:hemerapp/repositories/bots_repository.dart';
+import 'package:hemerapp/repositories/pryv_repository.dart';
 import 'package:hemerapp/ui/components/bot_cell.dart';
+import 'package:hemerapp/ui/components/webview.dart';
+import 'package:hemerapp/ui/root/root_route.dart';
 
 class BotsRoute extends StatefulWidget {
   const BotsRoute({super.key});
@@ -34,7 +39,18 @@ class BotRouteState extends State<BotsRoute> {
                       child: GridTile(
                         child: BotCell(bot.name, null, 60.0),
                       ),
-                      onTap: () {}));
+                      onTap: () async {
+                        ServiceInfoModel serviceInfo = await fetchServiceInfo();
+                        final String accessUrl = serviceInfo.access;
+                        AuthenticationResponseModel authenticationResponseModel = await postAuthenticationRequest(accessUrl);
+                        String authUrl = authenticationResponseModel.authUrl;
+                        String pollUrl = authenticationResponseModel.poll;
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    RootRoute(child:WebView(url: authUrl, pollUrl: pollUrl,))));
+                      }));
             }).toList() ??
             [],
       ),
