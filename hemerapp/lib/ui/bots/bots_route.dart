@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hemerapp/models/bot_model.dart';
 import 'package:hemerapp/models/pryv/authentication/authentication_response_model.dart';
+import 'package:hemerapp/models/pryv/authentication/requested_permission_model.dart';
 import 'package:hemerapp/models/pryv/service_info_model.dart';
 import 'package:hemerapp/repositories/bots_repository.dart';
 import 'package:hemerapp/repositories/pryv_repository.dart';
@@ -24,6 +25,25 @@ class BotRouteState extends State<BotsRoute> {
     _futureBots = fetchBots();
   }
 
+  _requireAccessFromPryv(String botName, List<RequestedPermissionModel> requestedPermissions) async {
+    ServiceInfoModel serviceInfo = await fetchServiceInfo();
+    final String accessUrl = serviceInfo.access;
+    AuthenticationResponseModel authenticationResponseModel =
+        await postAuthenticationRequest(accessUrl, botName, requestedPermissions);
+    String authUrl = authenticationResponseModel.authUrl;
+    String pollUrl = authenticationResponseModel.poll;
+    if (context.mounted) {
+      await Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => RootRoute(
+                      child: WebView(
+                    url: authUrl,
+                    pollUrl: pollUrl,
+                  ))));
+    }
+  }
+
   _buildGridView(List<BotModel> bots) {
     return Padding(
       padding: const EdgeInsets.all(5),
@@ -40,16 +60,13 @@ class BotRouteState extends State<BotsRoute> {
                         child: BotCell(bot.name, null, 60.0),
                       ),
                       onTap: () async {
-                        ServiceInfoModel serviceInfo = await fetchServiceInfo();
-                        final String accessUrl = serviceInfo.access;
-                        AuthenticationResponseModel authenticationResponseModel = await postAuthenticationRequest(accessUrl);
-                        String authUrl = authenticationResponseModel.authUrl;
-                        String pollUrl = authenticationResponseModel.poll;
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    RootRoute(child:WebView(url: authUrl, pollUrl: pollUrl,))));
+                        if (bot.isPryvRequired) {
+                          await _requireAccessFromPryv(bot.name, bot.requiredPermissions);
+                        }
+                          if (context.mounted) {
+                            Navigator.pushNamed(context, '/chat');
+                          }
+
                       }));
             }).toList() ??
             [],

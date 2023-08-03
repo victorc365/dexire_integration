@@ -50,7 +50,7 @@ class WebViewState extends State<WebView> {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             if (snapshot!.data!) {
-              Navigator.pushNamed(context, '/chat');
+                Navigator.pop(context);
             } else if(!isRefreshing){
               isRefreshing = true;
               SchedulerBinding.instance.addPostFrameCallback((_) => setState(() {

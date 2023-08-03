@@ -12,10 +12,6 @@ import 'package:http/http.dart' as http;
 final String _pryvApiUrl =
     dotenv.get('PRYV_API_URL', fallback: 'localhost:8080');
 
-// TODO - Check with Davide if we ask consent once for all bot or once per bot
-// In the second case, app identifier should be the name of the bot
-final String _pryvAppIdentifier =
-    dotenv.get('PRYV_APP_IDENTIFIER', fallback: 'hemerapp');
 const String serviceInfoEndpoint = '/service/info';
 const Map<String, String> _headers = {
   HttpHeaders.contentTypeHeader: 'application/json'
@@ -33,7 +29,7 @@ Future<ServiceInfoModel> fetchServiceInfo() async {
 }
 
 Future<AuthenticationResponseModel> postAuthenticationRequest(
-    String url) async {
+    String url, String botName, List<RequestedPermissionModel> requestedPermissions) async {
   String endpoint = '';
 
   if (url.contains("https://")) {
@@ -44,12 +40,8 @@ Future<AuthenticationResponseModel> postAuthenticationRequest(
     url = url.substring(0, url.indexOf("/"));
   }
 
-  // TODO - Check with Davide from where those permissions should come.
-  List<RequestedPermissionModel> requestedPermissions = [
-    RequestedPermissionModel("test", "read", "test")
-  ];
   final data = jsonEncode(
-      AuthenticationRequestModel(_pryvAppIdentifier, requestedPermissions));
+      AuthenticationRequestModel(botName, requestedPermissions));
   final uri = Uri.https(url, endpoint, null);
   final response = await http.post(uri, body: data, headers: _headers);
   if (response.statusCode == HttpStatus.created) {
@@ -81,7 +73,6 @@ Future<bool> pollAuthenticationResult(String url) async {
       }
     } else if (response.statusCode == HttpStatus.forbidden) {
       return false;
-
     }
   }
 }
