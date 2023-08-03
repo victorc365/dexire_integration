@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 import yaml
 from enums.environment import Environment
@@ -7,9 +8,24 @@ from yaml.loader import SafeLoader
 
 class Bot:
     def __init__(self, data: dict) -> None:
-        self.name = data.get('name', 'undefined')
-        self.url = data.get('url', 'undefined')
-        self.is_dev = data.get('isDev', True)
+        self.name: str = data.get('name', 'undefined')
+        self.url: str = data.get('url', 'undefined')
+        self.is_dev: bool = data.get('isDev', True)
+        self.is_pryv_required: bool = data.get('isPryvRequired', False)
+        self.required_permissions: List[Permission] = []
+
+        for required_permission in data.get('requiredPermissions'):
+            for id, permission in required_permission.items():
+                stream_id = f'{self.name}_{id}'
+                self.required_permissions.append(
+                    Permission(stream_id, permission, id))
+
+
+class Permission:
+    def __init__(self, stream_id, level, default_name) -> None:
+        self.stream_id = stream_id
+        self.level = level
+        self.default_name = default_name
 
 
 class BotService:

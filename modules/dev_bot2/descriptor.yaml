@@ -3,6 +3,4 @@ url: http://test.com
 isDev: true
 isPryvRequired: true
 requiredPermissions:
-  - mushrooms:
-    - read
-    - contribute
+  - mushrooms: read

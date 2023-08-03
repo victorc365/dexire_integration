@@ -3,7 +3,5 @@ url: http://test.com
 isDev: true
 isPryvRequired: true
 requiredPermissions:
-  - diary:
-    - read
-    - contribute
-    - manage
+  - diary: read
+  - test: read

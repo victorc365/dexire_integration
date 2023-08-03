@@ -3,5 +3,4 @@ url: http://test.com
 isDev: true
 isPryvRequired: true
 requiredPermissions:
-  - exercices:
-    - read
+  - exercices: read
