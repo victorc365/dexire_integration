@@ -15,10 +15,10 @@ class Bot:
         self.required_permissions: List[Permission] = []
 
         for required_permission in data.get('requiredPermissions'):
-            for id, permission in required_permission.items():
-                stream_id = f'{self.name}_{id}'
+            for name, permission in required_permission.items():
+                stream_id = f'{self.name}_{name}'
                 self.required_permissions.append(
-                    Permission(stream_id, permission, id))
+                    Permission(stream_id, permission, name))
 
 
 class Permission:
