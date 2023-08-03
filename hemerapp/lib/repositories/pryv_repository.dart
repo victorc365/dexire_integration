@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:core';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hemerapp/models/pryv/authentication/authentication_request_model.dart';
 import 'package:hemerapp/models/pryv/authentication/authentication_response_model.dart';
 import 'package:hemerapp/models/pryv/authentication/poll_authorization_result_model.dart';
@@ -51,7 +52,7 @@ Future<AuthenticationResponseModel> postAuthenticationRequest(
   }
 }
 
-Future<bool> pollAuthenticationResult(String url) async {
+Future<bool> pollAuthenticationResult(String url, String botName) async {
   String endpoint = '';
   if (url.contains("https://")) {
     url = url.replaceAll("https://", "");
@@ -68,6 +69,13 @@ Future<bool> pollAuthenticationResult(String url) async {
     if (response.statusCode == HttpStatus.ok) {
       PollAuthorizationResultModel model = PollAuthorizationResultModel.fromJson(jsonDecode(response.body));
       if (model.status == PollAuthorizationResultModel.accepted) {
+        final storage = FlutterSecureStorage();
+
+        final connectionInfo = model.apiEndpoint!.replaceAll("https://", "").split("@");
+        final token = connectionInfo[0];
+        final username = connectionInfo[1].split('.')[0];
+        await storage.write(key: 'username', value: username);
+        await storage.write(key: botName, value: token);
         return true;
       } else if(model.status != PollAuthorizationResultModel.needSignIn) {
       }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hemerapp/models/bot_model.dart';
 import 'package:hemerapp/models/pryv/authentication/authentication_response_model.dart';
 import 'package:hemerapp/models/pryv/authentication/requested_permission_model.dart';
@@ -25,11 +26,13 @@ class BotRouteState extends State<BotsRoute> {
     _futureBots = fetchBots();
   }
 
-  _requireAccessFromPryv(String botName, List<RequestedPermissionModel> requestedPermissions) async {
+  _requireAccessFromPryv(String botName,
+      List<RequestedPermissionModel> requestedPermissions) async {
     ServiceInfoModel serviceInfo = await fetchServiceInfo();
     final String accessUrl = serviceInfo.access;
     AuthenticationResponseModel authenticationResponseModel =
-        await postAuthenticationRequest(accessUrl, botName, requestedPermissions);
+        await postAuthenticationRequest(
+            accessUrl, botName, requestedPermissions);
     String authUrl = authenticationResponseModel.authUrl;
     String pollUrl = authenticationResponseModel.poll;
     if (context.mounted) {
@@ -40,6 +43,7 @@ class BotRouteState extends State<BotsRoute> {
                       child: WebView(
                     url: authUrl,
                     pollUrl: pollUrl,
+                    botName: botName,
                   ))));
     }
   }
@@ -61,12 +65,17 @@ class BotRouteState extends State<BotsRoute> {
                       ),
                       onTap: () async {
                         if (bot.isPryvRequired) {
-                          await _requireAccessFromPryv(bot.name, bot.requiredPermissions);
-                        }
-                          if (context.mounted) {
-                            Navigator.pushNamed(context, '/chat');
+                          const storage = FlutterSecureStorage();
+                          String? value = await storage.read(key: bot.name);
+                          if (value == null) {
+                            await _requireAccessFromPryv(
+                                bot.name, bot.requiredPermissions);
                           }
-
+                        }
+                        if (context.mounted) {
+                          Navigator.pushNamed(context, '/chat',
+                              arguments: bot);
+                        }
                       }));
             }).toList() ??
             [],
