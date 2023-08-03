@@ -1,9 +1,8 @@
-name: devBot
+name: devBot2
 url: http://test.com
 isDev: true
 isPryvRequired: true
 requiredPermissions:
-  - diary:
+  - mushrooms:
     - read
     - contribute
-    - manage
