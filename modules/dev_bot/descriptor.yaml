@@ -1,7 +1,7 @@
 name: devBot
 url: http://test.com
 isDev: true
-isPryvRequired: true
+isPryvRequired: false
 requiredPermissions:
   - diary: read
   - test: read

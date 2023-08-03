@@ -4,3 +4,4 @@ isDev: true
 isPryvRequired: true
 requiredPermissions:
   - exercices: read
+  - nutrition: manage
