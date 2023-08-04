@@ -5,6 +5,8 @@ import yaml
 from enums.environment import Environment
 from yaml.loader import SafeLoader
 
+from services.openfire.user_service import UserService
+
 
 class Bot:
     def __init__(self, data: dict) -> None:
@@ -30,6 +32,7 @@ class Permission:
 
 class BotService:
     def __init__(self) -> None:
+        self.user_service: UserService = UserService()
         self.bots_folder = os.environ.get(
             Environment.MODULE_DIRECTORY_PATH.value)
 
@@ -42,3 +45,11 @@ class BotService:
                 data = yaml.load(file, Loader=SafeLoader)
                 bot_descriptors.append(Bot(data))
         return bot_descriptors
+
+    def connect_to_bot(self, username: str, bot_name: str, token: str) -> None:
+        bot_user_name = f'{bot_name}_{username}'
+        bot_exists = self.user_service.bot_user_exist(bot_user_name)
+        if not bot_exists:
+            self.user_service.create_bot_user(bot_user_name, bot_user_name)
+
+        # TODO - send message to gateway agent to spawn the agent if not online
