@@ -48,7 +48,7 @@ Future<AuthenticationResponseModel> postAuthenticationRequest(
   if (response.statusCode == HttpStatus.created) {
     return AuthenticationResponseModel.fromJson(jsonDecode(response.body));
   } else {
-    throw Exception('Failed to load pryv service info');
+    throw Exception('Failed to authentication request');
   }
 }
 
@@ -69,7 +69,7 @@ Future<bool> pollAuthenticationResult(String url, String botName) async {
     if (response.statusCode == HttpStatus.ok) {
       PollAuthorizationResultModel model = PollAuthorizationResultModel.fromJson(jsonDecode(response.body));
       if (model.status == PollAuthorizationResultModel.accepted) {
-        final storage = FlutterSecureStorage();
+        const storage = FlutterSecureStorage();
 
         final connectionInfo = model.apiEndpoint!.replaceAll("https://", "").split("@");
         final token = connectionInfo[0];

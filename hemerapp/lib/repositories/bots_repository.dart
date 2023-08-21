@@ -9,7 +9,9 @@ final String _erebotsApiUrl =
     dotenv.get('EREBOTS_API_URL', fallback: 'localhost:8080');
 final String _erebotsApiVersion = dotenv.get('EREBOTS_API_VERSION');
 final String _botsEndpoint = '/$_erebotsApiVersion/bots';
-
+const Map<String, String> _headers = {
+  HttpHeaders.contentTypeHeader: 'application/json'
+};
 Future<List<BotModel>> fetchBots() async {
   final uri = Uri.http(_erebotsApiUrl, _botsEndpoint, null);
   final response = await http.get(uri);
@@ -19,4 +21,12 @@ Future<List<BotModel>> fetchBots() async {
   } else {
     throw Exception("Failed to load bots");
   }
+}
+
+Future<bool> connectToBot(String botName, String username, String token) async {
+  final uri = Uri.http(_erebotsApiUrl, '$_botsEndpoint/$botName/connect', null);
+  final data = jsonEncode(
+      {'username': username, 'token': token});
+  final response = await http.post(uri, body: data, headers: _headers);
+  return response.statusCode == HttpStatus.created;
 }

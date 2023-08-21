@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hemerapp/models/bot_model.dart';
+import 'package:hemerapp/repositories/bots_repository.dart';
 
 class ChatRoute extends StatefulWidget {
   const ChatRoute({super.key});
@@ -11,8 +12,10 @@ class ChatRoute extends StatefulWidget {
 
 class ChatRouteState extends State<ChatRoute> {
   late BotModel bot;
-  late Future<String> token;
+  String token = 'undefined';
   late String username;
+  bool isConnected = false;
+
   final FlutterSecureStorage storage = const FlutterSecureStorage();
   @override
   void initState() {
@@ -23,16 +26,18 @@ class ChatRouteState extends State<ChatRoute> {
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
     bot = ModalRoute.of(context)!.settings.arguments as BotModel;
-    token = _getToken();
-    username = (await storage.read(key: 'username'))!;
   }
 
-  Future<String> _getToken() async {
-    String? value = "";
-    if(bot.isPryvRequired) {
-      value = await storage.read(key: bot.name);
+  Future<bool> _connectToBot() async {
+    if (bot.isPryvRequired) {
+      token = (await storage.read(key: bot.name))!;
+      username = (await storage.read(key: 'username'))!;
+    } else {
+      username = 'Anonymous';
+
     }
-    return value!;
+
+    return await connectToBot(bot.name, username, token);
   }
 
   @override
@@ -42,11 +47,12 @@ class ChatRouteState extends State<ChatRoute> {
         child: Column(
           children: [
             Expanded(
-              child: FutureBuilder<String>(
-                  future: token,
+              child: FutureBuilder<bool>(
+                  future: _connectToBot(),
                   builder: (context, snapshot) {
                     if (snapshot.hasData) {
-                      return Text(snapshot.data! + bot.name +username);
+                      return Text(
+                          'bot name:${bot.name}\n$username\ntoken:$token\nconnected:$isConnected');
                     }
                     return const Center(
                       child: CircularProgressIndicator(),
