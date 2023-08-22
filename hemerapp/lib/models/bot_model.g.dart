@@ -12,6 +12,10 @@ BotModel _$BotModelFromJson(Map<String, dynamic> json) =>
       json['icon'] as String?,
       json['url'] as String,
       json['isDev'] as bool? ?? false,
+      json['isPryvRequired'] as bool,
+      (json['requiredPermissions']as List<dynamic>)
+          .map((e) => RequestedPermissionModel.fromJson(e as Map<String, dynamic>))
+          .toList() ,
     );
 
 Map<String, dynamic> _$BotModelToJson(BotModel instance) =>
@@ -20,4 +24,6 @@ Map<String, dynamic> _$BotModelToJson(BotModel instance) =>
       'icon': instance.icon,
       'url': instance.url,
       'isDev': instance.isDev,
+      'isPryvRequired': instance.isPryvRequired,
+      'requiredPermissions': instance.requiredPermissions,
     };

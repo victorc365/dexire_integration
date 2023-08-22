@@ -1,15 +1,17 @@
+import 'package:hemerapp/models/pryv/authentication/requested_permission_model.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'bot_model.g.dart';
 
 @JsonSerializable()
 class BotModel {
-  BotModel(this.name, this.icon, this.url, this.isDev);
+  BotModel(this.name, this.icon, this.url, this.isDev, this.isPryvRequired, this.requiredPermissions);
 
   String name;
   String? icon;
   String url;
-
+  bool isPryvRequired;
+  List<RequestedPermissionModel> requiredPermissions;
   @JsonKey(defaultValue: false)
   bool isDev;
 

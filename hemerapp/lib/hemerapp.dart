@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:hemerapp/ui/bots/bots_route.dart';
+import 'package:hemerapp/ui/chat/chat_route.dart';
 import 'package:hemerapp/ui/login/login_route.dart';
 import 'package:hemerapp/ui/profile/profile_route.dart';
 import 'package:hemerapp/ui/root/root_route.dart';
@@ -44,7 +45,8 @@ class _HemerappState extends State<Hemerapp> {
         '/bots': (context) => const RootRoute(child: BotsRoute()),
         '/login': (context) => const RootRoute(child: LoginRoute()),
         '/profile': (context) => const RootRoute(child: ProfileRoute()),
-        '/settings': (context) => const RootRoute(child: SettingsRoute())
+        '/settings': (context) => const RootRoute(child: SettingsRoute()),
+        '/chat': (context) => const RootRoute(child: ChatRoute())
       },
     );
   }

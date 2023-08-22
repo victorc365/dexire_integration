@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SideMenu extends StatelessWidget {
   const SideMenu({
@@ -13,7 +14,7 @@ class SideMenu extends StatelessWidget {
         child: Column(
           children: [
             DrawerHeader(
-                child: Image.asset("assets/images/aislab.png"),
+              child: Image.asset("assets/images/aislab.png"),
             ),
             DrawerListTile(
               title: AppLocalizations.of(context)!.bots,
@@ -38,8 +39,12 @@ class SideMenu extends StatelessWidget {
             ),
             DrawerListTile(
               title: AppLocalizations.of(context)!.logout,
-              press: () {
-                //TODO - implement logout
+              press: () async {
+                const storage = FlutterSecureStorage();
+                await storage.deleteAll();
+                if (context.mounted) {
+                  Navigator.pushNamed(context, '/bots');
+                }
               },
               icon: Icons.exit_to_app,
             )

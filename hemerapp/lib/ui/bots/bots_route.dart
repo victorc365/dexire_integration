@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hemerapp/models/bot_model.dart';
+import 'package:hemerapp/models/pryv/authentication/authentication_response_model.dart';
+import 'package:hemerapp/models/pryv/authentication/requested_permission_model.dart';
+import 'package:hemerapp/models/pryv/service_info_model.dart';
 import 'package:hemerapp/repositories/bots_repository.dart';
+import 'package:hemerapp/repositories/pryv_repository.dart';
 import 'package:hemerapp/ui/components/bot_cell.dart';
+import 'package:hemerapp/ui/components/webview.dart';
+import 'package:hemerapp/ui/root/root_route.dart';
 
 class BotsRoute extends StatefulWidget {
   const BotsRoute({super.key});
@@ -19,6 +26,28 @@ class BotRouteState extends State<BotsRoute> {
     _futureBots = fetchBots();
   }
 
+  _requireAccessFromPryv(String botName,
+      List<RequestedPermissionModel> requestedPermissions) async {
+    ServiceInfoModel serviceInfo = await fetchServiceInfo();
+    final String accessUrl = serviceInfo.access;
+    AuthenticationResponseModel authenticationResponseModel =
+        await postAuthenticationRequest(
+            accessUrl, botName, requestedPermissions);
+    String authUrl = authenticationResponseModel.authUrl;
+    String pollUrl = authenticationResponseModel.poll;
+    if (context.mounted) {
+      await Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) => RootRoute(
+                      child: WebView(
+                    url: authUrl,
+                    pollUrl: pollUrl,
+                    botName: botName,
+                  ))));
+    }
+  }
+
   _buildGridView(List<BotModel> bots) {
     return Padding(
       padding: const EdgeInsets.all(5),
@@ -34,7 +63,20 @@ class BotRouteState extends State<BotsRoute> {
                       child: GridTile(
                         child: BotCell(bot.name, null, 60.0),
                       ),
-                      onTap: () {}));
+                      onTap: () async {
+                        if (bot.isPryvRequired) {
+                          const storage = FlutterSecureStorage();
+                          String? value = await storage.read(key: bot.name);
+                          if (value == null) {
+                            await _requireAccessFromPryv(
+                                bot.name, bot.requiredPermissions);
+                          }
+                        }
+                        if (context.mounted) {
+                          Navigator.pushNamed(context, '/chat',
+                              arguments: bot);
+                        }
+                      }));
             }).toList() ??
             [],
       ),
