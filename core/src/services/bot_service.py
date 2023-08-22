@@ -2,9 +2,10 @@ import os
 from typing import List
 
 import yaml
-from enums.environment import Environment
 from yaml.loader import SafeLoader
 
+from enums.environment import Environment
+from mas.core_engine import CoreEngine
 from services.openfire.user_service import UserService
 
 
@@ -46,10 +47,10 @@ class BotService:
                 bot_descriptors.append(Bot(data))
         return bot_descriptors
 
-    def connect_to_bot(self, username: str, bot_name: str, token: str) -> None:
+    async def connect_to_bot(self, username: str, bot_name: str, token: str) -> None:
         bot_user_name = f'{bot_name}_{username}'
         bot_exists = self.user_service.bot_user_exist(bot_user_name)
         if not bot_exists:
             self.user_service.create_bot_user(bot_user_name, bot_user_name)
 
-        # TODO - send message to gateway agent to spawn the agent if not online
+        await CoreEngine().create_agent(bot_user_name, token)
