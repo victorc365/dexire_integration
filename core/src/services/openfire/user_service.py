@@ -17,25 +17,30 @@ class UserService:
             'Authorization': secret_key
         }
 
-    def create_bot_user(self, username: str, password: str) -> bool:
-        data = {'username': username, 'password': password}
-        r = requests.post(self.url, json=data, headers=self.headers)
+    def bot_user_exist(self, bot_user_name: str) -> bool:
+        url = f'{self.url}/{bot_user_name}'
+        response = requests.get(url, headers=self.headers)
+        return response.status_code == status.HTTP_200_OK
 
-        if r.status_code == status.HTTP_201_CREATED:
-            self.logger.info(f'User {username} has been successfully created in XMPP server')
+    def create_bot_user(self, bot_user_name: str, password: str) -> bool:
+        data = {'username': bot_user_name, 'password': password}
+        response = requests.post(self.url, json=data, headers=self.headers)
+
+        if response.status_code == status.HTTP_201_CREATED:
+            self.logger.info(f'Bot user {bot_user_name} has been successfully created in XMPP server')
             return True
 
-        self.logger.error(f'Unexpected error creating user {username}. Request ended with code: {r.status_code}:')
-        self.logger.error(f'Error message: {r.text}')
+        self.logger.error(f'Unexpected error creating bot user {bot_user_name}. Request ended with code: {response.status_code}:')
+        self.logger.error(f'Error message: {response.text}')
         return False
 
-    def delete_bot_user(self, username: str) -> bool:
-        url = f'{self.url}/{username}'
-        r = requests.delete(url, headers=self.headers)
-        if r.status_code == status.HTTP_200_OK:
-            self.logger.info(f'User {username} has been successfully deleted from XMPP server')
+    def delete_bot_user(self, bot_user_name: str) -> bool:
+        url = f'{self.url}/{bot_user_name}'
+        response = requests.delete(url, headers=self.headers)
+        if response.status_code == status.HTTP_200_OK:
+            self.logger.info(f'Bot user {bot_user_name} has been successfully deleted from XMPP server')
             return True
 
-        self.logger.error(f'Unexpected error deleting user {username}. Request ended with code: {r.status_code}:')
-        self.logger.error(f'Error message: {r.text}')
+        self.logger.error(f'Unexpected error deleting bot user {bot_user_name}. Request ended with code: {response.status_code}:')
+        self.logger.error(f'Error message: {response.text}')
         return False

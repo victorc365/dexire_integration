@@ -1,0 +1,7 @@
+name: devBot2
+url: http://test.com
+isDev: true
+isPryvRequired: true
+requiredPermissions:
+  - mushrooms: read
+  - toto: manage
