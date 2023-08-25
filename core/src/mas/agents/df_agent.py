@@ -1,5 +1,7 @@
 from mas.agents.basic_agent import BasicAgent
+
 from spade.behaviour import CyclicBehaviour
+from mas.agents.basic_agent import AgentType
 
 
 class ListenerBehaviour(CyclicBehaviour):
@@ -12,11 +14,8 @@ class ListenerBehaviour(CyclicBehaviour):
             return
 
 
-class GatewayAgent(BasicAgent):
+class DFAgent(BasicAgent):
     def __init__(self, name: str) -> None:
         super().__init__(name)
-
-    async def setup(self) -> None:
-        await super().setup()
         self.add_behaviour(ListenerBehaviour())
         self.logger.debug('Setup and ready!')
