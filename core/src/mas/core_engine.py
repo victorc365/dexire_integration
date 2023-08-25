@@ -7,7 +7,6 @@ import spade
 import setup
 from enums.status import Status
 from mas.agents.basic_agent import BasicAgent
-from mas.agents.gateway_agent import GatewayAgent
 from mas.agents.df_agent import DFAgent
 from mas.agents.ams_agent import AMSAgent
 from mas.agents.personal_agent import PersonalAgent
@@ -47,6 +46,8 @@ class CoreEngine(metaclass=Singleton):
         await self._create_agent(PersonalAgent(bot_user_name, bot_user_name, token))
 
     async def create_gateway_agent(self, name: str):
+        # TODO - Find a way to solve the circular dependency which does not imply to put import here
+        from mas.agents.gateway_agent import GatewayAgent
         await self._create_agent(GatewayAgent(name))
 
     async def _create_default_agents(self):

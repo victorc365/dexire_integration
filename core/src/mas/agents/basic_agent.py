@@ -17,7 +17,7 @@ class BasicSetupBehaviour(OneShotBehaviour):
     def on_subscribe(self, jid):
         subscriber = jid.split("@")[0]
         self.agent.logger.debug(f'Agent {subscriber} asked for subscription.')
-        if any(subscriber in authorized for authorized in self.agent.authorized_subscriptions):
+        if any(authorized in subscriber for authorized in self.agent.authorized_subscriptions):
             self.agent.logger.info(f'Subscription from  {subscriber} approved.')
             self.presence.approve(jid)
         else:
@@ -32,7 +32,8 @@ class BasicAgent(Agent):
     def __init__(self, name: str):
         self.logger = logging.getLogger(f'[{name}]')
         self.id = create_jid(name)
-        self.authorized_subscriptions = [AgentType.AMS_AGENT.value]
+        self.authorized_subscriptions = [AgentType.AMS_AGENT.value, AgentType.DF_AGENT.value]
+        self.role = None
         password = name
         super().__init__(self.id, password)
 

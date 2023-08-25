@@ -5,6 +5,7 @@ from spade.behaviour import OneShotBehaviour
 class SetupPresenceListener(OneShotBehaviour):
     def on_available(self, jid, stanza):
         self.agent.logger.debug(f'Agent {jid.split("@")[0]} is available.')
+        print("lol")
         print(stanza)
 
     def on_subscribed(self, jid):
