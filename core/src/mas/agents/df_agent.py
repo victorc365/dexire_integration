@@ -28,6 +28,13 @@ class ListenerBehaviour(CyclicBehaviour):
 
 
 class DFAgent(BasicAgent):
+    """Erebots implementation of FIPA Directory Facilitator (DF).
+
+    DFAgent is responsible for keeping a list of agent providing services to which a PersonalAgent can register.
+
+    For more information about DirectoryFacilitator in FIPA specs, please read
+    http://www.fipa.org/specs/fipa00023/SC00023J.html#_Toc26668967
+    """
     def __init__(self, name: str) -> None:
         super().__init__(name)
         self.add_behaviour(ListenerBehaviour())

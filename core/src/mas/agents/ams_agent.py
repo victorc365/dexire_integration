@@ -32,6 +32,14 @@ class CreateAgentBehaviour(OneShotBehaviour):
 
 
 class AMSAgent(BasicAgent):
+    """Erebots implementation of FIPA Agent Management System (AMS).
+
+        AMSAgent is responsible for creating other agents on the platform.
+        It also contains a list of all the agents available on the plateform.
+
+        For more information about AMS in FIPA specs, please read
+        http://www.fipa.org/specs/fipa00023/SC00023J.html#_Toc26668971
+        """
     def __init__(self, name: str) -> None:
         super().__init__(name)
 
