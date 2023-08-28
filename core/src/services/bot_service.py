@@ -53,4 +53,4 @@ class BotService:
         if not bot_exists:
             self.user_service.create_bot_user(bot_user_name, bot_user_name)
 
-        await CoreEngine().create_agent(bot_user_name, token)
+        await CoreEngine().create_personal_agent(bot_user_name, token)

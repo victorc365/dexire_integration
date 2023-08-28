@@ -9,4 +9,4 @@ class PersonalAgent(BasicAgent):
 
     async def setup(self):
         self.logger.debug('Setup and ready!')
-        return await super().setup()
+        await super().setup()
