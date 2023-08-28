@@ -1,3 +1,5 @@
+from spade.presence import ContactNotFound
+
 from mas.agents.basic_agent import BasicAgent
 from spade.behaviour import OneShotBehaviour
 
@@ -21,8 +23,12 @@ class CreateAgentBehaviour(OneShotBehaviour):
         self.new_agent = new_agent
 
     async def run(self) -> None:
-        await self.new_agent.start(auto_register=True)
-        self.presence.subscribe(self.new_agent.id)
+        try:
+            self.agent.presence.get_contact(self.new_agent.jid)
+        except ContactNotFound:
+            self.agent.logger.info(f'{self.new_agent.id} not available yet. Starting the bot')
+            await self.new_agent.start(auto_register=True)
+            self.presence.subscribe(self.new_agent.id)
 
 
 class AMSAgent(BasicAgent):

@@ -1,5 +1,7 @@
 import logging
 from enum import Enum
+
+from aioxmpp import PresenceState, PresenceShow
 from spade.agent import Agent
 from spade.behaviour import OneShotBehaviour
 from utils.string_builder import create_jid
@@ -25,6 +27,7 @@ class BasicSetupBehaviour(OneShotBehaviour):
 
     async def run(self):
         self.presence.set_available()
+        self.presence.set_presence(state=PresenceState(True, PresenceShow.CHAT))
         self.presence.on_subscribe = self.on_subscribe
 
 
