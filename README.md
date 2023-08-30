@@ -65,7 +65,8 @@ EREBOTS 3.0 is a scenario and platform agnostic multi-agent chatbot system. Able
 
 ### Miscellaneous
 
-| Name                        | Project               | Description                                                             |
-|-----------------------------|-----------------------|-------------------------------------------------------------------------|
-| SPADE_PORT                  | CORE                  | Port where the API of erebot is listening                               |
-| MODULE_DIRECTORY_PATH       | CUSTOM                | Directory containing the custom FSMs configuration known as "bots" for the user|
+| Name                       | Project | Description                                                                   |
+|----------------------------|---------|-------------------------------------------------------------------------------|
+| SPADE_PORT                 | CORE    | Port where the API of erebot is listening                                     |
+| MODULE_DIRECTORY_PATH      | CUSTOM  | Directory containing the custom FSMs configuration known as "bots" for the user |
+| MAXIMUM_CLIENT_PER_GATEWAY | CORE    | Maximum number of active websocket connection per gateway agent               |
