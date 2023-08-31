@@ -8,11 +8,6 @@ import 'package:hemerapp/repositories/bots_repository.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:uuid/uuid.dart';
-String randomString() {
-  final random = Random.secure();
-  final values = List<int>.generate(16, (i) => random.nextInt(255));
-  return base64UrlEncode(values);
-}
 
 class ChatRoute extends StatefulWidget {
   const ChatRoute({super.key});
@@ -32,6 +27,7 @@ class ChatRouteState extends State<ChatRoute> {
   late types.User _user;
 
   final FlutterSecureStorage storage = const FlutterSecureStorage();
+
   @override
   void initState() {
     super.initState();
@@ -44,7 +40,6 @@ class ChatRouteState extends State<ChatRoute> {
       username = (await storage.read(key: 'username'))!;
     } else {
       username = 'Anonymous';
-
     }
     _user = types.User(id: username);
     isConnected = await connectToBot(bot.name, username, token);
@@ -79,12 +74,12 @@ class ChatRouteState extends State<ChatRoute> {
     );
   }
 
-
   void _addMessage(types.Message message) {
     setState(() {
       _messages.insert(0, message);
     });
   }
+
   void _handleSendPressed(types.PartialText message) {
     final textMessage = types.TextMessage(
       author: _user,
