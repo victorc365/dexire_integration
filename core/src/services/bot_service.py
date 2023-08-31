@@ -7,6 +7,7 @@ from yaml.loader import SafeLoader
 from enums.environment import Environment
 from mas.core_engine import CoreEngine
 from services.openfire.user_service import UserService
+from utils.metaclasses.singleton import Singleton
 
 
 class Bot:
@@ -31,11 +32,15 @@ class Permission:
         self.default_name = default_name
 
 
-class BotService:
+class BotService(metaclass=Singleton):
     def __init__(self) -> None:
         self.user_service: UserService = UserService()
         self.bots_folder = os.environ.get(
             Environment.MODULE_DIRECTORY_PATH.value)
+        self.bots = []
+
+    def get_bots(self):
+        return self.bots
 
     def get_bot_descriptors(self) -> list[Bot]:
         bots = os.listdir(self.bots_folder)
@@ -44,7 +49,10 @@ class BotService:
             descriptor_file = f'{self.bots_folder}/{bot}/descriptor.yaml'
             with open(descriptor_file) as file:
                 data = yaml.load(file, Loader=SafeLoader)
-                bot_descriptors.append(Bot(data))
+                bot_descriptor = Bot(data)
+                bot_descriptors.append(bot_descriptor)
+                if bot_descriptor.name not in self.bots:
+                    self.bots.append(bot_descriptor.name.lower())
         return bot_descriptors
 
     async def connect_to_bot(self, username: str, bot_name: str, token: str) -> None:

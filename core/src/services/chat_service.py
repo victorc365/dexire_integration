@@ -16,7 +16,7 @@ class ChatService(metaclass=Singleton):
         print(bot_user_name)
         self.bot_gateways[client_id][bot_user_name] = gateway_id
 
-    async def  forward_websocket(self, websocket, client_id: str, bot_user_name: str):
+    async def forward_websocket(self, websocket, client_id: str, bot_user_name: str):
         gateway_id = self.bot_gateways[client_id][bot_user_name]
         gateway = CoreEngine().container.get_agent(gateway_id)
-        await gateway.register_websocket(bot_user_name,websocket)
+        await gateway.register_websocket(bot_user_name, websocket)
