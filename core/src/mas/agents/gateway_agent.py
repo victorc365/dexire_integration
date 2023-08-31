@@ -1,3 +1,5 @@
+from starlette.websockets import WebSocketDisconnect
+from services.bot_service import BotService
 from mas.agents.basic_agent import BasicAgent, AgentType
 from spade.behaviour import CyclicBehaviour, OneShotBehaviour
 from mas.core_engine import CoreEngine
@@ -23,18 +25,15 @@ class SetupBehaviour(OneShotBehaviour):
     def on_subscribe(self, jid):
         subscriber = jid.split("@")[0]
         self.agent.logger.debug(f'Agent {subscriber} asked for subscription.')
-        if any(authorized in subscriber for authorized in self.agent.authorized_subscriptions):
-            if AgentType.PERSONAL_AGENT.value in subscriber:
-                if len(self.clients) < int(os.environ.get(Environment.MAXIMUM_CLIENTS_PER_GATEWAY.value)):
-                    self.clients.append(subscriber)
-                    self.presence.subscribe(subscriber)
-
-                else:
-                    return
-            self.agent.logger.info(f'Subscription from  {subscriber} approved.')
-            self.presence.approve(jid)
-        else:
-            self.agent.logger.warning(f'Agent {subscriber} is not authorized for subscription.')
+        bot_name = subscriber.split('_')[0]
+        if bot_name in BotService().get_bots():
+            if len(self.agent.clients.keys()) < int(os.environ.get(Environment.MAXIMUM_CLIENTS_PER_GATEWAY.value)):
+                self.agent.clients[subscriber] = None
+                self.presence.subscribe(jid)
+            else:
+                return
+        self.agent.logger.info(f'Subscription from  {subscriber} approved.')
+        self.presence.approve(jid)
 
     async def run(self):
         self.presence.on_subscribe = self.on_subscribe
@@ -45,10 +44,27 @@ class GatewayAgent(BasicAgent):
         super().__init__(name)
         self.role = AgentType.GATEWAY_AGENT.value
         self.authorized_subscriptions.append(AgentType.PERSONAL_AGENT.value)
-        self.clients = []
+        self.clients = {}
 
     async def setup(self) -> None:
         await super().setup()
+        self.add_behaviour(SetupBehaviour())
         self.add_behaviour(ListenerBehaviour())
         CoreEngine().df_agent.register(self)
         self.logger.debug('Setup and ready!')
+
+    async def register_websocket(self, bot_user_name, websocket):
+        if bot_user_name.lower() in self.clients.keys():
+            self.clients[bot_user_name] = websocket
+            await self.listen_on_websocket(bot_user_name, websocket)
+        else:
+            self.logger.error(f'Ignored websocket connection from {bot_user_name} because it was unexpected.')
+
+    async def listen_on_websocket(self, bot_user_name, websocket):
+        await websocket.accept()
+        try:
+            while True:
+                data = await websocket.receive_text()
+                print(data)
+        except WebSocketDisconnect:
+            self.clients[bot_user_name] = None
