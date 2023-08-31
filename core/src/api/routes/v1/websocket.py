@@ -1,35 +1,11 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket
+from services.chat_service import ChatService
 
 router = APIRouter(prefix='/ws', tags=['Websocket'])
+chat_service = ChatService()
 
 
-class ConnectionManager:
-    def __init__(self):
-        self.active_connections: list[WebSocket] = []
-
-    async def connect(self, websocket: WebSocket):
-        await websocket.accept()
-        self.active_connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
-
-    async def send_personal_message(self, message: str, websocket: WebSocket):
-        await websocket.send_text(message)
-
-    async def broadcast(self, message: str):
-        for connection in self.active_connections:
-            await connection.send_text(message)
-
-
-manager = ConnectionManager()
-
-
-@router.websocket('/{client_id}')
-async def websocket_endpoint(websocket: WebSocket, client_id: str):
-    await manager.connect(websocket, client_id)
-    try:
-        while True:
-            data = await websocket.receive_text()
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
+@router.websocket('/{client_name}/{bot_name}')
+async def websocket_endpoint(websocket: WebSocket, client_name: str, bot_name: str):
+    bot_user_name = f'{bot_name}_{client_name}'
+    await chat_service.forward_websocket(websocket, client_name, bot_user_name)
