@@ -10,6 +10,7 @@ from mas.agents.basic_agent import BasicAgent
 from mas.agents.df_agent import DFAgent
 from mas.agents.ams_agent import AMSAgent
 from utils.metaclasses.singleton import Singleton
+from spade.container import Container
 
 
 class CoreEngine(metaclass=Singleton):
@@ -19,6 +20,7 @@ class CoreEngine(metaclass=Singleton):
         self.run_api = run_api
         self.ams_agent = AMSAgent('ams_agent')
         self.df_agent = DFAgent('df_agent')
+        self.container = None
 
     def start(self) -> None:
         spade.run(self._start())
@@ -27,7 +29,8 @@ class CoreEngine(metaclass=Singleton):
         await self._create_default_agents()
 
         self._status = Status.RUNNING.value
-        container = spade.container.Container()
+        container = Container()
+        self.container = container
         if self.run_api:
             server = setup.init_api(container.loop)
             # KeyboardInterrupt is caught by uvicorn and spade never shutdown
