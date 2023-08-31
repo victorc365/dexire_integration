@@ -1,9 +1,24 @@
-from mas.agents.basic_agent import BasicAgent
+from mas.agents.basic_agent import BasicAgent, AgentType
 from mas.enums.performative import Performative
 from mas.core_engine import CoreEngine
 from spade.behaviour import OneShotBehaviour, CyclicBehaviour
 from spade.message import Message
 import json
+from services.chat_service import ChatService
+
+
+class SetupBehaviour(OneShotBehaviour):
+    def on_subscribe(self, jid):
+        subscriber = jid.split("@")[0]
+        self.agent.logger.debug(f'Agent {subscriber} asked for subscription.')
+
+        if AgentType.GATEWAY_AGENT.value in subscriber:
+            self.agent.logger.info(f'Subscription from  {subscriber} approved.')
+            self.presence.approve(jid)
+            ChatService().register_gateway(jid, self.agent.id)
+
+    async def run(self):
+        self.presence.on_subscribe = self.on_subscribe
 
 
 class AvailableGatewayRequestMessage(Message):
@@ -41,7 +56,7 @@ class RegisterToGatewayBehaviour(OneShotBehaviour):
         super().__init__()
 
     async def run(self) -> None:
-        # ask DF for available non full gateway
+        # ask DF for available gateways
         message = AvailableGatewayRequestMessage(self.agent.id)
         await self.send(message)
 
@@ -55,5 +70,6 @@ class PersonalAgent(BasicAgent):
     async def setup(self):
         self.logger.debug('Setup and ready!')
         await super().setup()
+        self.add_behaviour(SetupBehaviour())
         self.add_behaviour(RegisterToGatewayBehaviour())
         self.add_behaviour(ListenerBehaviour())
