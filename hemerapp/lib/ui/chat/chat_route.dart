@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -8,6 +7,7 @@ import 'package:hemerapp/repositories/bots_repository.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:uuid/uuid.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class ChatRoute extends StatefulWidget {
   const ChatRoute({super.key});
@@ -21,7 +21,7 @@ class ChatRouteState extends State<ChatRoute> {
   String token = 'undefined';
   bool isConnected = false;
   final List<types.Message> _messages = [];
-
+  WebSocketChannel? channel;
   late BotModel bot;
   late String username;
   late types.User _user;
@@ -43,6 +43,15 @@ class ChatRouteState extends State<ChatRoute> {
     }
     _user = types.User(id: username);
     isConnected = await connectToBot(bot.name, username, token);
+    if (isConnected && channel == null) {
+      while (channel == null) {
+        try {
+          channel = openWebsocketChannel(username, bot.name);
+        } on Exception catch (e) {
+          continue;
+        }
+      }
+    }
     return isConnected;
   }
 
@@ -50,6 +59,7 @@ class ChatRouteState extends State<ChatRoute> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
+        bottom: false,
         child: Column(
           children: [
             Expanded(
@@ -75,6 +85,7 @@ class ChatRouteState extends State<ChatRoute> {
   }
 
   void _addMessage(types.Message message) {
+    print(message);
     setState(() {
       _messages.insert(0, message);
     });
@@ -89,5 +100,6 @@ class ChatRouteState extends State<ChatRoute> {
     );
 
     _addMessage(textMessage);
+    channel!.sink.add(jsonEncode(textMessage.toJson()));
   }
 }
