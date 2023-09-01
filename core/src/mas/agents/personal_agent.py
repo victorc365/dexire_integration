@@ -5,6 +5,7 @@ from spade.behaviour import OneShotBehaviour, CyclicBehaviour
 from spade.message import Message
 import json
 from services.chat_service import ChatService
+from enums.status import Status
 
 
 class SetupBehaviour(OneShotBehaviour):
@@ -16,6 +17,7 @@ class SetupBehaviour(OneShotBehaviour):
             self.agent.logger.info(f'Subscription from  {subscriber} approved.')
             self.presence.approve(jid)
             ChatService().register_gateway(jid, self.agent.id)
+            self.agent.status = Status.RUNNING.value
 
     async def run(self):
         self.presence.on_subscribe = self.on_subscribe
@@ -66,6 +68,7 @@ class PersonalAgent(BasicAgent):
         super().__init__(bot_user_name)
         self.password = password
         self.token = token
+        self.status = Status.TURNED_OFF.value
 
     async def setup(self):
         self.logger.debug('Setup and ready!')
