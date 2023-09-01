@@ -43,7 +43,9 @@ class ChatRouteState extends State<ChatRoute> {
       username = 'Anonymous';
     }
     _user = types.User(id: username);
-    await connectToBot(bot.name, username, token);
+    if (!isConnected) {
+      await connectToBot(bot.name, username, token);
+    }
     Timer.periodic(const Duration(seconds: 2), (timer) async {
       if (!isConnected) {
         String status = await getStatus("${bot.name}_$username");
