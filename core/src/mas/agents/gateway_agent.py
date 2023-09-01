@@ -1,3 +1,5 @@
+from aioxmpp import JID
+from spade.message import Message
 from starlette.websockets import WebSocketDisconnect
 from services.bot_service import BotService
 from mas.agents.basic_agent import BasicAgent, AgentType
@@ -6,6 +8,16 @@ from mas.core_engine import CoreEngine
 from mas.enums.performative import Performative
 from enums.environment import Environment
 import os
+
+
+class FreeSlotGatewayResponseMessage(Message):
+    def __init__(self, sender: JID, to: JID, performative: str) -> None:
+        super().__init__(
+            to=str(to),
+            sender=str(sender),
+            body="FREE_SLOTS",
+            metadata={Performative.PERFORMATIVE.value: performative}
+        )
 
 
 class ListenerBehaviour(CyclicBehaviour):
@@ -18,7 +30,15 @@ class ListenerBehaviour(CyclicBehaviour):
             return
 
         if message.metadata[Performative.PERFORMATIVE.value] == Performative.REQUEST.value:
-            print(message)
+            if message.body == 'FREE_SLOTS':
+                if len(self.agent.clients.keys()) < int(os.environ.get(Environment.MAXIMUM_CLIENTS_PER_GATEWAY.value)):
+                    self.agent.clients[str(message.sender).split("@")[0]] = None
+                    performative = Performative.AGREE.value
+                else:
+                    performative = Performative.REFUSE.value
+                reply = FreeSlotGatewayResponseMessage(to=message.sender, sender=message.to,
+                                                       performative=performative)
+                await self.send(reply)
 
 
 class SetupBehaviour(OneShotBehaviour):

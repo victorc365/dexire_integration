@@ -11,9 +11,6 @@ class ChatService(metaclass=Singleton):
         client_id = bot_user_name.split('_')[1]
         if client_id not in self.bot_gateways.keys():
             self.bot_gateways[client_id] = {}
-
-        print(client_id)
-        print(bot_user_name)
         self.bot_gateways[client_id][bot_user_name] = gateway_id
 
     async def forward_websocket(self, websocket, client_id: str, bot_user_name: str):
