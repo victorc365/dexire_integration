@@ -29,11 +29,25 @@ Future<List<BotModel>> fetchBots() async {
   }
 }
 
-Future<bool> connectToBot(String botName, String username, String token) async {
+Future<String?> connectToBot(
+    String botName, String username, String token) async {
   final uri = Uri.http(_erebotsApiUrl, '$_botsEndpoint/$botName/connect', null);
   final data = jsonEncode({'username': username, 'token': token});
   final response = await http.post(uri, body: data, headers: _headers);
-  return response.statusCode == HttpStatus.created;
+  if (response.statusCode == HttpStatus.created) {
+    return response.body;
+  }
+  return null;
+}
+
+Future<String> getStatus(String botUsername) async {
+  final uri =
+      Uri.http(_erebotsApiUrl, '$_botsEndpoint/$botUsername/status', null);
+  final response = await http.get(uri, headers: _headers);
+  if (response.statusCode == HttpStatus.ok) {
+    return jsonDecode(response.body);
+  }
+  throw Exception("Unreachable endpoint");
 }
 
 WebSocketChannel openWebsocketChannel(String username, String botname) {

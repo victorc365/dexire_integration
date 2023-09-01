@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -42,16 +43,27 @@ class ChatRouteState extends State<ChatRoute> {
       username = 'Anonymous';
     }
     _user = types.User(id: username);
-    isConnected = await connectToBot(bot.name, username, token);
-    if (isConnected && channel == null) {
-      while (channel == null) {
-        try {
-          channel = openWebsocketChannel(username, bot.name);
-        } on Exception catch (e) {
-          continue;
+    await connectToBot(bot.name, username, token);
+    Timer.periodic(const Duration(seconds: 2), (timer) async {
+      if (!isConnected) {
+        String status = await getStatus("${bot.name}_$username");
+        if (status == 'RUNNING') {
+          isConnected = true;
+          if (isConnected && channel == null) {
+            while (channel == null) {
+              try {
+                channel = openWebsocketChannel(username, bot.name);
+              } on Exception catch (e) {
+                continue;
+              }
+            }
+          }
         }
+      } else {
+        timer.cancel();
       }
-    }
+    });
+
     return isConnected;
   }
 
