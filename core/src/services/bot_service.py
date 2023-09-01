@@ -8,6 +8,7 @@ from enums.environment import Environment
 from mas.core_engine import CoreEngine
 from services.openfire.user_service import UserService
 from utils.metaclasses.singleton import Singleton
+from utils.string_builder import create_jid
 
 
 class Bot:
@@ -42,6 +43,9 @@ class BotService(metaclass=Singleton):
     def get_bots(self):
         return self.bots
 
+    def get_status(self, bot_user_name: str) -> bool:
+        return CoreEngine().container.get_agent(create_jid(bot_user_name.lower())).status
+
     def get_bot_descriptors(self) -> list[Bot]:
         bots = os.listdir(self.bots_folder)
         bot_descriptors = []
@@ -61,3 +65,4 @@ class BotService(metaclass=Singleton):
         if not bot_exists:
             self.user_service.create_bot_user(bot_user_name, bot_user_name)
         await CoreEngine().create_personal_agent(bot_user_name, token)
+        return self.get_status(bot_user_name)
