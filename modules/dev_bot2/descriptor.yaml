@@ -2,6 +2,7 @@ name: devBot2
 url: http://test.com
 isDev: true
 isPryvRequired: true
+hasProfilingBehaviour: false
 requiredPermissions:
   - mushrooms: read
   - toto: manage

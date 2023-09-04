@@ -2,6 +2,7 @@ name: devBot
 url: http://test.com
 isDev: true
 isPryvRequired: false
+hasProfilingBehaviour: true
 requiredPermissions:
   - diary: read
   - test: read
