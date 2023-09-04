@@ -17,6 +17,7 @@ class Bot:
         self.url: str = data.get('url', 'undefined')
         self.is_dev: bool = data.get('isDev', True)
         self.is_pryv_required: bool = data.get('isPryvRequired', False)
+        self.has_profiling_behaviour: bool = data.get('hasProfilingBehaviour', False)
         self.required_permissions: List[Permission] = []
 
         for required_permission in data.get('requiredPermissions'):
