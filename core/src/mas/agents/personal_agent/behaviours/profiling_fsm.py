@@ -9,3 +9,11 @@ class ProfilingFSMBehaviour(DynamicFSMBehaviour):
     fully customizable and the profiling behaviour is built using a list of questions provided as a yaml file coming
     with the bot module.
     """
+    def __init__(self, config: dict) -> None:
+        super().__init__()
+        self.config = config
+
+    async def setup(self) -> None:
+        super().setup()
+
+
