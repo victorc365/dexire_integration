@@ -1,11 +1,24 @@
 from mas.agents.basic_agent import BasicAgent
 from spade.behaviour import CyclicBehaviour, OneShotBehaviour
+from mas.enums.performative import Performative
+from spade.message import Message
+from aioxmpp import JID
+import json
+
+
+class AvailableGatewayResponseMessage(Message):
+    def __init__(self, to: JID, sender: JID, body: list[str]) -> None:
+        super().__init__(
+            to=str(to),
+            sender=str(sender),
+            body=json.dumps(body),
+            metadata={Performative.PERFORMATIVE.value: Performative.AGREE.value}
+        )
 
 
 class SetupPresenceListener(OneShotBehaviour):
     def on_available(self, jid, stanza):
         self.agent.logger.debug(f'Agent {jid.split("@")[0]} is available.')
-        print(stanza)
 
     def on_subscribed(self, jid):
         self.agent.logger.debug(f'Agent {jid.split("@")[0]} has accepted the subscription.')
@@ -22,9 +35,13 @@ class ListenerBehaviour(CyclicBehaviour):
 
     async def run(self) -> None:
         message = await self.receive(timeout=1)
-        if message is not None:
-            print(message)
+        if message is None:
             return
+
+        if message.metadata[Performative.PERFORMATIVE.value] == Performative.REQUEST.value:
+            reply = AvailableGatewayResponseMessage(to=message.sender, sender=message.to,
+                                                    body=self.agent.services['gateway'])
+            await self.send(reply)
 
 
 class DFAgent(BasicAgent):
@@ -35,16 +52,18 @@ class DFAgent(BasicAgent):
     For more information about DirectoryFacilitator in FIPA specs, please read
     http://www.fipa.org/specs/fipa00023/SC00023J.html#_Toc26668967
     """
+
     def __init__(self, name: str) -> None:
         super().__init__(name)
-        self.add_behaviour(ListenerBehaviour())
-        self.logger.debug('Setup and ready!')
         self.services = {
             'gateway': []
         }
 
+    async def setup(self) -> None:
+        self.add_behaviour(ListenerBehaviour())
+        self.logger.debug('Setup and ready!')
+
     def register(self, agent: BasicAgent) -> None:
-        print(agent.id)
         if agent.role in self.services.keys():
             self.services[agent.role].append(agent.id)
             self.presence.subscribe(agent.id)

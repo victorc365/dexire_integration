@@ -24,5 +24,13 @@ def get():
              status_code=status.HTTP_201_CREATED
              )
 async def connect(bot_name: str, user_info: UserInfoModel):
-    await bot_service.connect_to_bot(user_info.username, bot_name, user_info.token)
-    return {'botname': bot_name}
+    bot_status = await bot_service.connect_to_bot(user_info.username, bot_name, user_info.token)
+    return bot_status
+
+
+@router.get('/{bot_user_name}/status',
+            summary='Get the status of the bot corresponding to bot_user_name in format {bot_name}_{username}',
+            status_code=status.HTTP_200_OK)
+async def get_status(bot_user_name: str):
+    bot_status = bot_service.get_status(bot_user_name)
+    return bot_status
