@@ -77,7 +77,8 @@ class EventServices:
         response = requests.get(url=self.url, params=params, headers=self.headers)
         if response.status_code != HTTPStatus.OK:
             self.logger.error(
-                f'Unexpected error while trying to fetch Pryv events with params: {params}. Status: {response.status_code}, content: {response.json()}')
+                f'Unexpected error while trying to fetch Pryv events with params: {params}.'
+                f' Status: {response.status_code}, content: {response.json()}')
             return None
         return [Event(event) for event in response.json().get('events', [])]
 
@@ -87,7 +88,8 @@ class EventServices:
         event = Event(response['event'])
         if response.status_code != HTTPStatus.OK:
             self.logger.error(
-                f'Unexpected error while trying to fetch Pryv event with id: {event_id}. Status: {response.status_code}, content: {response.json()}')
+                f'Unexpected error while trying to fetch Pryv event with id: {event_id}.'
+                f' Status: {response.status_code}, content: {response.json()}')
             return None
         if include_history:
             history = [Event(event) for event in response['history']]
@@ -97,6 +99,7 @@ class EventServices:
         response = requests.post(url=self.url, json=json.dumps(event), headers=self.headers)
         if response.status_code != HTTPStatus.CREATED:
             self.logger.error(
-                f'Unexpected error while trying to create Pryv event: {event}. Status: {response.status_code}, content: {response.json()}')
+                f'Unexpected error while trying to create Pryv event: {event}.'
+                f' Status: {response.status_code}, content: {response.json()}')
             return None
         return Event(response.json()['event'])
