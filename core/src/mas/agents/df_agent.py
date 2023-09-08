@@ -5,7 +5,6 @@ from spade.behaviour import CyclicBehaviour, OneShotBehaviour
 class SetupPresenceListener(OneShotBehaviour):
     def on_available(self, jid, stanza):
         self.agent.logger.debug(f'Agent {jid.split("@")[0]} is available.')
-        print(stanza)
 
     def on_subscribed(self, jid):
         self.agent.logger.debug(f'Agent {jid.split("@")[0]} has accepted the subscription.')
@@ -23,7 +22,6 @@ class ListenerBehaviour(CyclicBehaviour):
     async def run(self) -> None:
         message = await self.receive(timeout=1)
         if message is not None:
-            print(message)
             return
 
 
@@ -35,6 +33,7 @@ class DFAgent(BasicAgent):
     For more information about DirectoryFacilitator in FIPA specs, please read
     http://www.fipa.org/specs/fipa00023/SC00023J.html#_Toc26668967
     """
+
     def __init__(self, name: str) -> None:
         super().__init__(name)
         self.add_behaviour(ListenerBehaviour())
@@ -44,7 +43,6 @@ class DFAgent(BasicAgent):
         }
 
     def register(self, agent: BasicAgent) -> None:
-        print(agent.id)
         if agent.role in self.services.keys():
             self.services[agent.role].append(agent.id)
             self.presence.subscribe(agent.id)

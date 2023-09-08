@@ -75,7 +75,6 @@ class EventServices:
     def get_events(self,
                    params: GetEventParameters = None) -> list[Event]:
         response = requests.get(url=self.url, params=params, headers=self.headers)
-        print(response)
         if response.status_code != HTTPStatus.OK:
             self.logger.error(
                 f'Unexpected error while trying to fetch Pryv events with params: {params}. Status: {response.status_code}, content: {response.json()}')
@@ -85,7 +84,6 @@ class EventServices:
     def get_event(self, event_id: str, include_history: bool = False) -> Event:
         params = {'includeHistory': include_history}
         response = requests.get(url=self.url, params=params, headers=self.headers).json()
-        print(response)
         event = Event(response['event'])
         if response.status_code != HTTPStatus.OK:
             self.logger.error(
