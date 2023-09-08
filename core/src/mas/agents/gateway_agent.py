@@ -6,6 +6,7 @@ from mas.agents.basic_agent import BasicAgent, AgentType
 from spade.behaviour import CyclicBehaviour, OneShotBehaviour
 from mas.core_engine import CoreEngine
 from mas.enums.performative import Performative
+from mas.enums.message_type import MessageType
 from enums.environment import Environment
 import os
 
@@ -15,7 +16,7 @@ class FreeSlotGatewayResponseMessage(Message):
         super().__init__(
             to=str(to),
             sender=str(sender),
-            body="FREE_SLOTS",
+            body=MessageType.FREE_SLOTS.value,
             metadata={Performative.PERFORMATIVE.value: performative}
         )
 
@@ -30,7 +31,7 @@ class ListenerBehaviour(CyclicBehaviour):
             return
 
         if message.metadata[Performative.PERFORMATIVE.value] == Performative.REQUEST.value:
-            if message.body == 'FREE_SLOTS':
+            if message.body == MessageType.FREE_SLOTS.value:
                 if len(self.agent.clients.keys()) < int(os.environ.get(Environment.MAXIMUM_CLIENTS_PER_GATEWAY.value)):
                     self.agent.clients[str(message.sender).split("@")[0]] = None
                     performative = Performative.AGREE.value
@@ -47,11 +48,12 @@ class SetupBehaviour(OneShotBehaviour):
         self.agent.logger.debug(f'Agent {subscriber} asked for subscription.')
         bot_name = subscriber.split('_')[0]
         if bot_name in BotService().get_bots():
-            if len(self.agent.clients.keys()) < int(os.environ.get(Environment.MAXIMUM_CLIENTS_PER_GATEWAY.value)):
-                self.agent.clients[subscriber] = None
-                self.presence.subscribe(jid)
-            else:
+            number_clients = len(self.agent.clients.keys())
+            maximum_clients = int(os.environ.get(Environment.MAXIMUM_CLIENTS_PER_GATEWAY.value))
+            if number_clients >= maximum_clients:
                 return
+            self.agent.clients[subscriber] = None
+            self.presence.subscribe(jid)
         self.agent.logger.info(f'Subscription from  {subscriber} approved.')
         self.presence.approve(jid)
 
@@ -85,6 +87,6 @@ class GatewayAgent(BasicAgent):
         try:
             while True:
                 data = await websocket.receive_text()
-                print(data)
+                # TODO - PERSIST data in Pryv
         except WebSocketDisconnect:
             self.clients[bot_user_name] = None

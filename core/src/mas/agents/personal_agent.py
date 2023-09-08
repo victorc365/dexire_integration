@@ -1,5 +1,6 @@
 from mas.agents.basic_agent import BasicAgent, AgentType
 from mas.enums.performative import Performative
+from mas.enums.message_type import MessageType
 from mas.core_engine import CoreEngine
 from spade.behaviour import OneShotBehaviour, CyclicBehaviour
 from spade.message import Message
@@ -28,7 +29,7 @@ class FreeSlotGatewayRequestMessage(Message):
         super().__init__(
             to=to,
             sender=sender,
-            body="FREE_SLOTS",
+            body=MessageType.FREE_SLOTS.value,
             metadata={Performative.PERFORMATIVE.value: Performative.REQUEST.value}
         )
 
@@ -38,7 +39,7 @@ class AvailableGatewayRequestMessage(Message):
         super().__init__(
             to=CoreEngine().df_agent.id,
             sender=sender,
-            body="AVAILABLE_GATEWAYS",
+            body=MessageType.AVAILABLE_GATEWAYS.value,
             metadata={Performative.PERFORMATIVE.value: Performative.REQUEST.value}
         )
 
@@ -52,7 +53,7 @@ class ListenerBehaviour(CyclicBehaviour):
         if message is None:
             return
 
-        if message.body == 'FREE_SLOTS':
+        if message.body == MessageType.FREE_SLOTS.value:
             if message.metadata[Performative.PERFORMATIVE.value] == Performative.AGREE.value:
                 ChatService().register_gateway(str(message.sender), self.agent.id)
                 self.agent.status = Status.RUNNING.value
