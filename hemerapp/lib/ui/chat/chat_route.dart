@@ -49,7 +49,7 @@ class ChatRouteState extends State<ChatRoute> {
     Timer.periodic(const Duration(seconds: 2), (timer) async {
       if (!isConnected) {
         String status = await getStatus("${bot.name}_$username");
-        if (status == 'RUNNING') {
+        if (status.toLowerCase() == BotStatus.running.name) {
           isConnected = true;
           if (isConnected && channel == null) {
             while (channel == null) {

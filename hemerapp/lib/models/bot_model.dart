@@ -3,6 +3,10 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'bot_model.g.dart';
 
+
+enum BotStatus { running}
+
+
 @JsonSerializable()
 class BotModel {
   BotModel(this.name, this.icon, this.url, this.isDev, this.isPryvRequired, this.requiredPermissions);
