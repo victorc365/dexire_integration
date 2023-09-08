@@ -67,11 +67,14 @@ class Event(BaseModel):
 class EventServices:
     def __init__(self, user_endpoint: str, token: str) -> None:
         self.logger = logging.getLogger('[EventServices]')
-        self.url = None
+        self.url = f'{user_endpoint}/events'
+        self.headers = {
+            'Authorization': token
+        }
 
     def get_events(self,
                    params: GetEventParameters = None) -> list[Event]:
-        response = requests.get(url=self.url, params=params)
+        response = requests.get(url=self.url, params=params, headers=self.headers)
         print(response)
         if response.status_code != HTTPStatus.OK:
             self.logger.error(
@@ -81,7 +84,7 @@ class EventServices:
 
     def get_event(self, event_id: str, include_history: bool = False) -> Event:
         params = {'includeHistory': include_history}
-        response = requests.get(url=self.url, params=params).json()
+        response = requests.get(url=self.url, params=params, headers=self.headers).json()
         print(response)
         event = Event(response['event'])
         if response.status_code != HTTPStatus.OK:
@@ -93,7 +96,7 @@ class EventServices:
         return event, history
 
     def create_event(self, event: Event):
-        response = requests.post(url=self.url, json=json.dumps(event))
+        response = requests.post(url=self.url, json=json.dumps(event), headers=self.headers)
         if response.status_code != HTTPStatus.CREATED:
             self.logger.error(
                 f'Unexpected error while trying to create Pryv event: {event}. Status: {response.status_code}, content: {response.json()}')
