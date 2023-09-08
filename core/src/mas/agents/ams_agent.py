@@ -27,8 +27,8 @@ class CreateAgentBehaviour(OneShotBehaviour):
             self.agent.presence.get_contact(self.new_agent.jid)
         except ContactNotFound:
             self.agent.logger.info(f'{self.new_agent.id} not available yet. Starting the bot')
-            await self.new_agent.start(auto_register=True)
             self.presence.subscribe(self.new_agent.id)
+        await self.new_agent.start(auto_register=True)
 
 
 class AMSAgent(BasicAgent):
@@ -40,6 +40,7 @@ class AMSAgent(BasicAgent):
         For more information about AMS in FIPA specs, please read
         http://www.fipa.org/specs/fipa00023/SC00023J.html#_Toc26668971
         """
+
     def __init__(self, name: str) -> None:
         super().__init__(name)
 
