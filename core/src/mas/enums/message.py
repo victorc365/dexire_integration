@@ -29,6 +29,7 @@ class MessagePerformative(Enum):
     For more information, please have a look at http://www.fipa.org/specs/fipa00037/SC00037J.html
     """
     AGREE = 'agree'
+    INFORM = 'inform'
     REFUSE = 'refuse'
     REQUEST = 'request'
 
