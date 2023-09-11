@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, Mock
 
 import factory
 from src.mas.agents.dummy_agent import DummyAgent
-from src.mas.agents.gateway_agent import GatewayAgent
+from mas.agents.gateway_agent.gateway_agent import GatewayAgent
 
 
 class MockedGatewayAgent(GatewayAgent):
