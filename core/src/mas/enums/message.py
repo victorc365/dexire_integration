@@ -1,6 +1,16 @@
 from enum import Enum
 
 
+class MessageMetadata(Enum):
+    """Enumeration of metadata that can be attached to a Message.
+
+    Each incoming/outgoing message comes with a set of metadata that helps erebots to process them effectively.
+    """
+
+    DIRECTION= 'direction'
+    TARGET = 'target'
+
+
 class MessageDirection(Enum):
     """ Enumeration of possible values for the metadata "direction" of a Message.
 
