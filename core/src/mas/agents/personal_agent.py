@@ -8,6 +8,21 @@ from services.chat_service import ChatService
 from enums.status import Status
 
 
+class EchoBehaviour(OneShotBehaviour):
+    def __init__(self, message) -> None:
+        super().__init__()
+        self.message = message
+
+    async def run(self) -> None:
+        # TODO - remove this dummy behaviour when FSM is implemented
+        message = Message()
+        message.to = str(self.message.sender)
+        message.sender = str(self.message.to)
+        message.metadata = {'performative': 'inform', 'direction': 'outgoing', 'target': 'hemerapp'}
+        message.body = self.message.body
+        await self.send(message)
+
+
 class SetupBehaviour(OneShotBehaviour):
     def on_subscribe(self, jid):
         subscriber = jid.split("@")[0]
@@ -72,8 +87,8 @@ class ListenerBehaviour(CyclicBehaviour):
                 # Use the most recent gateway as it should have available space
                 self.presence.subscribe(self.agent.last_gateway)
         elif message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.INFORM.value:
-            # TODO - forward to correct FSM
-            pass
+            # TODO - forward to correct FSM when personal agent FSM are implemented
+            self.agent.add_behaviour(EchoBehaviour(message))
 
 
 class RegisterToGatewayBehaviour(OneShotBehaviour):

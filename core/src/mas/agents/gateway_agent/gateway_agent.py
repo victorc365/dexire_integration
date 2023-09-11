@@ -57,6 +57,8 @@ class ListenerBehaviour(CyclicBehaviour):
                 reply = FreeSlotGatewayResponseMessage(to=message.sender, sender=message.to,
                                                        performative=performative)
                 await self.send(reply)
+        elif message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.INFORM.value:
+            self.agent.add_behaviour(FormatMessageBehaviour(message))
 
 
 class SetupBehaviour(OneShotBehaviour):
@@ -106,7 +108,7 @@ class GatewayAgent(BasicAgent):
                 data = await websocket.receive_text()
                 json_data = json.loads(data)
                 message = HemerappMessage(
-                    sender=json_data['sender'],
+                    sender=str(self.id),
                     to=create_jid(json_data['to']),
                     performative=MessagePerformative.INFORM.value,
                     body=json_data['body'],
