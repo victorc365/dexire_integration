@@ -7,7 +7,7 @@ from services.bot_service import BotService
 from mas.agents.basic_agent import BasicAgent, AgentType
 from spade.behaviour import CyclicBehaviour, OneShotBehaviour
 from mas.core_engine import CoreEngine
-from mas.enums.message import MessageType, MessagePerformative
+from mas.enums.message import MessageType, MessagePerformative, MessageMetadata
 from enums.environment import Environment
 import os
 
@@ -18,7 +18,7 @@ class FreeSlotGatewayResponseMessage(Message):
             to=str(to),
             sender=str(sender),
             body=MessageType.FREE_SLOTS.value,
-            metadata={MessagePerformative.PERFORMATIVE.value: performative}
+            metadata={MessageMetadata.PERFORMATIVE.value: performative}
         )
 
 
@@ -31,7 +31,7 @@ class ListenerBehaviour(CyclicBehaviour):
         if message is None:
             return
 
-        if message.metadata[MessagePerformative.PERFORMATIVE.value] == MessagePerformative.REQUEST.value:
+        if message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.REQUEST.value:
             if message.body == MessageType.FREE_SLOTS.value:
                 if len(self.agent.clients.keys()) < int(os.environ.get(Environment.MAXIMUM_CLIENTS_PER_GATEWAY.value)):
                     self.agent.clients[str(message.sender).split("@")[0]] = None

@@ -7,8 +7,9 @@ class MessageMetadata(Enum):
     Each incoming/outgoing message comes with a set of metadata that helps erebots to process them effectively.
     """
 
-    DIRECTION= 'direction'
+    DIRECTION = 'direction'
     TARGET = 'target'
+    PERFORMATIVE = 'performative'
 
 
 class MessageDirection(Enum):
@@ -28,7 +29,6 @@ class MessagePerformative(Enum):
     For more information, please have a look at http://www.fipa.org/specs/fipa00037/SC00037J.html
     """
     AGREE = 'agree'
-    PERFORMATIVE = 'performative'
     REFUSE = 'refuse'
     REQUEST = 'request'
 
