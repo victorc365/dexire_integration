@@ -17,11 +17,10 @@ class ForwardMessageBehaviour(OneShotBehaviour):
 
     async def run(self):
         direction = self.message.get_metadata(MessageMetadata.DIRECTION.value)
-        print(self.message.to)
         bot_username = ''
         match direction:
             case MessageDirection.INCOMING.value:
-                self.send(self, self.message)
+                await self.send(self.message)
             case MessageDirection.OUTGOING.value:
                 websocket = self.agent.clients[bot_username]
                 await websocket.send(self.message)
