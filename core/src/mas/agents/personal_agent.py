@@ -1,6 +1,5 @@
 from mas.agents.basic_agent import BasicAgent, AgentType
-from mas.enums.performative import Performative
-from mas.enums.message_type import MessageType
+from mas.enums.message import MessageType, MessagePerformative
 from mas.core_engine import CoreEngine
 from spade.behaviour import OneShotBehaviour, CyclicBehaviour
 from spade.message import Message
@@ -30,7 +29,7 @@ class FreeSlotGatewayRequestMessage(Message):
             to=to,
             sender=sender,
             body=MessageType.FREE_SLOTS.value,
-            metadata={Performative.PERFORMATIVE.value: Performative.REQUEST.value}
+            metadata={MessagePerformative.PERFORMATIVE.value: MessagePerformative.REQUEST.value}
         )
 
 
@@ -40,7 +39,7 @@ class AvailableGatewayRequestMessage(Message):
             to=CoreEngine().df_agent.id,
             sender=sender,
             body=MessageType.AVAILABLE_GATEWAYS.value,
-            metadata={Performative.PERFORMATIVE.value: Performative.REQUEST.value}
+            metadata={MessagePerformative.PERFORMATIVE.value: MessagePerformative.REQUEST.value}
         )
 
 
@@ -54,14 +53,14 @@ class ListenerBehaviour(CyclicBehaviour):
             return
 
         if message.body == MessageType.FREE_SLOTS.value:
-            if message.metadata[Performative.PERFORMATIVE.value] == Performative.AGREE.value:
+            if message.metadata[MessagePerformative.PERFORMATIVE.value] == MessagePerformative.AGREE.value:
                 ChatService().register_gateway(str(message.sender), self.agent.id)
                 self.agent.status = Status.RUNNING.value
-            elif message.metadata[Performative.PERFORMATIVE.value] == Performative.REFUSE.value:
+            elif message.metadata[MessagePerformative.PERFORMATIVE.value] == MessagePerformative.REFUSE.value:
                 message = FreeSlotGatewayRequestMessage(self.agent.id, self.agent.subscribed_gateways.pop())
                 await self.send(message)
 
-        elif message.metadata[Performative.PERFORMATIVE.value] == Performative.AGREE.value:
+        elif message.metadata[MessagePerformative.PERFORMATIVE.value] == MessagePerformative.AGREE.value:
             gateways = json.loads(message.body)
             self.agent.last_gateway = gateways[-1]
             for gateway in gateways:
