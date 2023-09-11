@@ -88,6 +88,6 @@ class GatewayAgent(BasicAgent):
         try:
             while True:
                 data = await websocket.receive_text()
-                self.add_behaviour(FormatMessageBehaviour())
+                self.add_behaviour(FormatMessageBehaviour(data))
         except WebSocketDisconnect:
             self.clients[bot_user_name] = None
