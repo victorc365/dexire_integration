@@ -51,7 +51,6 @@ class ListenerBehaviour(CyclicBehaviour):
         message = await self.receive(timeout=1)
         if message is None:
             return
-
         if message.body == MessageType.FREE_SLOTS.value:
             if message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.AGREE.value:
                 ChatService().register_gateway(str(message.sender), self.agent.id)
@@ -72,6 +71,9 @@ class ListenerBehaviour(CyclicBehaviour):
             else:
                 # Use the most recent gateway as it should have available space
                 self.presence.subscribe(self.agent.last_gateway)
+        elif message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.INFORM.value:
+            # TODO - forward to correct FSM
+            pass
 
 
 class RegisterToGatewayBehaviour(OneShotBehaviour):
