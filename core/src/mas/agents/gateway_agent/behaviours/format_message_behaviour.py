@@ -15,24 +15,22 @@ class FormatMessageBehaviour(OneShotBehaviour):
     Once, the message is formatted, the ForwardMessageBehaviour is automatically called.
     """
 
-    def __init__(self, message) -> None:
+    def __init__(self, message, direction: MessageDirection = None, target: MessageTarget = None) -> None:
         super().__init__()
-
         self.message = message
-        target = message.get_metadata(MessageMetadata.TARGET.value)
-
-        match target:
-            case MessageTarget.HEMERAPP.value:
-                self.formatter = HemerappFormatter()
+        self.direction = message.get_metadata(MessageMetadata.DIRECTION.value) if direction is None else direction
+        self.target = message.get_metadata(MessageMetadata.TARGET.value) if target is None else target
 
     async def run(self):
-        direction = self.message.get_metadata(MessageMetadata.DIRECTION.value)
         formatted_message = None
 
-        match direction:
-            case MessageDirection.INCOMING.value:
-                formatted_message = self.formatter.format_incoming_message(self.message)
-            case MessageDirection.OUTGOING.value:
-                formatted_message = self.formatter.format_outgoing_message(self.message)
+        match self.target:
+            case MessageTarget.HEMERAPP.value:
+                formatter = HemerappFormatter()
 
+        match self.direction:
+            case MessageDirection.INCOMING.value:
+                formatted_message = formatter.format_incoming_message(self.message)
+            case MessageDirection.OUTGOING.value:
+                formatted_message = formatter.format_outgoing_message(self.message)
         self.agent.add_behaviour(ForwardMessageBehaviour(formatted_message))

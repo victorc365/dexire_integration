@@ -10,22 +10,6 @@ from mas.core_engine import CoreEngine
 from mas.enums.message import MessageType, MessagePerformative, MessageMetadata, MessageTarget, MessageDirection
 from enums.environment import Environment
 import os
-import json
-
-from utils.string_builder import create_jid
-
-
-class HemerappMessage(Message):
-    def __init__(self, sender: str, to: str, performative: str, body: str, direction: str) -> None:
-        super().__init__(
-            to=to,
-            sender=sender,
-            body=body,
-            metadata={
-                MessageMetadata.PERFORMATIVE.value: performative,
-                MessageMetadata.DIRECTION.value: direction,
-                MessageMetadata.TARGET.value: MessageTarget.HEMERAPP.value}
-        )
 
 
 class FreeSlotGatewayResponseMessage(Message):
@@ -106,14 +90,7 @@ class GatewayAgent(BasicAgent):
         try:
             while True:
                 data = await websocket.receive_text()
-                json_data = json.loads(data)
-                message = HemerappMessage(
-                    sender=str(self.id),
-                    to=create_jid(json_data['to']),
-                    performative=MessagePerformative.INFORM.value,
-                    body=json_data['body'],
-                    direction=MessageDirection.INCOMING.value
-                )
-                self.add_behaviour(FormatMessageBehaviour(message))
+                self.add_behaviour(
+                    FormatMessageBehaviour(data, MessageDirection.INCOMING.value, MessageTarget.HEMERAPP.value))
         except WebSocketDisconnect:
             self.clients[bot_user_name] = None

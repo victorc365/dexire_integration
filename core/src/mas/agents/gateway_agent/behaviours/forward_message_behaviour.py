@@ -2,6 +2,8 @@ from spade.behaviour import OneShotBehaviour
 
 from mas.enums.message import MessageMetadata, MessageDirection
 import json
+
+
 class ForwardMessageBehaviour(OneShotBehaviour):
     """ One shot behaviour responsible to forward message to correct destination.
 
@@ -15,20 +17,12 @@ class ForwardMessageBehaviour(OneShotBehaviour):
         self.message = message
 
     async def run(self):
-        direction = self.message.get_metadata(MessageMetadata.DIRECTION.value)
+        direction = self.message.metadata[MessageMetadata.DIRECTION.value]
         match direction:
             case MessageDirection.INCOMING.value:
+                self.message.sender = self.agent.id
                 await self.send(self.message)
             case MessageDirection.OUTGOING.value:
-
-                # TODO - refactor for better code
-                to = self.message.sender.localpart
-
+                to = self.message.sender
                 websocket = self.agent.clients[to]
-                message = {
-                    'to': self.message.sender.localpart.split('@')[0].split('_')[1],
-                    'sender': self.message.sender.localpart,
-                    'body': self.message.body,
-                    'metadata': self.message.metadata
-                }
-                await websocket.send_text(json.dumps(message))
+                await websocket.send_text(json.dumps(self.message.__dict__))
