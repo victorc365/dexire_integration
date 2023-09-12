@@ -56,6 +56,21 @@ class ChatRouteState extends State<ChatRoute> {
             while (channel == null) {
               try {
                 channel = openWebsocketChannel(username, bot.name);
+                channel?.stream.listen((event) {
+                  MessageModel messageModel =
+                      MessageModel.fromJson(jsonDecode(event));
+                  if (messageModel != null) {
+                    // TODO - Modify to use id and timestamp coming from backend
+                    // when pryv is added
+                    types.Message message = types.TextMessage(
+                      id: uuid.v1(),
+                      author: types.User(id: messageModel.sender!),
+                      text: jsonDecode(messageModel.body!)['text'],
+                      createdAt: DateTime.now().millisecondsSinceEpoch,
+                    );
+                    _messages.insert(0, message);
+                  }
+                });
               } on Exception catch (e) {
                 continue;
               }
@@ -114,8 +129,12 @@ class ChatRouteState extends State<ChatRoute> {
     );
 
     _addMessage(textMessage);
-    MessageModel formattedMessage = MessageModel("${bot.name}_${_user.id}",
-        _user.id, jsonEncode(textMessage.toJson()), null, {'target':'hemerapp'});
+    MessageModel formattedMessage = MessageModel(
+        "${bot.name}_${_user.id}",
+        _user.id,
+        jsonEncode(textMessage.toJson()),
+        null,
+        {'target': 'hemerapp'});
     channel!.sink.add(jsonEncode(formattedMessage));
   }
 }

@@ -11,7 +11,7 @@ MessageModel _$MessageModelFromJson(Map<String, dynamic> json) => MessageModel(
       json['sender'] as String?,
       json['body'] as String?,
       json['thread'] as String?,
-      json['metadata'] as Map<String, String>?,
+      json['metadata'] as Map<String, dynamic>?,
     );
 
 Map<String, dynamic> _$MessageModelToJson(MessageModel instance) =>

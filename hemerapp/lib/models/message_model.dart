@@ -10,7 +10,7 @@ class MessageModel {
   String? sender;
   String? body;
   String? thread;
-  Map<String, String>? metadata;
+  Map<String, dynamic>? metadata;
 
   factory MessageModel.fromJson(Map<String, dynamic> json) =>
       _$MessageModelFromJson(json);
