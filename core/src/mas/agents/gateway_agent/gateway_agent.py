@@ -33,11 +33,14 @@ class ListenerBehaviour(CyclicBehaviour):
 
         if message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.REQUEST.value:
             if message.body == MessageType.FREE_SLOTS.value:
-                if len(self.agent.clients.keys()) < int(os.environ.get(Environment.MAXIMUM_CLIENTS_PER_GATEWAY.value)):
+                current_clients_number = len(self.agent.clients.keys())
+                max_clients_number = int(os.environ.get(Environment.MAXIMUM_CLIENTS_PER_GATEWAY.value))
+                performative = MessagePerformative.REFUSE.value
+
+                if current_clients_number < max_clients_number:
                     self.agent.clients[str(message.sender).split("@")[0]] = None
                     performative = MessagePerformative.AGREE.value
-                else:
-                    performative = MessagePerformative.REFUSE.value
+
                 reply = FreeSlotGatewayResponseMessage(to=message.sender, sender=message.to,
                                                        performative=performative)
                 await self.send(reply)
