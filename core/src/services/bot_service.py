@@ -11,6 +11,14 @@ from utils.metaclasses.singleton import Singleton
 from utils.string_builder import create_jid
 
 
+class BotProfiling:
+    def __init__(self, data: dict) -> None:
+        self.name: str = data.get('name', 'undefined')
+        self.version: str = data.get('version', 'undefined')
+        self.description: str = data.get('description', 'undefined')
+        self.states: dict = data.get('states', 'undefined')
+
+
 class Bot:
     def __init__(self, data: dict) -> None:
         self.name: str = data.get('name', 'undefined')
@@ -67,3 +75,14 @@ class BotService(metaclass=Singleton):
             self.user_service.create_bot_user(bot_user_name, bot_user_name)
         await CoreEngine().create_personal_agent(bot_user_name, token)
         return self.get_status(bot_user_name)
+
+    def get_bot_profiling(self, bot_name: str):
+        bots = os.listdir(self.bots_folder)
+        for bot in bots:
+            if bot_name == bot:
+                profiling_file = f'{self.bots_folder}/{bot}/profiling.yaml'
+                with open(profiling_file) as file:
+                    data = yaml.load(file, Loader=SafeLoader)
+                    bot_profiling = BotProfiling(data)
+                    return bot_profiling
+        return None

@@ -1,9 +1,12 @@
 from mas.agents.basic_agent import BasicAgent, AgentType
+from mas.agents.personal_agent.behaviours.profiling_fsm import ProfilingFSMBehaviour
 from mas.enums.message import MessageType, MessagePerformative, MessageMetadata
 from mas.core_engine import CoreEngine
 from spade.behaviour import OneShotBehaviour, CyclicBehaviour
 from spade.message import Message
 import json
+
+from services.bot_service import BotService
 from services.chat_service import ChatService
 from enums.status import Status
 
@@ -116,3 +119,16 @@ class PersonalAgent(BasicAgent):
         self.add_behaviour(SetupBehaviour())
         self.add_behaviour(RegisterToGatewayBehaviour())
         self.add_behaviour(ListenerBehaviour())
+        self.load_profiling_behaviour()
+
+    def load_profiling_behaviour(self):
+        profiling_configuration = BotService().get_bot_profiling(self.id.split('_')[0])
+
+        if profiling_configuration is None:
+            self.logger.debug('No profiling Configuration to load.')
+            return
+
+        if profiling_configuration.states is None:
+            self.logger.error('Profiling configuration exists but no state has been defined. Skipping profiling FSM')
+            return
+        self.add_behaviour(ProfilingFSMBehaviour(profiling_configuration))
