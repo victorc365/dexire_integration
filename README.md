@@ -11,12 +11,12 @@ EREBOTS 3.0 is a scenario and platform agnostic multi-agent chatbot system. Able
     - [x] Start SPADE engine
     - [x] Create DFAgent
     - [x] Create AMSAgent
-  - [ ] create Gateway Agent
+  - [x] create Gateway Agent
     - [x] Gateway handle personalized agent subscription
     - [x] Gateway handle websockets
-    - [ ] Gateway forward messages to personalized agent router
-    - [ ] Gateway forward messages to frontend
-    - [ ] Gateway handle agnostic formatting of messages
+    - [x] Gateway forward messages to personalized agent router
+    - [x] Gateway forward messages to frontend
+    - [x] Gateway handle agnostic formatting of messages
   - [ ] create Personalized Agent
     -  [ ] Create Message Router Behaviour
     -  [ ] Create Contextual FSM
