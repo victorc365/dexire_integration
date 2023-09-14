@@ -1,12 +1,13 @@
 from aioxmpp import JID
 from spade.message import Message
 from starlette.websockets import WebSocketDisconnect
+
+from mas.agents.gateway_agent.behaviours.format_message_behaviour import FormatMessageBehaviour
 from services.bot_service import BotService
 from mas.agents.basic_agent import BasicAgent, AgentType
 from spade.behaviour import CyclicBehaviour, OneShotBehaviour
 from mas.core_engine import CoreEngine
-from mas.enums.performative import Performative
-from mas.enums.message_type import MessageType
+from mas.enums.message import MessageType, MessagePerformative, MessageMetadata, MessageTarget, MessageDirection
 from enums.environment import Environment
 import os
 
@@ -17,7 +18,7 @@ class FreeSlotGatewayResponseMessage(Message):
             to=str(to),
             sender=str(sender),
             body=MessageType.FREE_SLOTS.value,
-            metadata={Performative.PERFORMATIVE.value: performative}
+            metadata={MessageMetadata.PERFORMATIVE.value: performative}
         )
 
 
@@ -30,16 +31,21 @@ class ListenerBehaviour(CyclicBehaviour):
         if message is None:
             return
 
-        if message.metadata[Performative.PERFORMATIVE.value] == Performative.REQUEST.value:
+        if message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.REQUEST.value:
             if message.body == MessageType.FREE_SLOTS.value:
-                if len(self.agent.clients.keys()) < int(os.environ.get(Environment.MAXIMUM_CLIENTS_PER_GATEWAY.value)):
+                current_clients_number = len(self.agent.clients.keys())
+                max_clients_number = int(os.environ.get(Environment.MAXIMUM_CLIENTS_PER_GATEWAY.value))
+                performative = MessagePerformative.REFUSE.value
+
+                if current_clients_number < max_clients_number:
                     self.agent.clients[str(message.sender).split("@")[0]] = None
-                    performative = Performative.AGREE.value
-                else:
-                    performative = Performative.REFUSE.value
+                    performative = MessagePerformative.AGREE.value
+
                 reply = FreeSlotGatewayResponseMessage(to=message.sender, sender=message.to,
                                                        performative=performative)
                 await self.send(reply)
+        elif message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.INFORM.value:
+            self.agent.add_behaviour(FormatMessageBehaviour(message))
 
 
 class SetupBehaviour(OneShotBehaviour):
@@ -87,6 +93,7 @@ class GatewayAgent(BasicAgent):
         try:
             while True:
                 data = await websocket.receive_text()
-                # TODO - PERSIST data in Pryv
+                self.add_behaviour(
+                    FormatMessageBehaviour(data, MessageDirection.INCOMING.value, MessageTarget.HEMERAPP.value))
         except WebSocketDisconnect:
             self.clients[bot_user_name] = None

@@ -1,4 +1,4 @@
-name: devBot
+name: devbot
 url: http://test.com
 isDev: true
 isPryvRequired: false

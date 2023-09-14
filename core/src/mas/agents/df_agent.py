@@ -1,9 +1,10 @@
 from mas.agents.basic_agent import BasicAgent
 from spade.behaviour import CyclicBehaviour, OneShotBehaviour
-from mas.enums.performative import Performative
 from spade.message import Message
 from aioxmpp import JID
 import json
+
+from mas.enums.message import MessagePerformative, MessageMetadata
 
 
 class AvailableGatewayResponseMessage(Message):
@@ -12,7 +13,7 @@ class AvailableGatewayResponseMessage(Message):
             to=str(to),
             sender=str(sender),
             body=json.dumps(body),
-            metadata={Performative.PERFORMATIVE.value: Performative.AGREE.value}
+            metadata={MessageMetadata.PERFORMATIVE.value: MessagePerformative.AGREE.value}
         )
 
 
@@ -38,7 +39,7 @@ class ListenerBehaviour(CyclicBehaviour):
         if message is None:
             return
 
-        if message.metadata[Performative.PERFORMATIVE.value] == Performative.REQUEST.value:
+        if message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.REQUEST.value:
             reply = AvailableGatewayResponseMessage(to=message.sender, sender=message.to,
                                                     body=self.agent.services['gateway'])
             await self.send(reply)
