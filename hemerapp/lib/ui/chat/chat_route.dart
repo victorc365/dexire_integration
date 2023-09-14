@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hemerapp/models/bot_model.dart';
+import 'package:hemerapp/models/message_model.dart';
 import 'package:hemerapp/repositories/bots_repository.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
@@ -55,6 +56,21 @@ class ChatRouteState extends State<ChatRoute> {
             while (channel == null) {
               try {
                 channel = openWebsocketChannel(username, bot.name);
+                channel?.stream.listen((event) {
+                  MessageModel messageModel =
+                      MessageModel.fromJson(jsonDecode(event));
+                  if (messageModel != null) {
+                    // TODO - Modify to use id and timestamp coming from backend
+                    // when pryv is added
+                    types.Message message = types.TextMessage(
+                      id: uuid.v1(),
+                      author: types.User(id: messageModel.sender!),
+                      text: jsonDecode(messageModel.body!)['text'],
+                      createdAt: DateTime.now().millisecondsSinceEpoch,
+                    );
+                    _messages.insert(0, message);
+                  }
+                });
               } on Exception catch (e) {
                 continue;
               }
@@ -99,7 +115,6 @@ class ChatRouteState extends State<ChatRoute> {
   }
 
   void _addMessage(types.Message message) {
-    print(message);
     setState(() {
       _messages.insert(0, message);
     });
@@ -114,6 +129,12 @@ class ChatRouteState extends State<ChatRoute> {
     );
 
     _addMessage(textMessage);
-    channel!.sink.add(jsonEncode(textMessage.toJson()));
+    MessageModel formattedMessage = MessageModel(
+        "${bot.name}_${_user.id}",
+        _user.id,
+        jsonEncode(textMessage.toJson()),
+        null,
+        {'target': 'hemerapp'});
+    channel!.sink.add(jsonEncode(formattedMessage));
   }
 }
