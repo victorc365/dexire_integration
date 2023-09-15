@@ -15,7 +15,6 @@ class InternalListenerBehaviour(CyclicBehaviour):
 
     async def _process_free_slots_message(self, message):
         message_performative = message.get_metadata(MessageMetadata.PERFORMATIVE.value)
-        print(message)
         match message_performative:
             case MessagePerformative.AGREE.value:
                 ChatService().register_gateway(str(message.sender), self.agent.id)
@@ -31,7 +30,6 @@ class InternalListenerBehaviour(CyclicBehaviour):
         message_performative = message.get_metadata(MessageMetadata.PERFORMATIVE.value)
         match message_performative:
             case MessagePerformative.AGREE.value:
-                print(message)
                 gateways = json.loads(message.body)
                 self.agent.last_gateway = gateways[-1]
                 for gateway in gateways:
