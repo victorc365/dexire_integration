@@ -12,7 +12,10 @@ class FreeSlotGatewayRequestMessage(Message):
             sender=sender,
             body=MessageType.FREE_SLOTS.value,
             thread=MessageThread.INTERNAL_THREAD.value,
-            metadata={MessageMetadata.PERFORMATIVE.value: MessagePerformative.REQUEST.value}
+            metadata={
+                MessageMetadata.PERFORMATIVE.value: MessagePerformative.REQUEST.value,
+                MessageMetadata.TYPE.value: MessageType.FREE_SLOTS.value
+            }
         )
 
 
@@ -23,7 +26,10 @@ class AvailableGatewayRequestMessage(Message):
             sender=sender,
             body=MessageType.AVAILABLE_GATEWAYS.value,
             thread=MessageThread.INTERNAL_THREAD.value,
-            metadata={MessageMetadata.PERFORMATIVE.value: MessagePerformative.REQUEST.value}
+            metadata={
+                MessageMetadata.PERFORMATIVE.value: MessagePerformative.REQUEST.value,
+                MessageMetadata.TYPE.value: MessageType.AVAILABLE_GATEWAYS.value
+            }
         )
 
 

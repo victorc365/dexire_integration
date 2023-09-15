@@ -13,7 +13,10 @@ class FreeSlotGatewayResponseMessage(Message):
             sender=str(sender),
             body=MessageType.FREE_SLOTS.value,
             thread=MessageThread.INTERNAL_THREAD.value,
-            metadata={MessageMetadata.PERFORMATIVE.value: performative}
+            metadata={
+                MessageMetadata.PERFORMATIVE.value: performative,
+                MessageMetadata.TYPE.value: MessageType.FREE_SLOTS.value
+            }
         )
 
 
@@ -26,16 +29,19 @@ class InternalListenerBehaviour(CyclicBehaviour):
         if message is None:
             return
 
-        if message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.REQUEST.value:
-            if message.body == MessageType.FREE_SLOTS.value:
-                current_clients_number = len(self.agent.clients.keys())
-                max_clients_number = int(os.environ.get(Environment.MAXIMUM_CLIENTS_PER_GATEWAY.value))
-                performative = MessagePerformative.REFUSE.value
+        message_type = message.get_metadata(MessageMetadata.TYPE.value)
+        match message_type:
+            case MessageType.FREE_SLOTS.value:
+                performative = message.metadata[MessageMetadata.PERFORMATIVE.value]
+                if performative == MessagePerformative.REQUEST.value:
+                    current_clients_number = len(self.agent.clients.keys())
+                    max_clients_number = int(os.environ.get(Environment.MAXIMUM_CLIENTS_PER_GATEWAY.value))
+                    performative = MessagePerformative.REFUSE.value
 
-                if current_clients_number < max_clients_number:
-                    self.agent.clients[str(message.sender).split("@")[0]] = None
-                    performative = MessagePerformative.AGREE.value
+                    if current_clients_number < max_clients_number:
+                        self.agent.clients[str(message.sender).split("@")[0]] = None
+                        performative = MessagePerformative.AGREE.value
 
-                reply = FreeSlotGatewayResponseMessage(to=message.sender, sender=message.to,
-                                                       performative=performative)
-                await self.send(reply)
+                    reply = FreeSlotGatewayResponseMessage(to=message.sender, sender=message.to,
+                                                           performative=performative)
+                    await self.send(reply)

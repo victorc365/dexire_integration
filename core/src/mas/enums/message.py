@@ -10,6 +10,7 @@ class MessageMetadata(Enum):
     DIRECTION = 'direction'
     TARGET = 'target'
     PERFORMATIVE = 'performative'
+    TYPE = 'type'
 
 
 class MessageDirection(Enum):
