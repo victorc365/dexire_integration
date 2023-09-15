@@ -17,10 +17,11 @@ class PersonalAgent(BasicAgent):
         self.subscribed_gateways = []
 
     async def setup(self):
-      
+        internal_template = Template()
+        internal_template.thread = 'internal-thread'
 
         self.logger.debug('Setup and ready!')
         await super().setup()
         self.add_behaviour(SetupBehaviour())
         self.add_behaviour(RegisterToGatewayBehaviour())
-        self.add_behaviour(InternalListenerBehaviour())
+        self.add_behaviour(InternalListenerBehaviour(), internal_template)
