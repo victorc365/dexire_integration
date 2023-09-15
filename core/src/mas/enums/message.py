@@ -55,6 +55,7 @@ class MessageType(Enum):
     """
     FREE_SLOTS = 'free_slots'
     AVAILABLE_GATEWAYS = 'available_gateways'
+    OPENED_WEBSOCKET = 'opened_websocket'
 
 
 class MessageThread(Enum):

@@ -5,9 +5,11 @@ from mas.agents.gateway_agent.behaviours.format_message_behaviour import FormatM
 from mas.agents.basic_agent import BasicAgent, AgentType
 from mas.agents.gateway_agent.behaviours.internals.internal_listener_behaviour import InternalListenerBehaviour
 from mas.agents.gateway_agent.behaviours.internals.setup_behaviour import SetupBehaviour
+from mas.agents.generic_behaviours.send_message_behaviour import SendInternalMessageBehaviour
 from mas.core_engine import CoreEngine
-from mas.enums.message import MessageTarget, MessageDirection
+from mas.enums.message import MessageTarget, MessageDirection, MessageType, MessagePerformative
 from utils.communication_utils import get_internal_thread_template, get_user_thread_template
+from utils.string_builder import create_jid
 
 
 class GatewayAgent(BasicAgent):
@@ -30,13 +32,20 @@ class GatewayAgent(BasicAgent):
         if bot_user_name.lower() in self.clients.keys():
             self.clients[bot_user_name] = websocket
             await self.listen_on_websocket(bot_user_name, websocket)
-            # TODO - send message to personal agent to inform websocket is open
 
         else:
             self.logger.error(f'Ignored websocket connection from {bot_user_name} because it was unexpected.')
 
     async def listen_on_websocket(self, bot_user_name, websocket):
         await websocket.accept()
+        self.add_behaviour(SendInternalMessageBehaviour(
+            to=create_jid(bot_user_name),
+            sender=self.id,
+            message_type=MessageType.OPENED_WEBSOCKET.value,
+            performative=MessagePerformative.INFORM.value,
+            body=None
+
+        ))
         try:
             while True:
                 data = await websocket.receive_text()

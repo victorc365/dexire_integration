@@ -19,9 +19,6 @@ class InternalListenerBehaviour(CyclicBehaviour):
             case MessagePerformative.AGREE.value:
                 ChatService().register_gateway(str(message.sender), self.agent.id)
                 self.agent.status = Status.RUNNING.value
-                # TODO - find a way to start profiling with other behaviour even if it depends on the gateway registration
-                profiling_configuration = BotService().get_bot_profiling(self.agent.id.split('_')[0])
-                self.agent.add_behaviour(ProfilingFSMBehaviour(profiling_configuration))
             case MessagePerformative.REFUSE.value:
                 message = FreeSlotGatewayRequestMessage(self.agent.id, self.agent.subscribed_gateways.pop())
                 await self.send(message)
@@ -50,9 +47,12 @@ class InternalListenerBehaviour(CyclicBehaviour):
         message_type = message.get_metadata(MessageMetadata.TYPE.value)
 
         # TODO - if websocket is open, start profling state machine
-
+        print(message)
         match message_type:
             case MessageType.FREE_SLOTS.value:
                 await self._process_free_slots_message(message)
             case MessageType.AVAILABLE_GATEWAYS.value:
                 await self._process_available_gateways_message(message)
+            case MessageType.OPENED_WEBSOCKET.value:
+                profiling_configuration = BotService().get_bot_profiling(self.agent.id.split('_')[0])
+                self.agent.add_behaviour(ProfilingFSMBehaviour(profiling_configuration))
