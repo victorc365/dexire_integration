@@ -11,7 +11,7 @@ from utils.metaclasses.singleton import Singleton
 from utils.string_builder import create_jid
 
 
-class BotProfiling:
+class BotProfilingConfig:
     def __init__(self, data: dict) -> None:
         self.name: str = data.get('name', 'undefined')
         self.version: str = data.get('version', 'undefined')
@@ -83,6 +83,6 @@ class BotService(metaclass=Singleton):
                 profiling_file = f'{self.bots_folder}/{bot}/profiling.yaml'
                 with open(profiling_file) as file:
                     data = yaml.load(file, Loader=SafeLoader)
-                    bot_profiling = BotProfiling(data)
+                    bot_profiling = BotProfilingConfig(data)
                     return bot_profiling
         return None

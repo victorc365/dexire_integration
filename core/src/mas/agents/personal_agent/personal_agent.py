@@ -73,6 +73,9 @@ class ListenerBehaviour(CyclicBehaviour):
             if message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.AGREE.value:
                 ChatService().register_gateway(str(message.sender), self.agent.id)
                 self.agent.status = Status.RUNNING.value
+                # TODO - find a way to start profiling with other behaviour even if it depends on the gateway registration
+                profiling_configuration = BotService().get_bot_profiling(self.agent.id.split('_')[0])
+                self.agent.add_behaviour(ProfilingFSMBehaviour(profiling_configuration))
             elif message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.REFUSE.value:
                 message = FreeSlotGatewayRequestMessage(self.agent.id, self.agent.subscribed_gateways.pop())
                 await self.send(message)
@@ -119,16 +122,3 @@ class PersonalAgent(BasicAgent):
         self.add_behaviour(SetupBehaviour())
         self.add_behaviour(RegisterToGatewayBehaviour())
         self.add_behaviour(ListenerBehaviour())
-        self.load_profiling_behaviour()
-
-    def load_profiling_behaviour(self):
-        profiling_configuration = BotService().get_bot_profiling(self.id.split('_')[0])
-
-        if profiling_configuration is None:
-            self.logger.debug('No profiling Configuration to load.')
-            return
-
-        if profiling_configuration.states is None:
-            self.logger.error('Profiling configuration exists but no state has been defined. Skipping profiling FSM')
-            return
-        self.add_behaviour(ProfilingFSMBehaviour(profiling_configuration))

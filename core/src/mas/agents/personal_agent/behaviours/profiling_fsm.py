@@ -1,4 +1,5 @@
 from mas.agents.generic_behaviours.dynamic_fsm import DynamicFSMBehaviour
+from services.bot_service import BotProfilingConfig
 
 
 class ProfilingFSMBehaviour(DynamicFSMBehaviour):
@@ -9,11 +10,17 @@ class ProfilingFSMBehaviour(DynamicFSMBehaviour):
     fully customizable and the profiling behaviour is built using a list of questions provided as a yaml file coming
     with the bot module.
     """
-    def __init__(self, config: dict) -> None:
-        super().__init__()
+
+    def __init__(self, config: BotProfilingConfig) -> None:
+        if config is None:
+            self.logger.debug('No profiling Configuration to load.')
+            return
+
+        if config.states is None:
+            self.logger.error('Profiling configuration exists but no state has been defined. Skipping profiling FSM')
+            return
         self.config = config
+        super().__init__()
 
-    async def setup(self) -> None:
+    def setup(self) -> None:
         super().setup()
-
-

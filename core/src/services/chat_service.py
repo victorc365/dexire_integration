@@ -6,6 +6,11 @@ class ChatService(metaclass=Singleton):
     def __init__(self):
         self.bot_gateways = {}
 
+    def get_gateway(self, bot_user_name: str):
+        bot_user_name = bot_user_name.split('@')[0]
+        client_id = bot_user_name.split('_')[1]
+        return self.bot_gateways[client_id][bot_user_name]
+
     def register_gateway(self, gateway_id: str, bot_user_name: str):
         bot_user_name = bot_user_name.split('@')[0]
         client_id = bot_user_name.split('_')[1]
