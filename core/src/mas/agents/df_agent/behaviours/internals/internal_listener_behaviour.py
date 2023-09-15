@@ -1,24 +1,8 @@
 import json
-
-from aioxmpp import JID
 from spade.behaviour import CyclicBehaviour
-from spade.message import Message
 
-from mas.enums.message import MessagePerformative, MessageMetadata, MessageThread, MessageType
-
-
-class AvailableGatewayResponseMessage(Message):
-    def __init__(self, to: JID, sender: JID, body: list[str]) -> None:
-        super().__init__(
-            to=str(to),
-            sender=str(sender),
-            body=json.dumps(body),
-            thread=MessageThread.INTERNAL_THREAD.value,
-            metadata={
-                MessageMetadata.PERFORMATIVE.value: MessagePerformative.AGREE.value,
-                MessageMetadata.TYPE.value: MessageType.AVAILABLE_GATEWAYS.value,
-            }
-        )
+from mas.agents.generic_behaviours.send_message_behaviour import SendInternalMessageBehaviour
+from mas.enums.message import MessagePerformative, MessageMetadata, MessageType
 
 
 class InternalListenerBehaviour(CyclicBehaviour):
@@ -35,6 +19,10 @@ class InternalListenerBehaviour(CyclicBehaviour):
             case MessageType.AVAILABLE_GATEWAYS.value:
                 performative = message.metadata[MessageMetadata.PERFORMATIVE.value]
                 if performative == MessagePerformative.REQUEST.value:
-                    reply = AvailableGatewayResponseMessage(to=message.sender, sender=message.to,
-                                                            body=self.agent.services['gateway'])
-                    await self.send(reply)
+                    self.agent.add_behaviour(SendInternalMessageBehaviour(
+                        to=str(message.sender),
+                        sender=str(message.to),
+                        body=json.dumps(self.agent.services['gateway']),
+                        performative=MessagePerformative.AGREE.value,
+                        message_type=MessageType.AVAILABLE_GATEWAYS.value
+                    ))

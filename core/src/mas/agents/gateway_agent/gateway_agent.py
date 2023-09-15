@@ -31,6 +31,7 @@ class GatewayAgent(BasicAgent):
             self.clients[bot_user_name] = websocket
             await self.listen_on_websocket(bot_user_name, websocket)
             # TODO - send message to personal agent to inform websocket is open
+
         else:
             self.logger.error(f'Ignored websocket connection from {bot_user_name} because it was unexpected.')
 

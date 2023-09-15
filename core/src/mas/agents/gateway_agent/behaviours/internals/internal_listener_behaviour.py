@@ -1,23 +1,9 @@
-from aioxmpp import JID
-from spade.message import Message
 from spade.behaviour import CyclicBehaviour
+
+from mas.agents.generic_behaviours.send_message_behaviour import SendInternalMessageBehaviour
 from mas.enums.message import MessageType, MessagePerformative, MessageMetadata, MessageThread
 from enums.environment import Environment
 import os
-
-
-class FreeSlotGatewayResponseMessage(Message):
-    def __init__(self, sender: JID, to: JID, performative: str) -> None:
-        super().__init__(
-            to=str(to),
-            sender=str(sender),
-            body=MessageType.FREE_SLOTS.value,
-            thread=MessageThread.INTERNAL_THREAD.value,
-            metadata={
-                MessageMetadata.PERFORMATIVE.value: performative,
-                MessageMetadata.TYPE.value: MessageType.FREE_SLOTS.value
-            }
-        )
 
 
 class InternalListenerBehaviour(CyclicBehaviour):
@@ -42,6 +28,10 @@ class InternalListenerBehaviour(CyclicBehaviour):
                         self.agent.clients[str(message.sender).split("@")[0]] = None
                         performative = MessagePerformative.AGREE.value
 
-                    reply = FreeSlotGatewayResponseMessage(to=message.sender, sender=message.to,
-                                                           performative=performative)
-                    await self.send(reply)
+                    self.agent.add_behaviour(SendInternalMessageBehaviour(
+                        to=str(message.sender),
+                        sender=str(message.to),
+                        body=MessageType.FREE_SLOTS.value,
+                        performative=performative,
+                        message_type=MessageType.FREE_SLOTS.value
+                    ))

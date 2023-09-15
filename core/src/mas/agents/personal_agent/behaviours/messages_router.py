@@ -1,23 +1,7 @@
-from spade.behaviour import CyclicBehaviour, OneShotBehaviour
-from spade.message import Message
+from spade.behaviour import CyclicBehaviour
 
-from mas.enums.message import MessageMetadata, MessagePerformative, MessageThread
-
-
-class EchoBehaviour(OneShotBehaviour):
-    def __init__(self, message) -> None:
-        super().__init__()
-        self.message = message
-
-    async def run(self) -> None:
-        # TODO - remove this dummy behaviour when FSM is implemented
-        message = Message()
-        message.to = str(self.message.sender)
-        message.sender = str(self.message.to)
-        message.metadata = {'performative': 'inform', 'direction': 'outgoing', 'target': 'hemerapp'}
-        message.body = self.message.body
-        message.thread = MessageThread.USER_THREAD.value
-        await self.send(message)
+from mas.agents.generic_behaviours.send_message_behaviour import SendHemerappOutgoingMessageBehaviour
+from mas.enums.message import MessageMetadata, MessagePerformative
 
 
 class MessagesRouterBehaviour(CyclicBehaviour):
@@ -28,6 +12,7 @@ class MessagesRouterBehaviour(CyclicBehaviour):
     purposes. First, it is in charge to route the message to the internal queue of the correct agent's behaviour.
     Second, if the action to perform requires to start a new behaviour (ie: a OneShotBehaviour), the router can
     attach the behaviour to the agent and start it.
+
     """
 
     def __init__(self) -> None:
@@ -41,4 +26,9 @@ class MessagesRouterBehaviour(CyclicBehaviour):
 
         if message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.INFORM.value:
             # TODO - forward to correct FSM when personal agent FSM are implemented
-            self.agent.add_behaviour(EchoBehaviour(message))
+            self.agent.add_behaviour(SendHemerappOutgoingMessageBehaviour(
+                to=str(message.sender),
+                sender=str(message.to),
+                body=message.body,
+                performative=MessagePerformative.INFORM.value
+            ))
