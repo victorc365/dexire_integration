@@ -1,48 +1,5 @@
 from mas.agents.basic_agent import BasicAgent
-from spade.behaviour import CyclicBehaviour, OneShotBehaviour
-from spade.message import Message
-from aioxmpp import JID
-import json
-
-from mas.enums.message import MessagePerformative, MessageMetadata
-
-
-class AvailableGatewayResponseMessage(Message):
-    def __init__(self, to: JID, sender: JID, body: list[str]) -> None:
-        super().__init__(
-            to=str(to),
-            sender=str(sender),
-            body=json.dumps(body),
-            metadata={MessageMetadata.PERFORMATIVE.value: MessagePerformative.AGREE.value}
-        )
-
-
-class SetupPresenceListener(OneShotBehaviour):
-    def on_available(self, jid, stanza):
-        self.agent.logger.debug(f'Agent {jid.split("@")[0]} is available.')
-
-    def on_subscribed(self, jid):
-        self.agent.logger.debug(f'Agent {jid.split("@")[0]} has accepted the subscription.')
-
-    async def run(self):
-        self.presence.on_available = self.on_available
-        self.presence.on_unavailable = self.on_unavailable
-        self.presence.on_subscribed = self.on_subscribed
-
-
-class ListenerBehaviour(CyclicBehaviour):
-    def __init__(self) -> None:
-        super().__init__()
-
-    async def run(self) -> None:
-        message = await self.receive(timeout=1)
-        if message is None:
-            return
-
-        if message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.REQUEST.value:
-            reply = AvailableGatewayResponseMessage(to=message.sender, sender=message.to,
-                                                    body=self.agent.services['gateway'])
-            await self.send(reply)
+from mas.agents.df_agent.behaviours.internals.internal_listener_behaviour import InternalListenerBehaviour
 
 
 class DFAgent(BasicAgent):
@@ -61,7 +18,7 @@ class DFAgent(BasicAgent):
         }
 
     async def setup(self) -> None:
-        self.add_behaviour(ListenerBehaviour())
+        self.add_behaviour(InternalListenerBehaviour())
         self.logger.debug('Setup and ready!')
 
     def register(self, agent: BasicAgent) -> None:

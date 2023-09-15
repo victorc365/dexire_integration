@@ -2,7 +2,7 @@ from spade.behaviour import OneShotBehaviour
 from spade.message import Message
 
 from mas.core_engine import CoreEngine
-from mas.enums.message import MessageType, MessageMetadata, MessagePerformative
+from mas.enums.message import MessageType, MessageMetadata, MessagePerformative, MessageThread
 
 
 class FreeSlotGatewayRequestMessage(Message):
@@ -11,6 +11,7 @@ class FreeSlotGatewayRequestMessage(Message):
             to=to,
             sender=sender,
             body=MessageType.FREE_SLOTS.value,
+            thread=MessageThread.INTERNAL_THREAD.value,
             metadata={MessageMetadata.PERFORMATIVE.value: MessagePerformative.REQUEST.value}
         )
 
@@ -21,6 +22,7 @@ class AvailableGatewayRequestMessage(Message):
             to=CoreEngine().df_agent.id,
             sender=sender,
             body=MessageType.AVAILABLE_GATEWAYS.value,
+            thread=MessageThread.INTERNAL_THREAD.value,
             metadata={MessageMetadata.PERFORMATIVE.value: MessagePerformative.REQUEST.value}
         )
 

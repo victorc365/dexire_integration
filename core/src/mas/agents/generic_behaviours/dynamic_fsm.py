@@ -17,7 +17,7 @@ class DynamicState(State):
         message.to = gateway
         message.sender = self.agent.id
         message.metadata = {'performative': 'inform', 'direction': 'outgoing', 'target': 'hemerapp'}
-        message.body = "parfait michel"
+        message.body = {"text:":"parfait michel"}
         await self.send(message)
         while True:
             message = await self.receive(timeout=1)

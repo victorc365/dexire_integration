@@ -54,3 +54,14 @@ class MessageType(Enum):
     """
     FREE_SLOTS = 'free_slots'
     AVAILABLE_GATEWAYS = 'available_gateways'
+
+
+class MessageThread(Enum):
+    """ Enumeration of the available thread for the messages.
+
+    The thread of the message is used to help the routing of messages inside the platform. When adding a behaviour
+    to an agent, you can provide a template containing the specific thread to which the behaviour should listen to.
+
+    """
+    USER_THREAD = 'user-thread'
+    INTERNAL_THREAD = 'internal-thread'

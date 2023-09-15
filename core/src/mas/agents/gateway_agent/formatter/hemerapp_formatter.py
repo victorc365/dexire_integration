@@ -1,7 +1,7 @@
 from mas.agents.gateway_agent.formatter.abstract_formatter import AbstractFormatter
 import json
 from spade.message import Message
-from mas.enums.message import MessagePerformative, MessageDirection, MessageMetadata, MessageTarget
+from mas.enums.message import MessagePerformative, MessageDirection, MessageMetadata, MessageTarget, MessageThread
 from utils.string_builder import create_jid
 
 
@@ -12,6 +12,7 @@ class HemerappIncomingMessage(Message):
             to=to,
             sender=sender,
             body=body,
+            thread=MessageThread.USER_THREAD.value,
             metadata={
                 MessageMetadata.PERFORMATIVE.value: performative,
                 MessageMetadata.DIRECTION.value: direction,
