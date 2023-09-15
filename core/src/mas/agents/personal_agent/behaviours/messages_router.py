@@ -38,7 +38,6 @@ class MessagesRouterBehaviour(CyclicBehaviour):
 
         if message is None:
             return
-        print(message)
 
         if message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.INFORM.value:
             # TODO - forward to correct FSM when personal agent FSM are implemented

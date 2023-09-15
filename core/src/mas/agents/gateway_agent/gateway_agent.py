@@ -1,11 +1,13 @@
 from starlette.websockets import WebSocketDisconnect
 
+from mas.agents.gateway_agent.behaviours.external_listener_behaviour import ExternalListenerBehaviour
 from mas.agents.gateway_agent.behaviours.format_message_behaviour import FormatMessageBehaviour
 from mas.agents.basic_agent import BasicAgent, AgentType
 from mas.agents.gateway_agent.behaviours.internals.internal_listener_behaviour import InternalListenerBehaviour
 from mas.agents.gateway_agent.behaviours.internals.setup_behaviour import SetupBehaviour
 from mas.core_engine import CoreEngine
 from mas.enums.message import MessageTarget, MessageDirection
+from utils.communication_utils import get_internal_thread_template, get_user_thread_template
 
 
 class GatewayAgent(BasicAgent):
@@ -18,7 +20,9 @@ class GatewayAgent(BasicAgent):
     async def setup(self) -> None:
         await super().setup()
         self.add_behaviour(SetupBehaviour())
-        self.add_behaviour(InternalListenerBehaviour())
+        self.add_behaviour(InternalListenerBehaviour(), get_internal_thread_template())
+        self.add_behaviour(ExternalListenerBehaviour(), get_user_thread_template())
+
         CoreEngine().df_agent.register(self)
         self.logger.debug('Setup and ready!')
 

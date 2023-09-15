@@ -1,8 +1,10 @@
 from spade.behaviour import FSMBehaviour, State
 
 from enums.status import Status
+from mas.enums.message import MessageThread
 from services.chat_service import ChatService
 from spade.message import Message
+import json
 
 
 class DynamicState(State):
@@ -17,11 +19,11 @@ class DynamicState(State):
         message.to = gateway
         message.sender = self.agent.id
         message.metadata = {'performative': 'inform', 'direction': 'outgoing', 'target': 'hemerapp'}
-        message.body = {"text:":"parfait michel"}
+        message.body = json.dumps({"text:": "parfait michel"})
+        message.thread = MessageThread.USER_THREAD.value
         await self.send(message)
         while True:
             message = await self.receive(timeout=1)
-            print(message)
             if message is None:
                 continue
 
@@ -36,8 +38,7 @@ class DynamicFSMBehaviour(FSMBehaviour):
         self.config = None
 
     async def on_start(self) -> None:
-        while self.agent.status != Status.RUNNING.value:
-            print('waiting to be running')
+        pass
 
     async def on_end(self) -> None:
         pass
@@ -46,11 +47,8 @@ class DynamicFSMBehaviour(FSMBehaviour):
         super().setup()
         states = self.config.states
         for i, state in enumerate(states):
-            print(state)
             self.add_state(name=list(state.keys())[0],
-                          state=DynamicState(state[list(state.keys())[0]]),
-                          initial=(i == 0))
+                           state=DynamicState(state[list(state.keys())[0]]),
+                           initial=(i == 0))
             if 'transition' in state[list(state.keys())[0]].keys():
                 self.add_transition(list(state.keys())[0], state[list(state.keys())[0]]["transition"])
-
-

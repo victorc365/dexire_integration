@@ -1,7 +1,6 @@
 from aioxmpp import JID
 from spade.message import Message
 from spade.behaviour import CyclicBehaviour
-from mas.agents.gateway_agent.behaviours.format_message_behaviour import FormatMessageBehaviour
 from mas.enums.message import MessageType, MessagePerformative, MessageMetadata, MessageThread
 from enums.environment import Environment
 import os
@@ -40,5 +39,3 @@ class InternalListenerBehaviour(CyclicBehaviour):
                 reply = FreeSlotGatewayResponseMessage(to=message.sender, sender=message.to,
                                                        performative=performative)
                 await self.send(reply)
-        elif message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.INFORM.value:
-            self.agent.add_behaviour(FormatMessageBehaviour(message))

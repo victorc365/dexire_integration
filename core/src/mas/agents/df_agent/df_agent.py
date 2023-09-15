@@ -1,5 +1,6 @@
 from mas.agents.basic_agent import BasicAgent
 from mas.agents.df_agent.behaviours.internals.internal_listener_behaviour import InternalListenerBehaviour
+from utils.communication_utils import get_internal_thread_template
 
 
 class DFAgent(BasicAgent):
@@ -18,7 +19,8 @@ class DFAgent(BasicAgent):
         }
 
     async def setup(self) -> None:
-        self.add_behaviour(InternalListenerBehaviour())
+
+        self.add_behaviour(InternalListenerBehaviour(), get_internal_thread_template())
         self.logger.debug('Setup and ready!')
 
     def register(self, agent: BasicAgent) -> None:
