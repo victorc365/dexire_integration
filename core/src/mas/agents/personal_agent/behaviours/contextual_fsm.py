@@ -1,6 +1,15 @@
+from abc import ABCMeta
+
 from spade.behaviour import FSMBehaviour
 
-class ContextualFSMBehaviour(FSMBehaviour):
+
+class AbstractContextualState:
+    def __init__(self):
+        self.name = None
+        self.state = None
+
+
+class AbstractContextualFSMBehaviour(FSMBehaviour, metaclass=ABCMeta):
     """ Main state machine behaviour of a module (bot).
 
     A Personal Agent must have a ContextualFSMBehaviour. It is the state machine that is in charge to execute the module

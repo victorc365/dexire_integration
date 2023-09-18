@@ -5,7 +5,6 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
     def __init__(self):
         super().__init__()
 
-
     async def on_start(self):
         await super().on_start()
         print(f"{self.agent.bot_username}")
