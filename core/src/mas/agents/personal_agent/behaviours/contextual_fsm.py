@@ -1,6 +1,5 @@
 from spade.behaviour import FSMBehaviour
 
-
 class ContextualFSMBehaviour(FSMBehaviour):
     """ Main state machine behaviour of a module (bot).
 
@@ -10,4 +9,4 @@ class ContextualFSMBehaviour(FSMBehaviour):
     """
 
     def __init__(self) -> None:
-        pass
+        super().__init__()

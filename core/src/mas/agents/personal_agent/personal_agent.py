@@ -1,3 +1,4 @@
+import importlib
 from mas.agents.basic_agent import BasicAgent
 from mas.agents.personal_agent.behaviours.internals.internal_listener_behaviour import InternalListenerBehaviour
 from mas.agents.personal_agent.behaviours.internals.register_to_gateway_behaviour import RegisterToGatewayBehaviour
@@ -17,6 +18,9 @@ class PersonalAgent(BasicAgent):
         self.last_gateway = None
         self.subscribed_gateways = []
         self.message_router = MessagesRouterBehaviour()
+        self.module_name = bot_user_name.split('_')[0]
+        self.contextual_module = getattr(importlib.import_module(f'modules.{self.module_name}.contextual_fsm'),
+                                         'ContextualFSM')
 
     async def setup(self):
         await super().setup()
@@ -24,6 +28,7 @@ class PersonalAgent(BasicAgent):
         self.add_behaviour(RegisterToGatewayBehaviour())
         self.add_behaviour(InternalListenerBehaviour(), get_internal_thread_template())
         self.add_behaviour(self.message_router, get_user_thread_template())
+        self.add_contextual_behaviour(MessageContext.CONTEXTUAL.value, self.contextual_module())
         self.logger.debug('Setup and ready!')
 
     def add_contextual_behaviour(self, context: MessageContext, behaviour, template=None):

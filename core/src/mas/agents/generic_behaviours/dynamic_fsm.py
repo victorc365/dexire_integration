@@ -36,7 +36,6 @@ class DynamicState(State):
 
         # TODO - Save message in Pryv and process it if necessary
         print(message)
-
         if self.transition is not None:
             self.next_state = self.transition
         else:
