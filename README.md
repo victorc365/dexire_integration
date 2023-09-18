@@ -18,9 +18,9 @@ EREBOTS 3.0 is a scenario and platform agnostic multi-agent chatbot system. Able
     - [x] Gateway forward messages to frontend
     - [x] Gateway handle agnostic formatting of messages
   - [ ] create Personalized Agent
-    -  [ ] Create Message Router Behaviour
+    -  [x] Create Message Router Behaviour
     -  [ ] Create Contextual FSM
-    -  [ ] Create Profiling FSM 
+    -  [x] Create Profiling FSM 
     -  [ ] Create Persuasion FSM
   - [ ] simultaneous users
 
