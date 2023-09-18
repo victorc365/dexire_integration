@@ -12,6 +12,5 @@ class ExternalListenerBehaviour(CyclicBehaviour):
         message = await self.receive(timeout=1)
         if message is None:
             return
-
         if message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.INFORM.value:
             self.agent.add_behaviour(FormatMessageBehaviour(message))

@@ -7,7 +7,7 @@ from utils.string_builder import create_jid
 
 class HemerappIncomingMessage(Message):
     def __init__(self, sender: str = None, to: str = None, performative: str = None, body: str = None,
-                 direction: str = None) -> None:
+                 direction: str = None, context: str = None) -> None:
         super().__init__(
             to=to,
             sender=sender,
@@ -16,7 +16,9 @@ class HemerappIncomingMessage(Message):
             metadata={
                 MessageMetadata.PERFORMATIVE.value: performative,
                 MessageMetadata.DIRECTION.value: direction,
-                MessageMetadata.TARGET.value: MessageTarget.HEMERAPP.value}
+                MessageMetadata.TARGET.value: MessageTarget.HEMERAPP.value,
+                MessageMetadata.CONTEXT.value: context
+            }
         )
 
 
@@ -35,7 +37,8 @@ class HemerappFormatter(AbstractFormatter):
             to=create_jid(message_json['to']),
             performative=MessagePerformative.INFORM.value,
             body=message_json['body'],
-            direction=MessageDirection.INCOMING.value
+            direction=MessageDirection.INCOMING.value,
+            context=message_json['metadata']['context']
         )
 
     def format_outgoing_message(self, message):

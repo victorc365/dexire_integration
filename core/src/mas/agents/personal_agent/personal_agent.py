@@ -4,6 +4,7 @@ from mas.agents.personal_agent.behaviours.internals.register_to_gateway_behaviou
 from mas.agents.personal_agent.behaviours.internals.setup_behaviour import SetupBehaviour
 from enums.status import Status
 from mas.agents.personal_agent.behaviours.messages_router import MessagesRouterBehaviour
+from mas.enums.message import MessageContext
 from utils.communication_utils import get_internal_thread_template, get_user_thread_template
 
 
@@ -15,11 +16,16 @@ class PersonalAgent(BasicAgent):
         self.status = Status.TURNED_OFF.value
         self.last_gateway = None
         self.subscribed_gateways = []
+        self.message_router = MessagesRouterBehaviour()
 
     async def setup(self):
         await super().setup()
         self.add_behaviour(SetupBehaviour())
         self.add_behaviour(RegisterToGatewayBehaviour())
         self.add_behaviour(InternalListenerBehaviour(), get_internal_thread_template())
-        self.add_behaviour(MessagesRouterBehaviour(), get_user_thread_template())
+        self.add_behaviour(self.message_router, get_user_thread_template())
         self.logger.debug('Setup and ready!')
+
+    def add_contextual_behaviour(self, context: MessageContext, behaviour, template=None):
+        self.add_behaviour(behaviour, template)
+        self.message_router.set_address(context, behaviour)

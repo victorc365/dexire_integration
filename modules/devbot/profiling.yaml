@@ -10,6 +10,6 @@ states:
       transition: question_3
   - question_3:
       text: What is your birth year ?
-      transition: question_5
+      transition: question_4
   - question_4:
       text: What is your gender ?

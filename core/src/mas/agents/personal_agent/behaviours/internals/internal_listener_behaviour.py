@@ -4,7 +4,7 @@ from spade.behaviour import CyclicBehaviour
 from enums.status import Status
 from mas.agents.personal_agent.behaviours.internals.register_to_gateway_behaviour import FreeSlotGatewayRequestMessage
 from mas.agents.personal_agent.behaviours.profiling_fsm import ProfilingFSMBehaviour
-from mas.enums.message import MessagePerformative, MessageType, MessageMetadata
+from mas.enums.message import MessagePerformative, MessageType, MessageMetadata, MessageContext
 from services.bot_service import BotService
 from services.chat_service import ChatService
 
@@ -46,8 +46,6 @@ class InternalListenerBehaviour(CyclicBehaviour):
             return
         message_type = message.get_metadata(MessageMetadata.TYPE.value)
 
-        # TODO - if websocket is open, start profling state machine
-        print(message)
         match message_type:
             case MessageType.FREE_SLOTS.value:
                 await self._process_free_slots_message(message)
@@ -55,4 +53,5 @@ class InternalListenerBehaviour(CyclicBehaviour):
                 await self._process_available_gateways_message(message)
             case MessageType.OPENED_WEBSOCKET.value:
                 profiling_configuration = BotService().get_bot_profiling(self.agent.id.split('_')[0])
-                self.agent.add_behaviour(ProfilingFSMBehaviour(profiling_configuration))
+                self.agent.add_contextual_behaviour(MessageContext.PROFILING.value,
+                                                    ProfilingFSMBehaviour(profiling_configuration))

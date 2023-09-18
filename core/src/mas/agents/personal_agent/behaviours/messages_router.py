@@ -1,7 +1,5 @@
 from spade.behaviour import CyclicBehaviour
-
-from mas.agents.generic_behaviours.send_message_behaviour import SendHemerappOutgoingMessageBehaviour
-from mas.enums.message import MessageMetadata, MessagePerformative
+from mas.enums.message import MessageMetadata, MessagePerformative, MessageContext
 
 
 class MessagesRouterBehaviour(CyclicBehaviour):
@@ -17,6 +15,14 @@ class MessagesRouterBehaviour(CyclicBehaviour):
 
     def __init__(self) -> None:
         super().__init__()
+        self.addresses = {
+            MessageContext.PROFILING.value: None,
+            MessageContext.CONTEXTUAL.value: None,
+            MessageContext.PERSUASION.value: None
+        }
+
+    def set_address(self, context: str, behaviour):
+        self.addresses[context] = behaviour
 
     async def run(self) -> None:
         message = await self.receive(timeout=1)
@@ -24,11 +30,16 @@ class MessagesRouterBehaviour(CyclicBehaviour):
         if message is None:
             return
 
-        if message.metadata[MessageMetadata.PERFORMATIVE.value] == MessagePerformative.INFORM.value:
-            # TODO - forward to correct FSM when personal agent FSM are implemented
-            self.agent.add_behaviour(SendHemerappOutgoingMessageBehaviour(
-                to=str(message.sender),
-                sender=str(message.to),
-                body=message.body,
-                performative=MessagePerformative.INFORM.value
-            ))
+        performative = message.metadata[MessageMetadata.PERFORMATIVE.value]
+        if performative == MessagePerformative.INFORM.value:
+            context = message.metadata[MessageMetadata.CONTEXT.value]
+            behaviour = self.addresses[context]
+
+            if behaviour is None:
+                self.agent.logger.error(
+                    f'No behaviour assigned to context ({context}) but received message for it: {message}')
+            if behaviour.is_done():
+                self.agent.logger.error(
+                    f'A message has been sent for an ended context. Context: {context}, Message: {message}')
+                return
+            await behaviour.get_state(behaviour.current_state).enqueue(message)

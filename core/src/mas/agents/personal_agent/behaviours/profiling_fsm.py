@@ -20,6 +20,7 @@ class ProfilingFSMBehaviour(DynamicFSMBehaviour):
             self.logger.error('Profiling configuration exists but no state has been defined. Skipping profiling FSM')
             return
         self.config = config
+
         super().__init__()
 
     def setup(self) -> None:

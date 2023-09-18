@@ -1,7 +1,9 @@
+import asyncio
+
 from spade.behaviour import FSMBehaviour, State
 
-from enums.status import Status
-from mas.enums.message import MessageThread
+from mas.enums.message import MessageThread, MessageMetadata, MessagePerformative, MessageDirection, MessageTarget, \
+    MessageContext
 from services.chat_service import ChatService
 from spade.message import Message
 import json
@@ -18,18 +20,27 @@ class DynamicState(State):
         message = Message()
         message.to = gateway
         message.sender = self.agent.id
-        message.metadata = {'performative': 'inform', 'direction': 'outgoing', 'target': 'hemerapp'}
-        message.body = json.dumps({"text:": "parfait michel"})
+        message.metadata = {
+            MessageMetadata.PERFORMATIVE.value: MessagePerformative.INFORM.value,
+            MessageMetadata.DIRECTION.value: MessageDirection.OUTGOING.value,
+            MessageMetadata.TARGET.value: MessageTarget.HEMERAPP.value,
+            MessageMetadata.CONTEXT.value: MessageContext.PROFILING.value}
+        message.body = json.dumps({"text": f"{self.text}"})
         message.thread = MessageThread.USER_THREAD.value
         await self.send(message)
-        while True:
-            message = await self.receive(timeout=1)
-            if message is None:
-                continue
 
-            if self.transition is not None:
-                self.next_state = self.transition
-                break
+        while self.mailbox_size() == 0:
+            await asyncio.sleep(1)
+
+        message = await self.receive()
+
+        # TODO - Save message in Pryv and process it if necessary
+        print(message)
+
+        if self.transition is not None:
+            self.next_state = self.transition
+        else:
+            self.kill()
 
 
 class DynamicFSMBehaviour(FSMBehaviour):

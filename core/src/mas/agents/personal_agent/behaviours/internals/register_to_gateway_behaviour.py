@@ -38,6 +38,5 @@ class RegisterToGatewayBehaviour(OneShotBehaviour):
         super().__init__()
 
     async def run(self) -> None:
-        # ask DF for available gateways
         message = AvailableGatewayRequestMessage(self.agent.id)
         await self.send(message)
