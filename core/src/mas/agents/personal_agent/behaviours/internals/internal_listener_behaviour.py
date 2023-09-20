@@ -7,6 +7,7 @@ from mas.agents.personal_agent.behaviours.profiling_fsm import ProfilingFSMBehav
 from mas.enums.message import MessagePerformative, MessageType, MessageMetadata, MessageContext
 from services.bot_service import BotService
 from services.chat_service import ChatService
+from utils.communication_utils import get_profiling_fsm_template
 
 
 class InternalListenerBehaviour(CyclicBehaviour):
@@ -54,4 +55,5 @@ class InternalListenerBehaviour(CyclicBehaviour):
             case MessageType.OPENED_WEBSOCKET.value:
                 profiling_configuration = BotService().get_bot_profiling(self.agent.id.split('_')[0])
                 self.agent.add_contextual_behaviour(MessageContext.PROFILING.value,
-                                                    ProfilingFSMBehaviour(profiling_configuration))
+                                                    ProfilingFSMBehaviour(profiling_configuration),
+                                                    get_profiling_fsm_template())

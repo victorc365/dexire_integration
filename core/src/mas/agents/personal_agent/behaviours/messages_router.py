@@ -34,7 +34,6 @@ class MessagesRouterBehaviour(CyclicBehaviour):
         if performative == MessagePerformative.INFORM.value:
             context = message.metadata[MessageMetadata.CONTEXT.value]
             behaviour = self.addresses[context]
-
             if behaviour is None:
                 self.agent.logger.error(
                     f'No behaviour assigned to context ({context}) but received message for it: {message}')

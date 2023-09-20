@@ -6,7 +6,8 @@ from mas.agents.personal_agent.behaviours.internals.setup_behaviour import Setup
 from enums.status import Status
 from mas.agents.personal_agent.behaviours.messages_router import MessagesRouterBehaviour
 from mas.enums.message import MessageContext
-from utils.communication_utils import get_internal_thread_template, get_user_thread_template
+from utils.communication_utils import get_internal_thread_template, get_user_thread_template, \
+    get_contextual_fsm_template
 
 
 class PersonalAgent(BasicAgent):
@@ -28,7 +29,7 @@ class PersonalAgent(BasicAgent):
         self.add_behaviour(RegisterToGatewayBehaviour())
         self.add_behaviour(InternalListenerBehaviour(), get_internal_thread_template())
         self.add_behaviour(self.message_router, get_user_thread_template())
-        self.add_contextual_behaviour(MessageContext.CONTEXTUAL.value, self.contextual_module())
+        self.add_contextual_behaviour(MessageContext.CONTEXTUAL.value, self.contextual_module(), get_contextual_fsm_template())
         self.logger.debug('Setup and ready!')
 
     def add_contextual_behaviour(self, context: MessageContext, behaviour, template=None):
