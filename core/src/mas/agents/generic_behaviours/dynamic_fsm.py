@@ -8,7 +8,7 @@ from services.chat_service import ChatService
 from spade.message import Message
 import json
 
-
+# TODO - Make it more generic using template methods and more configuration from yml file
 class DynamicState(State):
     def __init__(self, config: dict) -> None:
         super().__init__()
