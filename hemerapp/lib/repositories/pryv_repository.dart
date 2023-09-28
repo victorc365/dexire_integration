@@ -10,77 +10,83 @@ import 'package:hemerapp/models/pryv/authentication/requested_permission_model.d
 import 'package:hemerapp/models/pryv/service_info_model.dart';
 import 'package:http/http.dart' as http;
 
-final String _pryvApiUrl =
-    dotenv.get('PRYV_API_URL', fallback: 'localhost:8080');
+class PryvRepository {
+  late String _pryvApiUrl;
+  String serviceInfoEndpoint = '/service/info';
+  late Map<String, String> _headers;
 
-const String serviceInfoEndpoint = '/service/info';
-const Map<String, String> _headers = {
-  HttpHeaders.contentTypeHeader: 'application/json'
-};
-
-Future<ServiceInfoModel> fetchServiceInfo() async {
-  final url = 'reg.$_pryvApiUrl';
-  final uri = Uri.https(url, serviceInfoEndpoint, null);
-  final response = await http.get(uri);
-  if (response.statusCode == HttpStatus.ok) {
-    return ServiceInfoModel.fromJson(jsonDecode(response.body));
-  } else {
-    throw Exception('Failed to load pryv service info');
-  }
-}
-
-Future<AuthenticationResponseModel> postAuthenticationRequest(
-    String url, String botName, List<RequestedPermissionModel> requestedPermissions) async {
-  String endpoint = '';
-
-  if (url.contains("https://")) {
-    url = url.replaceAll("https://", "");
-  }
-  if (url.contains("/")) {
-    endpoint = url.substring(url.indexOf("/"), url.length);
-    url = url.substring(0, url.indexOf("/"));
+  PryvRepository() {
+    _pryvApiUrl = dotenv.get('PRYV_API_URL', fallback: 'localhost:8080');
+    _headers = {HttpHeaders.contentTypeHeader: 'application/json'};
   }
 
-  final data = jsonEncode(
-      AuthenticationRequestModel(botName, requestedPermissions));
-  final uri = Uri.https(url, endpoint, null);
-  final response = await http.post(uri, body: data, headers: _headers);
-  if (response.statusCode == HttpStatus.created) {
-    return AuthenticationResponseModel.fromJson(jsonDecode(response.body));
-  } else {
-    throw Exception('Failed to authentication request');
+  Future<AuthenticationResponseModel> postAuthenticationRequest(
+      String url,
+      String botName,
+      List<RequestedPermissionModel> requestedPermissions) async {
+    String endpoint = '';
+
+    if (url.contains("https://")) {
+      url = url.replaceAll("https://", "");
+    }
+    if (url.contains("/")) {
+      endpoint = url.substring(url.indexOf("/"), url.length);
+      url = url.substring(0, url.indexOf("/"));
+    }
+
+    final data =
+        jsonEncode(AuthenticationRequestModel(botName, requestedPermissions));
+    final uri = Uri.https(url, endpoint, null);
+    final response = await http.post(uri, body: data, headers: _headers);
+    if (response.statusCode == HttpStatus.created) {
+      return AuthenticationResponseModel.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to authentication request');
+    }
   }
-}
 
-Future<bool> pollAuthenticationResult(String url, String botName) async {
-  String endpoint = '';
-  if (url.contains("https://")) {
-    url = url.replaceAll("https://", "");
-  }
-  if (url.contains("/")) {
-    endpoint = url.substring(url.indexOf("/"), url.length);
-    url = url.substring(0, url.indexOf("/"));
-  }
+  Future<bool> pollAuthenticationResult(String url, String botName) async {
+    String endpoint = '';
+    if (url.contains("https://")) {
+      url = url.replaceAll("https://", "");
+    }
+    if (url.contains("/")) {
+      endpoint = url.substring(url.indexOf("/"), url.length);
+      url = url.substring(0, url.indexOf("/"));
+    }
 
-  final uri = Uri.https(url, endpoint, null);
-  while (true) {
-    final response = await http.get(uri);
+    final uri = Uri.https(url, endpoint, null);
+    while (true) {
+      final response = await http.get(uri);
 
-    if (response.statusCode == HttpStatus.ok) {
-      PollAuthorizationResultModel model = PollAuthorizationResultModel.fromJson(jsonDecode(response.body));
-      if (model.status == PollAuthorizationResultModel.accepted) {
-        const storage = FlutterSecureStorage();
+      if (response.statusCode == HttpStatus.ok) {
+        PollAuthorizationResultModel model =
+            PollAuthorizationResultModel.fromJson(jsonDecode(response.body));
+        if (model.status == PollAuthorizationResultModel.accepted) {
+          const storage = FlutterSecureStorage();
 
-        final connectionInfo = model.apiEndpoint!.replaceAll("https://", "").split("@");
-        final token = connectionInfo[0];
-        final username = connectionInfo[1].split('.')[0];
-        await storage.write(key: 'username', value: username);
-        await storage.write(key: botName, value: token);
-        return true;
-      } else if(model.status != PollAuthorizationResultModel.needSignIn) {
+          final connectionInfo =
+              model.apiEndpoint!.replaceAll("https://", "").split("@");
+          final token = connectionInfo[0];
+          final username = connectionInfo[1].split('.')[0];
+          await storage.write(key: 'username', value: username);
+          await storage.write(key: botName, value: token);
+          return true;
+        } else if (model.status != PollAuthorizationResultModel.needSignIn) {}
+      } else if (response.statusCode == HttpStatus.forbidden) {
+        return false;
       }
-    } else if (response.statusCode == HttpStatus.forbidden) {
-      return false;
+    }
+  }
+
+  Future<ServiceInfoModel> fetchServiceInfo() async {
+    final url = 'reg.$_pryvApiUrl';
+    final uri = Uri.https(url, serviceInfoEndpoint, null);
+    final response = await http.get(uri);
+    if (response.statusCode == HttpStatus.ok) {
+      return ServiceInfoModel.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to load pryv service info');
     }
   }
 }
