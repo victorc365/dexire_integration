@@ -9,7 +9,8 @@
   "conversations": "conversations",
   "addNew": "add new",
   "hintSearch": "search...",
-  "contacts": "contacts"
-
-
+  "hintKeyboard": "Write message...",
+  "contacts": "contacts",
+  "offline": "offline",
+  "online": "online"
 }

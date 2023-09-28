@@ -5,11 +5,14 @@
   "profile": "Profil",
   "bots": "Bots",
   "settings": "Paramètres",
-  "chats": "chats",
-  "conversations": "conversations",
-  "addNew": "add new",
-  "hintSearch": "search...",
-  "contacts": "contacts"
+  "chats": "Chats",
+  "conversations": "Conversations",
+  "addNew": "Nouveau",
+  "hintSearch": "Recherche...",
+  "hintKeyboard": "Ecrire...",
+  "contacts": "Contacts",
+  "offline": "Hors ligne",
+  "online": "En ligne"
 
 
 }
