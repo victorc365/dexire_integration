@@ -1,0 +1,68 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter/material.dart';
+import 'package:hemerapp/models/bot_model.dart';
+import 'package:hemerapp/models/message_model.dart';
+import 'package:hemerapp/repositories/bots_repository.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+
+class MessagesProvider with ChangeNotifier {
+  final _repository = BotsRepository();
+  bool isLoading = false;
+  bool _isConnected = false;
+  List<MessageModel> _messages = [];
+
+  List<MessageModel> get messages => _messages;
+
+  WebSocketChannel? channel;
+
+  Future<void> openChannel(username, botName, token) async {
+    _isConnected = false;
+    _messages = [];
+    isLoading = true;
+    if (channel != null) {
+      channel = null;
+    }
+    notifyListeners();
+
+    if (!_isConnected) {
+      await _repository.connectToBot(botName, username, token);
+    }
+
+    Timer.periodic(const Duration(seconds: 2), (timer) async {
+      if (!_isConnected) {
+        String status = await _repository.getStatus("${botName}_$username");
+        if (status.toLowerCase() == BotStatus.running.name) {
+          _isConnected = true;
+          if (_isConnected && channel == null) {
+            while (channel == null) {
+              try {
+                channel = _repository.openWebsocketChannel(username, botName);
+                channel?.stream.listen((event) {
+                  MessageModel messageModel =
+                      MessageModel.fromJson(jsonDecode(event));
+                  if (messageModel != null) {
+                    _messages.add(messageModel);
+                    notifyListeners();
+                  }
+                });
+              } on Exception catch (e) {
+                continue;
+              }
+            }
+          }
+        }
+      } else {
+        timer.cancel();
+        isLoading = false;
+        notifyListeners();
+      }
+    });
+  }
+
+  Future<void> sendMessage(MessageModel message) async {
+    _messages.add(message);
+    channel!.sink.add(jsonEncode(message));
+  }
+}
