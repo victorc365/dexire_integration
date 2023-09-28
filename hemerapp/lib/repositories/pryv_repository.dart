@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:core';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hemerapp/models/pryv/authentication/authentication_request_model.dart';
 import 'package:hemerapp/models/pryv/authentication/authentication_response_model.dart';
 import 'package:hemerapp/models/pryv/authentication/poll_authorization_result_model.dart';
@@ -45,7 +44,8 @@ class PryvRepository {
     }
   }
 
-  Future<bool> pollAuthenticationResult(String url, String botName) async {
+  Future<(String?, String?)> pollAuthenticationResult(
+      String url, String botName) async {
     String endpoint = '';
     if (url.contains("https://")) {
       url = url.replaceAll("https://", "");
@@ -63,18 +63,15 @@ class PryvRepository {
         PollAuthorizationResultModel model =
             PollAuthorizationResultModel.fromJson(jsonDecode(response.body));
         if (model.status == PollAuthorizationResultModel.accepted) {
-          const storage = FlutterSecureStorage();
-
           final connectionInfo =
               model.apiEndpoint!.replaceAll("https://", "").split("@");
           final token = connectionInfo[0];
           final username = connectionInfo[1].split('.')[0];
-          await storage.write(key: 'username', value: username);
-          await storage.write(key: botName, value: token);
-          return true;
+
+          return (username, token);
         } else if (model.status != PollAuthorizationResultModel.needSignIn) {}
       } else if (response.statusCode == HttpStatus.forbidden) {
-        return false;
+        return (null, null);
       }
     }
   }

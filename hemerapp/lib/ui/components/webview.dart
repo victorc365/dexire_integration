@@ -5,11 +5,10 @@ import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class WebView extends StatefulWidget {
-  const WebView(
-      {super.key,
-      required this.url,
-      required this.pollUrl,
-      required this.botName});
+  const WebView({super.key,
+    required this.url,
+    required this.pollUrl,
+    required this.botName});
 
   final String url;
   final String pollUrl;
@@ -50,7 +49,7 @@ class WebViewState extends State<WebView> {
 
   Future<bool> _checkAuth(String url, String botName) async {
     return Provider.of<PryvProvider>(context, listen: false)
-        .pollAuthenticationResult(botName);
+        .pollAuthenticationResult(botName, context);
   }
 
   @override
@@ -60,19 +59,24 @@ class WebViewState extends State<WebView> {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             if (snapshot!.data!) {
-              Navigator.pop(context);
-            } else if (!isRefreshing) {
-              isRefreshing = true;
-              SchedulerBinding.instance
-                  .addPostFrameCallback((_) => setState(() {
-                        _isAuthGranted =
-                            _checkAuth(widget.pollUrl, widget.botName);
-                      }));
-            }
+              SchedulerBinding.instance.addPostFrameCallback((_) {
+                Navigator.pop(context);
+              });
+
+          } else if (!isRefreshing) {
+            isRefreshing = true;
+            SchedulerBinding.instance
+                .addPostFrameCallback((_) =>
+                setState(() {
+                  _isAuthGranted =
+                      _checkAuth(widget.pollUrl, widget.botName);
+                }));
           }
-          return Scaffold(
-            body: WebViewWidget(controller: _buildController(widget.url)),
-          );
-        });
+        }
+        return Scaffold(
+    body: WebViewWidget(controller: _buildController(widget.url)),
+    );
   }
-}
+
+  );
+}}

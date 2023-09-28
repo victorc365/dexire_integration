@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:hemerapp/models/bot_model.dart';
 import 'package:hemerapp/models/pryv/authentication/authentication_response_model.dart';
 import 'package:hemerapp/models/pryv/service_info_model.dart';
+import 'package:hemerapp/providers/secure_storage_provider.dart';
 import 'package:hemerapp/repositories/pryv_repository.dart';
 import 'package:hemerapp/ui/components/webview.dart';
+import 'package:provider/provider.dart';
 
 class PryvProvider with ChangeNotifier {
   final _repository = PryvRepository();
@@ -39,7 +41,9 @@ class PryvProvider with ChangeNotifier {
     }
   }
 
-  Future<bool> pollAuthenticationResult(botName) async {
-    return await _repository.pollAuthenticationResult(pollUrl, botName);
+  Future<bool> pollAuthenticationResult(botName, context) async {
+    var (username, token) = await _repository.pollAuthenticationResult(pollUrl, botName);
+    Provider.of<SecureStorageProvider>(context, listen: false).addCredentials(botName, token, username);
+    return username != null && token != null;
   }
 }

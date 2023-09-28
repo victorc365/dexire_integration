@@ -12,12 +12,28 @@ class SecureStorageProvider with ChangeNotifier {
 
   String get token => _token!;
 
+  Future<void> removeCredentials(botName) async {
+    await _repository.delete(key: botName);
+    notifyListeners();
+  }
+
+  Future<void> removeAllCredentials() async {
+    await _repository.deleteAll();
+    notifyListeners();
+  }
+
   Future<void> addCredentials(botName, token, username) async {
     isLoading = true;
     notifyListeners();
     await _repository.write(key: botName, value: token);
-    await _repository.write(key: 'username', value: token);
+    await _repository.write(key: 'username', value: username);
+    isLoginRequired = false;
     isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> login() async {
+    isLoginRequired = false;
     notifyListeners();
   }
 
