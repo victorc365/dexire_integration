@@ -4,5 +4,10 @@
   "logout": "Logout",
   "profile": "Profile",
   "bots": "Bots",
-  "settings": "Settings"
+  "settings": "Settings",
+  "chats": "chats",
+  "conversations": "conversations",
+  "addNew": "add new",
+  "hintSearch": "search...",
+  "contacts": "contacts"
 }

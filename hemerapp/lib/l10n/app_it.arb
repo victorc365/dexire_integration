@@ -4,5 +4,10 @@
   "logout": "Esci",
   "profile": "Profilo",
   "bots": "Bots",
-  "settings": "Impostazioni"
+  "settings": "Impostazioni",
+  "chats": "chats",
+  "conversations": "conversations",
+  "addNew": "add new",
+  "hintSearch": "search...",
+  "contacts": "contacts"
 }

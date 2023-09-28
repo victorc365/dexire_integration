@@ -4,6 +4,12 @@
   "logout": "Déconnexion",
   "profile": "Profil",
   "bots": "Bots",
-  "settings": "Paramètres"
+  "settings": "Paramètres",
+  "chats": "chats",
+  "conversations": "conversations",
+  "addNew": "add new",
+  "hintSearch": "search...",
+  "contacts": "contacts"
+
 
 }
