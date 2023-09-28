@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:hemerapp/models/bot_model.dart';
 import 'package:hemerapp/providers/messages_provider.dart';
 import 'package:hemerapp/providers/pryv_provider.dart';
 import 'package:hemerapp/providers/secure_storage_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+import 'dart:developer' as developer;
 
 class ChatRoute extends StatefulWidget {
   const ChatRoute({super.key});
@@ -14,13 +18,13 @@ class ChatRoute extends StatefulWidget {
 
 class ChatRouteState extends State<ChatRoute> {
   String username = '';
+  String botStatus = '';
   BotModel? bot;
   late MessagesProvider messagesProvider;
 
   @override
   void initState() {
     super.initState();
-
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       Provider.of<SecureStorageProvider>(context, listen: false)
           .getCredentials(bot?.name)
@@ -99,7 +103,7 @@ class ChatRouteState extends State<ChatRoute> {
                         height: 6,
                       ),
                       Text(
-                        value.isLoading ? "Online" : 'Offline',
+                        botStatus,
                         style: TextStyle(
                           color: Colors.grey.shade600,
                           fontSize: 13,
@@ -119,10 +123,25 @@ class ChatRouteState extends State<ChatRoute> {
         body: Consumer<MessagesProvider>(
           builder: (context, value, child) {
             if (value.isLoading) {
+              SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+                setState(() {
+                  botStatus =AppLocalizations.of(context)!.offline;
+                });
+              });
+
               return const Center(
                 child: CircularProgressIndicator(),
               );
             }
+
+            if (botStatus == AppLocalizations.of(context)!.conversations) {
+              SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+                setState(() {
+                  botStatus = AppLocalizations.of(context)!.conversations;
+                });
+              });
+            }
+
             final messages = value.messages;
             return Stack(
               children: [
@@ -178,11 +197,11 @@ class ChatRouteState extends State<ChatRoute> {
                         const SizedBox(
                           width: 15,
                         ),
-                        const Expanded(
+                         Expanded(
                             child: TextField(
                           decoration: InputDecoration(
-                              hintText: "Write message...",
-                              hintStyle: TextStyle(color: Colors.black54),
+                              hintText: AppLocalizations.of(context)!.hintKeyboard,
+                              hintStyle: const TextStyle(color: Colors.black54),
                               border: InputBorder.none),
                         )),
                         const SizedBox(
