@@ -4,11 +4,8 @@ import 'package:hemerapp/models/bot_model.dart';
 import 'package:hemerapp/models/pryv/authentication/authentication_response_model.dart';
 import 'package:hemerapp/models/pryv/authentication/requested_permission_model.dart';
 import 'package:hemerapp/models/pryv/service_info_model.dart';
-import 'package:hemerapp/repositories/bots_repository.dart';
-import 'package:hemerapp/repositories/pryv_repository.dart';
 import 'package:hemerapp/ui/components/bot_cell.dart';
 import 'package:hemerapp/ui/components/webview.dart';
-import 'package:hemerapp/ui/root/root_route.dart';
 
 class BotsRoute extends StatefulWidget {
   const BotsRoute({super.key});
@@ -39,12 +36,11 @@ class BotRouteState extends State<BotsRoute> {
       await Navigator.push(
           context,
           MaterialPageRoute(
-              builder: (context) => RootRoute(
-                      child: WebView(
+              builder: (context) => WebView(
                     url: authUrl,
                     pollUrl: pollUrl,
                     botName: botName,
-                  ))));
+                  )));
     }
   }
 
@@ -65,7 +61,6 @@ class BotRouteState extends State<BotsRoute> {
                       ),
                       onTap: () async {
                         if (bot.isPryvRequired) {
-                          const storage = FlutterSecureStorage();
                           String? value = await storage.read(key: bot.name);
                           if (value == null) {
                             await _requireAccessFromPryv(

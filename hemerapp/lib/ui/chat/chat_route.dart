@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hemerapp/models/bot_model.dart';
 import 'package:hemerapp/models/message_model.dart';
-import 'package:hemerapp/repositories/bots_repository.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'dart:developer' as developer;
 
 class ChatRoute extends StatefulWidget {
   const ChatRoute({super.key});
@@ -27,6 +27,7 @@ class ChatRouteState extends State<ChatRoute> {
   late BotModel bot;
   late String username;
   late types.User _user;
+  String? currentContext;
 
   final FlutterSecureStorage storage = const FlutterSecureStorage();
 
@@ -62,13 +63,14 @@ class ChatRouteState extends State<ChatRoute> {
                   if (messageModel != null) {
                     // TODO - Modify to use id and timestamp coming from backend
                     // when pryv is added
+                    currentContext = messageModel.metadata!['context'];
                     types.Message message = types.TextMessage(
                       id: uuid.v1(),
                       author: types.User(id: messageModel.sender!),
                       text: jsonDecode(messageModel.body!)['text'],
                       createdAt: DateTime.now().millisecondsSinceEpoch,
                     );
-                    _messages.insert(0, message);
+                    _addMessage(message);
                   }
                 });
               } on Exception catch (e) {
@@ -88,6 +90,9 @@ class ChatRouteState extends State<ChatRoute> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Chat App'),
+      ),
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -101,6 +106,13 @@ class ChatRouteState extends State<ChatRoute> {
                         messages: _messages,
                         onSendPressed: _handleSendPressed,
                         user: _user,
+                        customBottomWidget: Column(
+                          children: [
+                            Row(
+                              children: [BackButton()],
+                            )
+                          ],
+                        ),
                       );
                     }
                     return const Center(
@@ -134,7 +146,8 @@ class ChatRouteState extends State<ChatRoute> {
         _user.id,
         jsonEncode(textMessage.toJson()),
         null,
-        {'target': 'hemerapp'});
+        {'target': 'hemerapp', 'context': currentContext});
+    currentContext = "contextual";
     channel!.sink.add(jsonEncode(formattedMessage));
   }
 }
