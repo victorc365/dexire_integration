@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:hemerapp/providers/bots_provider.dart';
+import 'package:hemerapp/providers/secure_storage_provider.dart';
 import 'package:hemerapp/ui/chat/chats_route.dart';
 import 'package:hemerapp/ui/profile/profile_route.dart';
 import 'package:hemerapp/ui/settings/settings_route.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:provider/provider.dart';
 
 class RootRoute extends StatefulWidget {
   const RootRoute({super.key});
@@ -20,6 +23,17 @@ class _RootRouteState extends State<RootRoute> {
   ];
 
   @override
+  void initState() {
+    Provider.of<SecureStorageProvider>(context, listen: false)
+        .loadUsername()
+        .then((value) {
+      var username =
+          Provider.of<SecureStorageProvider>(context, listen: false).username;
+      Provider.of<BotsProvider>(context, listen: false).getAllBots(username);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
@@ -28,7 +42,16 @@ class _RootRouteState extends State<RootRoute> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
-        onTap: (value) => setState(() => currentIndex = value),
+        onTap: (value) => setState(() {
+          if (value == 0) {
+            var username =
+                Provider.of<SecureStorageProvider>(context, listen: false)
+                    .username;
+            Provider.of<BotsProvider>(context, listen: false)
+                .getAllBots(username);
+          }
+          currentIndex = value;
+        }),
         unselectedItemColor: Colors.grey.shade600,
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
         unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
