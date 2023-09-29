@@ -5,10 +5,11 @@ import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class WebView extends StatefulWidget {
-  const WebView({super.key,
-    required this.url,
-    required this.pollUrl,
-    required this.botName});
+  const WebView(
+      {super.key,
+      required this.url,
+      required this.pollUrl,
+      required this.botName});
 
   final String url;
   final String pollUrl;
@@ -60,23 +61,20 @@ class WebViewState extends State<WebView> {
           if (snapshot.hasData) {
             if (snapshot!.data!) {
               SchedulerBinding.instance.addPostFrameCallback((_) {
-                Navigator.pop(context);
+                Navigator.of(context).pushNamed('/chat');
               });
-
-          } else if (!isRefreshing) {
-            isRefreshing = true;
-            SchedulerBinding.instance
-                .addPostFrameCallback((_) =>
-                setState(() {
-                  _isAuthGranted =
-                      _checkAuth(widget.pollUrl, widget.botName);
-                }));
+            } else if (!isRefreshing) {
+              isRefreshing = true;
+              SchedulerBinding.instance
+                  .addPostFrameCallback((_) => setState(() {
+                        _isAuthGranted =
+                            _checkAuth(widget.pollUrl, widget.botName);
+                      }));
+            }
           }
-        }
-        return Scaffold(
-    body: WebViewWidget(controller: _buildController(widget.url)),
-    );
+          return Scaffold(
+            body: WebViewWidget(controller: _buildController(widget.url)),
+          );
+        });
   }
-
-  );
-}}
+}
