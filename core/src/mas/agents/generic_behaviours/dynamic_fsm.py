@@ -15,6 +15,7 @@ class DynamicState(State):
         super().__init__()
         self.text = config['text']
         self.answers = config['answers'] if 'answers' in config.keys() else None
+        self.answer_type = config['answer_type'] if 'answer_type' in config.keys() else None
         self.transition = config['transition'] if 'transition' in config.keys() else None
 
     async def run(self) -> None:
@@ -26,8 +27,10 @@ class DynamicState(State):
             MessageMetadata.PERFORMATIVE.value: MessagePerformative.INFORM.value,
             MessageMetadata.DIRECTION.value: MessageDirection.OUTGOING.value,
             MessageMetadata.TARGET.value: MessageTarget.HEMERAPP.value,
-            MessageMetadata.CONTEXT.value: MessageContext.PROFILING.value}
-        message.body = json.dumps({'text': f'{self.text}', 'answers': f'{self.answers}'})
+            MessageMetadata.CONTEXT.value: MessageContext.PROFILING.value,
+            MessageMetadata.ANSWER_TYPE.value: self.answer_type,
+            MessageMetadata.ANSWERS.value: self.answers}
+        message.body = self.text
         message.thread = MessageThread.USER_THREAD.value
         await self.send(message)
 

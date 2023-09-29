@@ -4,12 +4,19 @@ description: Profiling questions to know more about the user.
 states:
   - question_1:
       text: What is your name?
+      answer_type: string
       transition: question_2
   - question_2:
       text: What is your surname ?
+      answer_type: string
       transition: question_3
   - question_3:
       text: What is your birth year ?
+      answer_type: integer
       transition: question_4
   - question_4:
       text: What is your gender ?
+      answer_type: options
+      answers:
+        - male
+        - female

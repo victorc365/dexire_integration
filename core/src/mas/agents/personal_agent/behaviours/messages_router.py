@@ -29,7 +29,6 @@ class MessagesRouterBehaviour(CyclicBehaviour):
 
         if message is None:
             return
-
         performative = message.metadata[MessageMetadata.PERFORMATIVE.value]
         if performative == MessagePerformative.INFORM.value:
             context = message.metadata[MessageMetadata.CONTEXT.value]

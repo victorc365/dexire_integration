@@ -6,7 +6,8 @@ class MessageMetadata(Enum):
 
     Each incoming/outgoing message comes with a set of metadata that helps erebots to process them effectively.
     """
-
+    ANSWER_TYPE = 'answer_type'
+    ANSWERS = 'answers'
     CONTEXT = 'context'
     DIRECTION = 'direction'
     TARGET = 'target'
