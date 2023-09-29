@@ -7,12 +7,17 @@ class ProfileRoute extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  Scaffold(
+    return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
             const Expanded(child: Text('Profile route')),
-            ElevatedButton(onPressed: () => Provider.of<SecureStorageProvider>(context, listen: false).removeAllCredentials(), child: Text("logout"))
+            ElevatedButton(
+                onPressed: () {
+                  Provider.of<SecureStorageProvider>(context, listen: false)
+                      .removeAllCredentials();
+                },
+                child: const Text("logout"))
           ],
         ),
       ),
