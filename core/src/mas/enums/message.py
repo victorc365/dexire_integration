@@ -7,9 +7,23 @@ class MessageMetadata(Enum):
     Each incoming/outgoing message comes with a set of metadata that helps erebots to process them effectively.
     """
 
+    CONTEXT = 'context'
     DIRECTION = 'direction'
     TARGET = 'target'
     PERFORMATIVE = 'performative'
+    TYPE = 'type'
+
+
+class MessageContext(Enum):
+    """Enumeration of possible values for the metadata "context" of a Message.
+
+    The context of a message is used to route the message to the correct handler. Each Personal agent has several
+    finite state machines. When a message arrives in the MessageRouter of an agent, it is re-routed according to its
+    context.
+    """
+    PROFILING = 'profiling'
+    CONTEXTUAL = 'contextual'
+    PERSUASION = 'persuasion'
 
 
 class MessageDirection(Enum):
@@ -54,3 +68,15 @@ class MessageType(Enum):
     """
     FREE_SLOTS = 'free_slots'
     AVAILABLE_GATEWAYS = 'available_gateways'
+    OPENED_WEBSOCKET = 'opened_websocket'
+
+
+class MessageThread(Enum):
+    """ Enumeration of the available thread for the messages.
+
+    The thread of the message is used to help the routing of messages inside the platform. When adding a behaviour
+    to an agent, you can provide a template containing the specific thread to which the behaviour should listen to.
+
+    """
+    USER_THREAD = 'user-thread'
+    INTERNAL_THREAD = 'internal-thread'

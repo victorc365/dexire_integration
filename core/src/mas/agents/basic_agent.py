@@ -34,6 +34,7 @@ class BasicSetupBehaviour(OneShotBehaviour):
 class BasicAgent(Agent):
     def __init__(self, name: str):
         self.logger = logging.getLogger(f'[{name}]')
+        self.bot_username = name
         self.id = create_jid(name)
         self.authorized_subscriptions = [AgentType.AMS_AGENT.value, AgentType.DF_AGENT.value]
         self.role = None

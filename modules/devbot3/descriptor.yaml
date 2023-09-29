@@ -1,7 +1,9 @@
 name: devbot3
+description: Three bots for development starts to be a lot...
 url: http://test.com
 isDev: true
 isPryvRequired: true
+hasProfilingBehaviour: false
 requiredPermissions:
   - exercices: read
   - nutrition: manage

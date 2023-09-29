@@ -1,0 +1,15 @@
+name: registering user
+version: 0.0.1
+description: Profiling questions to know more about the user.
+states:
+  - question_1:
+      text: What is your name?
+      transition: question_2
+  - question_2:
+      text: What is your surname ?
+      transition: question_3
+  - question_3:
+      text: What is your birth year ?
+      transition: question_4
+  - question_4:
+      text: What is your gender ?
