@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:hemerapp/models/bot_model.dart';
@@ -9,6 +10,8 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 class MessagesProvider with ChangeNotifier {
   final _repository = BotsRepository();
+  final String target = 'hemerapp';
+  String currentContext = 'contextual';
   bool isLoading = false;
   bool _isConnected = false;
   List<MessageModel> _messages = [];
@@ -43,7 +46,9 @@ class MessagesProvider with ChangeNotifier {
                 channel?.stream.listen((event) {
                   MessageModel messageModel =
                       MessageModel.fromJson(jsonDecode(event));
+                  developer.log(messageModel.body!);
                   _messages.add(messageModel);
+                  currentContext = messageModel.metadata?['context'];
                   notifyListeners();
                 });
               } on Exception {
@@ -61,8 +66,12 @@ class MessagesProvider with ChangeNotifier {
   }
 
   Future<void> sendMessage(MessageModel message) async {
+    message.metadata ??= {};
+    message.metadata?['context'] = currentContext;
+    message.metadata?['target'] = target;
     _messages.add(message);
     channel!.sink.add(jsonEncode(message));
+    currentContext = 'contextual';
     notifyListeners();
   }
 }

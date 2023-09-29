@@ -58,71 +58,7 @@ class ChatRouteState extends State<ChatRoute> {
       }
 
       return Scaffold(
-        appBar: AppBar(
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          backgroundColor: Colors.white,
-          flexibleSpace: SafeArea(
-              child: Container(
-            padding: const EdgeInsets.only(
-              right: 16,
-            ),
-            child: Row(
-              children: [
-                IconButton(
-                  onPressed: () {
-                    Navigator.of(context).pushNamed('/');
-                  },
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(
-                  width: 2,
-                ),
-                CircleAvatar(
-                  backgroundImage: bot?.icon != null
-                      ? NetworkImage(bot!.icon!)
-                      : Image.asset("assets/images/defaultBotIcon.png").image,
-                  maxRadius: 20,
-                ),
-                const SizedBox(
-                  width: 12,
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        bot!.name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 6,
-                      ),
-                      Text(
-                        botStatus,
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 13,
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-                const Icon(
-                  Icons.settings,
-                  color: Colors.black54,
-                )
-              ],
-            ),
-          )),
-        ),
+        appBar: _buildAppBar(context),
         body: Consumer<MessagesProvider>(
           builder: (context, value, child) {
             if (value.isLoading) {
@@ -137,15 +73,15 @@ class ChatRouteState extends State<ChatRoute> {
               );
             }
 
-            if (botStatus == AppLocalizations.of(context)!.conversations) {
+            if (botStatus == AppLocalizations.of(context)!.offline) {
               SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
                 setState(() {
-                  botStatus = AppLocalizations.of(context)!.conversations;
+                  botStatus = AppLocalizations.of(context)!.online;
                 });
               });
             }
 
-            final messages = value.messages;
+            final List<MessageModel> messages = value.messages;
             return Stack(
               children: [
                 //chat bubble view
@@ -218,7 +154,11 @@ class ChatRouteState extends State<ChatRoute> {
                           onPressed: () {
                             if (content.isNotEmpty) {
                               MessageModel message = MessageModel(
-                                  bot?.name, username, content, null, null);
+                                  '${bot?.name}_$username',
+                                  username,
+                                  content,
+                                  null,
+                                  null);
                               value.sendMessage(message);
                               setState(() {
                                 content = '';
@@ -243,5 +183,73 @@ class ChatRouteState extends State<ChatRoute> {
         ),
       );
     });
+  }
+
+  AppBar _buildAppBar(BuildContext context) {
+    return AppBar(
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      backgroundColor: Colors.white,
+      flexibleSpace: SafeArea(
+          child: Container(
+        padding: const EdgeInsets.only(
+          right: 16,
+        ),
+        child: Row(
+          children: [
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).pushNamed('/');
+              },
+              icon: const Icon(
+                Icons.arrow_back,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(
+              width: 2,
+            ),
+            CircleAvatar(
+              backgroundImage: bot?.icon != null
+                  ? NetworkImage(bot!.icon!)
+                  : Image.asset("assets/images/defaultBotIcon.png").image,
+              maxRadius: 20,
+            ),
+            const SizedBox(
+              width: 12,
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    bot!.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 6,
+                  ),
+                  Text(
+                    botStatus,
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 13,
+                    ),
+                  )
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.settings,
+              color: Colors.black54,
+            )
+          ],
+        ),
+      )),
+    );
   }
 }
