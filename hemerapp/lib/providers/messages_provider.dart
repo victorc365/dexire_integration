@@ -22,6 +22,7 @@ class MessagesProvider with ChangeNotifier {
     _messages = [];
     isLoading = true;
     if (channel != null) {
+      channel?.sink.close();
       channel = null;
     }
     notifyListeners();
@@ -64,5 +65,6 @@ class MessagesProvider with ChangeNotifier {
   Future<void> sendMessage(MessageModel message) async {
     _messages.add(message);
     channel!.sink.add(jsonEncode(message));
+    notifyListeners();
   }
 }
