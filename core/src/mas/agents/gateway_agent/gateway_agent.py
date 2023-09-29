@@ -51,5 +51,7 @@ class GatewayAgent(BasicAgent):
                 data = await websocket.receive_text()
                 self.add_behaviour(
                     FormatMessageBehaviour(data, MessageDirection.INCOMING.value, MessageTarget.HEMERAPP.value))
+                print("started")
         except WebSocketDisconnect:
+            print("oups")
             self.clients[bot_user_name] = None

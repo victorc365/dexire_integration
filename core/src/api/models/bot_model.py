@@ -7,6 +7,7 @@ from pydantic import ConfigDict, Field
 
 class BotModel(AbstractModel):
     name: str = Field(description='Name of the Bot')
+    description: str = Field(description='A description of the bot')
     url: str = Field(description='Url of the server serving the bot')
     is_dev: bool = Field(
         description='Indicate wether the bot is still under development or not',

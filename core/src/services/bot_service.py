@@ -22,6 +22,7 @@ class BotProfilingConfig:
 class Bot:
     def __init__(self, data: dict) -> None:
         self.name: str = data.get('name', 'undefined')
+        self.description: str = data.get('description', 'No description')
         self.url: str = data.get('url', 'undefined')
         self.is_dev: bool = data.get('isDev', True)
         self.is_pryv_required: bool = data.get('isPryvRequired', False)
@@ -55,17 +56,21 @@ class BotService(metaclass=Singleton):
     def get_status(self, bot_user_name: str) -> bool:
         return CoreEngine().container.get_agent(create_jid(bot_user_name.lower())).status
 
+    def get_bot_descriptor(self, bot_name: str) -> Bot:
+        descriptor_file = f'{self.bots_folder}/{bot_name}/descriptor.yaml'
+        with open(descriptor_file) as file:
+            data = yaml.load(file, Loader=SafeLoader)
+            bot_descriptor = Bot(data)
+        return bot_descriptor
+
     def get_bot_descriptors(self) -> list[Bot]:
         bots = os.listdir(self.bots_folder)
         bot_descriptors = []
         for bot in bots:
-            descriptor_file = f'{self.bots_folder}/{bot}/descriptor.yaml'
-            with open(descriptor_file) as file:
-                data = yaml.load(file, Loader=SafeLoader)
-                bot_descriptor = Bot(data)
-                bot_descriptors.append(bot_descriptor)
-                if bot_descriptor.name not in self.bots:
-                    self.bots.append(bot_descriptor.name.lower())
+            bot_descriptor = self.get_bot_descriptor(bot)
+            bot_descriptors.append(bot_descriptor)
+            if bot_descriptor.name not in self.bots:
+                self.bots.append(bot_descriptor.name.lower())
         return bot_descriptors
 
     async def connect_to_bot(self, username: str, bot_name: str, token: str) -> None:
@@ -75,6 +80,17 @@ class BotService(metaclass=Singleton):
             self.user_service.create_bot_user(bot_user_name, bot_user_name)
         await CoreEngine().create_personal_agent(bot_user_name, token)
         return self.get_status(bot_user_name)
+
+    def search_user_bots(self, username: str):
+        if username is None:
+            return
+        users: list = self.user_service.search_bots(username)['users']
+        bot_names = [user['username'].split('_')[0] for user in users]
+        bots = []
+        for bot_name in bot_names:
+            descriptor = self.get_bot_descriptor(bot_name)
+            bots.append(descriptor)
+        return bots
 
     def get_bot_profiling(self, bot_name: str):
         bots = os.listdir(self.bots_folder)

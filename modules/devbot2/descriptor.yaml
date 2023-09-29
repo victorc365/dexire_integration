@@ -1,4 +1,5 @@
 name: devbot2
+description: Another bot used for development.
 url: http://test.com
 isDev: true
 isPryvRequired: true

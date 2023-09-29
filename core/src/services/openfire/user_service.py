@@ -4,6 +4,7 @@ import requests
 from fastapi import status
 from enums.environment import Environment
 
+
 class UserService:
     def __init__(self) -> None:
         self.logger = logging.getLogger('[UserService]')
@@ -13,7 +14,7 @@ class UserService:
         self.url = f'http://{url}:{admin_port}/plugins/restapi/v1/users'
         self.headers = {
             'Content-Type': 'application/json; charset=utf-8',
-            'Accept': '*/*',
+            'Accept': 'application/json',
             'Authorization': secret_key
         }
 
@@ -30,7 +31,8 @@ class UserService:
             self.logger.info(f'Bot user {bot_user_name} has been successfully created in XMPP server')
             return True
 
-        self.logger.error(f'Unexpected error creating bot user {bot_user_name}. Request ended with code: {response.status_code}:')
+        self.logger.error(
+            f'Unexpected error creating bot user {bot_user_name}. Request ended with code: {response.status_code}:')
         self.logger.error(f'Error message: {response.text}')
         return False
 
@@ -41,6 +43,16 @@ class UserService:
             self.logger.info(f'Bot user {bot_user_name} has been successfully deleted from XMPP server')
             return True
 
-        self.logger.error(f'Unexpected error deleting bot user {bot_user_name}. Request ended with code: {response.status_code}:')
+        self.logger.error(
+            f'Unexpected error deleting bot user {bot_user_name}. Request ended with code: {response.status_code}:')
         self.logger.error(f'Error message: {response.text}')
         return False
+
+    def search_bots(self, username: str):
+        url = f'{self.url}?search={username}'
+        response = requests.get(url, headers=self.headers)
+        if response.status_code == status.HTTP_200_OK:
+            self.logger.info(f'Retrieve all bots belonging to {username} from xmpp server')
+            return response.json()
+        self.logger.error(
+            f'Unexpected error searching bots belonging to  {username}. Request ended with code: {response.status_code}:')

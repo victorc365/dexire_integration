@@ -25,3 +25,4 @@ class ProfilingFSMBehaviour(DynamicFSMBehaviour):
 
     def setup(self) -> None:
         super().setup()
+        print("setup")
