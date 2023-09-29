@@ -8,6 +8,7 @@ part of 'bot_model.dart';
 
 BotModel _$BotModelFromJson(Map<String, dynamic> json) => BotModel(
       json['name'] as String,
+      json['description'] as String,
       json['icon'] as String?,
       json['url'] as String,
       json['isDev'] as bool? ?? false,
@@ -20,6 +21,7 @@ BotModel _$BotModelFromJson(Map<String, dynamic> json) => BotModel(
 
 Map<String, dynamic> _$BotModelToJson(BotModel instance) => <String, dynamic>{
       'name': instance.name,
+      'description': instance.description,
       'icon': instance.icon,
       'url': instance.url,
       'isDev': instance.isDev,

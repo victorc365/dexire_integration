@@ -7,10 +7,11 @@ enum BotStatus { running }
 
 @JsonSerializable()
 class BotModel {
-  BotModel(this.name, this.icon, this.url, this.isDev, this.isPryvRequired,
+  BotModel(this.name, this.description,this.icon, this.url, this.isDev, this.isPryvRequired,
       this.requiredPermissions);
 
   String name;
+  String description;
   String? icon;
   String url;
   bool isPryvRequired;
