@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:hemerapp/models/bot_model.dart';
+import 'package:hemerapp/models/message_model.dart';
+import 'package:hemerapp/providers/bots_provider.dart';
 import 'package:hemerapp/providers/messages_provider.dart';
 import 'package:hemerapp/providers/pryv_provider.dart';
 import 'package:hemerapp/providers/secure_storage_provider.dart';
@@ -19,12 +21,14 @@ class ChatRoute extends StatefulWidget {
 class ChatRouteState extends State<ChatRoute> {
   String username = '';
   String botStatus = '';
+  String content = '';
   BotModel? bot;
   late MessagesProvider messagesProvider;
 
   @override
   void initState() {
     super.initState();
+    bot = Provider.of<BotsProvider>(context, listen: false).currentBot;
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       Provider.of<SecureStorageProvider>(context, listen: false)
           .getCredentials(bot?.name)
@@ -34,19 +38,18 @@ class ChatRouteState extends State<ChatRoute> {
         if (secureStorage.isLoginRequired) {
           Provider.of<PryvProvider>(context, listen: false)
               .initiateLogin(bot!, context);
+        } else {
+          final token = secureStorage.token;
+          username = secureStorage.username!;
+          Provider.of<MessagesProvider>(context, listen: false)
+              .openChannel(username, bot?.name, token);
         }
-        final token = secureStorage.token;
-        username = secureStorage.username;
-        Provider.of<MessagesProvider>(context, listen: false)
-            .openChannel(username, bot?.name, token);
       });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    bot = ModalRoute.of(context)!.settings.arguments as BotModel;
-
     return Consumer<SecureStorageProvider>(builder: (context, value, child) {
       if (value.isLoading) {
         return const Center(
@@ -68,7 +71,7 @@ class ChatRouteState extends State<ChatRoute> {
               children: [
                 IconButton(
                   onPressed: () {
-                    Navigator.of(context).pop();
+                    Navigator.of(context).pushNamed('/');
                   },
                   icon: const Icon(
                     Icons.arrow_back,
@@ -125,7 +128,7 @@ class ChatRouteState extends State<ChatRoute> {
             if (value.isLoading) {
               SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
                 setState(() {
-                  botStatus =AppLocalizations.of(context)!.offline;
+                  botStatus = AppLocalizations.of(context)!.offline;
                 });
               });
 
@@ -197,10 +200,14 @@ class ChatRouteState extends State<ChatRoute> {
                         const SizedBox(
                           width: 15,
                         ),
-                         Expanded(
+                        Expanded(
                             child: TextField(
+                          onChanged: (value) => setState(() {
+                            content = value;
+                          }),
                           decoration: InputDecoration(
-                              hintText: AppLocalizations.of(context)!.hintKeyboard,
+                              hintText:
+                                  AppLocalizations.of(context)!.hintKeyboard,
                               hintStyle: const TextStyle(color: Colors.black54),
                               border: InputBorder.none),
                         )),
@@ -208,7 +215,16 @@ class ChatRouteState extends State<ChatRoute> {
                           width: 15,
                         ),
                         FloatingActionButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            if (content.isNotEmpty) {
+                              MessageModel message = MessageModel(
+                                  bot?.name!, username, content, null, null);
+                              value.sendMessage(message);
+                              setState(() {
+                                content = '';
+                              });
+                            }
+                          },
                           backgroundColor: Colors.blue,
                           elevation: 0,
                           child: const Icon(

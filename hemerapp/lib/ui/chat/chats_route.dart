@@ -16,9 +16,6 @@ class _ChatsRouteState extends State<ChatsRoute> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      Provider.of<BotsProvider>(context, listen: false).getAllBots();
-    });
   }
 
   @override
@@ -94,16 +91,20 @@ class _ChatsRouteState extends State<ChatsRoute> {
                   child: CircularProgressIndicator(),
                 );
               }
-              final bots = value.bots;
+              final bots = value.contacts;
               return ListView.builder(
                 itemCount: bots.length,
                 shrinkWrap: true,
                 padding: const EdgeInsets.only(top: 16),
                 physics: const NeverScrollableScrollPhysics(),
                 itemBuilder: ((context, index) {
+                  // Todo - remove hardcoded values when returned from backend
                   return GestureDetector(
-                    onTap: (() => Navigator.of(context)
-                        .pushNamed('/chat', arguments: bots[index])),
+                    onTap: (() {
+                      Provider.of<BotsProvider>(context, listen: false)
+                          .currentBot = bots[index];
+                      Navigator.of(context).pushNamed('/chat');
+                    }),
                     child: ConversationList(
                         name: bots[index].name,
                         messageText: "test",

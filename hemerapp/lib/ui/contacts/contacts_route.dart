@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hemerapp/providers/bots_provider.dart';
+import 'package:hemerapp/providers/secure_storage_provider.dart';
 import 'package:hemerapp/ui/chat/conversation.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -18,7 +19,9 @@ class _ContactsRouteState extends State<ContactsRoute> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      Provider.of<BotsProvider>(context, listen: false).getAllBots();
+      var username =
+          Provider.of<SecureStorageProvider>(context, listen: false).username;
+      Provider.of<BotsProvider>(context, listen: false).getAllBots(username);
     });
   }
 
@@ -98,11 +101,15 @@ class _ContactsRouteState extends State<ContactsRoute> {
                   physics: const NeverScrollableScrollPhysics(),
                   itemBuilder: ((context, index) {
                     return GestureDetector(
-                      onTap: (() => Navigator.of(context)
-                          .pushNamed('/chat', arguments: bots[index])),
+                      onTap: (() {
+                        Provider.of<BotsProvider>(context, listen: false)
+                            .currentBot = bots[index];
+                        Navigator.of(context)
+                            .pushNamed('/chat', arguments: bots[index]);
+                      }),
                       child: ConversationList(
                           name: bots[index].name,
-                          messageText: "test",
+                          messageText: bots[index].description,
                           imageURL: bots[index].icon,
                           isMessageRead: null,
                           time: null),
