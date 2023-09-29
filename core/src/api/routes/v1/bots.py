@@ -16,7 +16,6 @@ bot_service: BotService = BotService()
 def get():
     bots: list[Bot] = bot_service.get_bot_descriptors()
     response = [BotModel.model_validate(bot) for bot in bots]
-    print(response)
     return response
 
 @router.get('/contacts',
@@ -27,7 +26,6 @@ def get():
 def get_contacts(username: str | None):
     bots: list[Bot] = bot_service.search_user_bots(username)
     response = [BotModel.model_validate(bot) for bot in bots]
-    print(response)
     return response
 
 @router.post('/{bot_name}/connect',
