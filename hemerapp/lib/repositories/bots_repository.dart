@@ -37,6 +37,20 @@ class BotsRepository {
     }
   }
 
+  Future<List<BotModel>> fetchContacts(String username) async {
+    final uri = Uri.http(
+        _erebotsApiUrl, '$_botsEndpoint/contacts', {'username': username});
+    final response = await http.get(uri);
+    if (response.statusCode == HttpStatus.ok) {
+      final parsedBots = jsonDecode(response.body).cast<Map<String, dynamic>>();
+      return parsedBots
+          .map<BotModel>((json) => BotModel.fromJson(json))
+          .toList();
+    } else {
+      throw Exception("Failed to load contacts");
+    }
+  }
+
   Future<String?> connectToBot(
       String botName, String username, String token) async {
     final uri =
