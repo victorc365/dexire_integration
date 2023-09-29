@@ -7,10 +7,14 @@ class SecureStorageProvider with ChangeNotifier {
   bool isLoginRequired = false;
   String? _username;
 
-  String get username => _username!;
+  String? get username => _username;
   String? _token;
 
   String get token => _token!;
+
+  Future<void> loadUsername() async {
+    _username = await _repository.read(key: 'username');
+  }
 
   Future<void> removeCredentials(botName) async {
     await _repository.delete(key: botName);
