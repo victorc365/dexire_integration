@@ -43,12 +43,10 @@ class MessagesProvider with ChangeNotifier {
                 channel?.stream.listen((event) {
                   MessageModel messageModel =
                       MessageModel.fromJson(jsonDecode(event));
-                  if (messageModel != null) {
-                    _messages.add(messageModel);
-                    notifyListeners();
-                  }
+                  _messages.add(messageModel);
+                  notifyListeners();
                 });
-              } on Exception catch (e) {
+              } on Exception {
                 continue;
               }
             }

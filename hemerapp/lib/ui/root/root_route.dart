@@ -24,6 +24,7 @@ class _RootRouteState extends State<RootRoute> {
 
   @override
   void initState() {
+    super.initState();
     Provider.of<SecureStorageProvider>(context, listen: false)
         .loadUsername()
         .then((value) {

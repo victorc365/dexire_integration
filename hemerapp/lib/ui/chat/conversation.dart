@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
 class ConversationList extends StatefulWidget {
-  String name;
-  String messageText;
-  String? imageURL;
-  String? time;
-  bool? isMessageRead;
+  final String name;
+  final String messageText;
+  final String? imageURL;
+  final String? time;
+  final bool? isMessageRead;
 
-  ConversationList(
+  const ConversationList(
       {super.key,
       required this.name,
       required this.messageText,

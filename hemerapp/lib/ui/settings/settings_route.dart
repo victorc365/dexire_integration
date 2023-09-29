@@ -9,6 +9,7 @@ class SettingsRoute extends StatefulWidget {
 }
 
 class _SettingsRouteState extends State<SettingsRoute> {
+  @override
   Widget build(BuildContext context) {
     return const Scaffold(
       body:  Center(

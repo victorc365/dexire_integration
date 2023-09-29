@@ -59,7 +59,7 @@ class WebViewState extends State<WebView> {
         future: _isAuthGranted,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            if (snapshot!.data!) {
+            if (snapshot.data!) {
               SchedulerBinding.instance.addPostFrameCallback((_) {
                 Navigator.of(context).pushNamed('/chat');
               });
