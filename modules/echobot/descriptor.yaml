@@ -1,0 +1,9 @@
+name: echobot
+description: Simple bot that replies by coping the user message.
+url: http://test.com
+isDev: true
+isPryvRequired: true
+hasProfilingBehaviour: false
+requiredPermissions:
+  - profiling: manage
+  - messages: manage
