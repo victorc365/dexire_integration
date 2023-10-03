@@ -20,8 +20,11 @@ class PersonalAgent(BasicAgent):
         self.subscribed_gateways = []
         self.message_router = MessagesRouterBehaviour()
         self.module_name = bot_user_name.split('_')[0]
-        self.contextual_module = getattr(importlib.import_module(f'modules.{self.module_name}.contextual_fsm'),
-                                         'ContextualFSM')
+        try:
+            self.contextual_module = getattr(importlib.import_module(f'modules.{self.module_name}.contextual_fsm'),
+                                             'ContextualFSM')
+        except ModuleNotFoundError:
+            self.contextual_module = None
 
     async def setup(self):
         await super().setup()
@@ -29,7 +32,9 @@ class PersonalAgent(BasicAgent):
         self.add_behaviour(RegisterToGatewayBehaviour())
         self.add_behaviour(InternalListenerBehaviour(), get_internal_thread_template())
         self.add_behaviour(self.message_router, get_user_thread_template())
-        self.add_contextual_behaviour(MessageContext.CONTEXTUAL.value, self.contextual_module(), get_contextual_fsm_template())
+        if self.contextual_module is not None:
+            self.add_contextual_behaviour(MessageContext.CONTEXTUAL.value, self.contextual_module(),
+                                          get_contextual_fsm_template())
         self.logger.debug('Setup and ready!')
 
     def add_contextual_behaviour(self, context: MessageContext, behaviour, template=None):

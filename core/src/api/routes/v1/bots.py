@@ -24,7 +24,7 @@ def get():
             response_description='List of Bots',
             response_model=list[BotModel])
 def get_contacts(username: str | None):
-    bots: list[Bot] = bot_service.search_user_bots(username)
+    bots: list[Bot] = bot_service.search_user_bots(username.lower())
     response = [BotModel.model_validate(bot) for bot in bots]
     return response
 
