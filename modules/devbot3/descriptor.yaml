@@ -11,7 +11,23 @@ requiredStreams:
       name: exercises
       parent: devbot3
       id: devbot3_exercises
+  - handExercises:
+      name: handExercises
+      parent: devbot3_exercises
+      id: devbot3_handexercises
+  - legExercises:
+      name: legExercises
+      parent: devbot3_exercises
+      id: devbot3_legexercises
   - nutrition:
       name: nutrition
       parent: devbot3
       id: devbot3_nutrition
+  - profiling:
+      name: profiling
+      parent: devbot3
+      id: devbot3_profiling
+  - messages:
+      name: messages
+      parent: devbot3
+      id: devbot3_messages
