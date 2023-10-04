@@ -54,6 +54,7 @@ class InternalListenerBehaviour(CyclicBehaviour):
                 await self._process_available_gateways_message(message)
             case MessageType.OPENED_WEBSOCKET.value:
                 profiling_configuration = BotService().get_bot_profiling(self.agent.id.split('_')[0])
-                self.agent.add_contextual_behaviour(MessageContext.PROFILING.value,
-                                                    ProfilingFSMBehaviour(profiling_configuration),
-                                                    get_profiling_fsm_template())
+                if profiling_configuration is not None:
+                    self.agent.add_contextual_behaviour(MessageContext.PROFILING.value,
+                                                        ProfilingFSMBehaviour(profiling_configuration),
+                                                        get_profiling_fsm_template())
