@@ -92,13 +92,15 @@ class ChatRouteState extends State<ChatRoute> {
                         padding: const EdgeInsets.only(
                             left: 14, right: 14, top: 10, bottom: 10),
                         child: Align(
-                          alignment: messages[index].to == username
-                              ? Alignment.topLeft
-                              : Alignment.topRight,
+                          alignment:
+                              messages[index].to == username.toLowerCase()
+                                  ? Alignment.topLeft
+                                  : Alignment.topRight,
                           child: Container(
                             decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(20),
-                                color: (messages[index].to == username)
+                                color: (messages[index].to ==
+                                        username.toLowerCase())
                                     ? Colors.grey.shade200
                                     : Colors.blue[200]),
                             padding: const EdgeInsets.all(16),

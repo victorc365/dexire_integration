@@ -7,6 +7,7 @@ import 'package:hemerapp/models/bot_model.dart';
 import 'package:hemerapp/models/message_model.dart';
 import 'package:hemerapp/repositories/bots_repository.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'dart:developer' as developer;
 
 class MessagesProvider with ChangeNotifier {
   final _repository = BotsRepository();
