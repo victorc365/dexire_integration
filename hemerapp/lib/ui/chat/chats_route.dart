@@ -13,6 +13,8 @@ class ChatsRoute extends StatefulWidget {
 }
 
 class _ChatsRouteState extends State<ChatsRoute> {
+  String searchQuery = '';
+
   @override
   void initState() {
     super.initState();
@@ -68,6 +70,9 @@ class _ChatsRouteState extends State<ChatsRoute> {
           Padding(
             padding: const EdgeInsets.only(left: 16, top: 16, right: 16),
             child: TextField(
+              onChanged: (value) => setState(() {
+                searchQuery = value;
+              }),
               decoration: InputDecoration(
                   hintText: AppLocalizations.of(context)!.hintSearch,
                   hintStyle: TextStyle(color: Colors.grey.shade600),
@@ -91,7 +96,14 @@ class _ChatsRouteState extends State<ChatsRoute> {
                   child: CircularProgressIndicator(),
                 );
               }
-              final bots = value.contacts;
+              var bots = value.contacts;
+              if (searchQuery.isNotEmpty) {
+                bots = bots
+                    .where((bot) => bot.name
+                    .toLowerCase()
+                    .contains(searchQuery.toLowerCase()))
+                    .toList();
+              }
               return ListView.builder(
                 itemCount: bots.length,
                 shrinkWrap: true,
