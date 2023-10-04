@@ -36,7 +36,7 @@ class Bot:
                     Permission(name, permission, name))
         for required_stream in data.get('requiredStreams'):
             for stream in required_stream.values():
-                self.required_streams.append(Stream(stream['id'],stream['parent'],stream['name']))
+                self.required_streams.append(Stream(stream['id'], stream['parent'], stream['name']))
 
 
 class Stream:
@@ -44,6 +44,7 @@ class Stream:
         self.stream_id = stream_id
         self.default_name = default_name
         self.parent = parent
+
 
 class Permission:
     def __init__(self, stream_id, level, default_name) -> None:
@@ -82,7 +83,7 @@ class BotService(metaclass=Singleton):
                 self.bots.append(bot_descriptor.name.lower())
         return bot_descriptors
 
-    async def connect_to_bot(self, username: str, bot_name: str, token: str) -> None:
+    async def connect_to_bot(self, username: str, bot_name: str, token: str) -> bool:
         bot_user_name = f'{bot_name}_{username}'
         bot_exists = self.user_service.bot_user_exist(bot_user_name)
         descriptor = self.get_bot_descriptor(bot_name)
@@ -90,11 +91,10 @@ class BotService(metaclass=Singleton):
             self.user_service.create_bot_user(bot_user_name, bot_user_name)
             descriptor.is_update_required = True
 
-
         await CoreEngine().create_personal_agent(bot_user_name, token, descriptor)
         return self.get_status(bot_user_name)
 
-    def search_user_bots(self, username: str):
+    def search_user_bots(self, username: str) -> list[Bot]:
         if username is None:
             return
         users: list = self.user_service.search_bots(username)['users']
@@ -105,13 +105,12 @@ class BotService(metaclass=Singleton):
             bots.append(descriptor)
         return bots
 
-    def get_bot_profiling(self, bot_name: str):
-        bots = os.listdir(self.bots_folder)
-        for bot in bots:
-            if bot_name == bot:
-                profiling_file = f'{self.bots_folder}/{bot}/profiling.yaml'
-                with open(profiling_file) as file:
-                    data = yaml.load(file, Loader=SafeLoader)
-                    bot_profiling = BotProfilingConfig(data)
-                    return bot_profiling
-        return None
+    def get_bot_profiling(self, bot_name: str) -> BotProfilingConfig | None:
+        profiling_file = f'{self.bots_folder}/{bot_name}/profiling.yaml'
+        try:
+            with open(profiling_file) as file:
+                data = yaml.load(file, Loader=SafeLoader)
+                bot_profiling = BotProfilingConfig(data)
+                return bot_profiling
+        except FileNotFoundError:
+            return None
