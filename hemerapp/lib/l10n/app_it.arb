@@ -12,5 +12,6 @@
   "hintKeyboard": "Write message...",
   "contacts": "contacts",
   "offline": "offline",
-  "online": "online"
+  "online": "online",
+  "languages": "Languages"
 }
