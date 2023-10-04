@@ -45,10 +45,10 @@ class CoreEngine(metaclass=Singleton):
             await spade.wait_until_finished(self.agents)
         await self.ams_agent.stop_agents()
 
-    async def create_personal_agent(self, bot_user_name: str, token: str):
+    async def create_personal_agent(self, bot_user_name: str, token: str, descriptor):
         # TODO - Find a way to solve the circular dependency which does not imply to put import here
         from mas.agents.personal_agent.personal_agent import PersonalAgent
-        await self._create_agent(PersonalAgent(bot_user_name, bot_user_name, token))
+        await self._create_agent(PersonalAgent(bot_user_name, bot_user_name, token, descriptor))
 
     async def create_gateway_agent(self, name: str):
         # TODO - Find a way to solve the circular dependency which does not imply to put import here

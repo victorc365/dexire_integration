@@ -21,7 +21,7 @@ class ForwardMessageBehaviour(OneShotBehaviour):
         match direction:
             case MessageDirection.INCOMING.value:
                 self.message.sender = self.agent.id
-                await self.send(self.message)   
+                await self.send(self.message)
             case MessageDirection.OUTGOING.value:
                 to = self.message.sender
                 websocket = self.agent.clients[to]

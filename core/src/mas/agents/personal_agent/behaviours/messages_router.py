@@ -1,5 +1,5 @@
 from spade.behaviour import CyclicBehaviour
-from mas.enums.message import MessageMetadata, MessagePerformative, MessageContext
+from mas.enums.message import MessageMetadata, MessagePerformative, MessageContext, MessageThread
 
 
 class MessagesRouterBehaviour(CyclicBehaviour):
@@ -29,6 +29,10 @@ class MessagesRouterBehaviour(CyclicBehaviour):
 
         if message is None:
             return
+
+        if message.thread == MessageThread.USER_THREAD.value:
+            self.agent.persistence_service.save_message_to_history(message)
+
         performative = message.metadata[MessageMetadata.PERFORMATIVE.value]
         if performative == MessagePerformative.INFORM.value:
             context = message.metadata[MessageMetadata.CONTEXT.value]

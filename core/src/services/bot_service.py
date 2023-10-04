@@ -1,5 +1,4 @@
 import os
-from typing import List
 
 import yaml
 from yaml.loader import SafeLoader
@@ -27,14 +26,24 @@ class Bot:
         self.is_dev: bool = data.get('isDev', True)
         self.is_pryv_required: bool = data.get('isPryvRequired', False)
         self.has_profiling_behaviour: bool = data.get('hasProfilingBehaviour', False)
-        self.required_permissions: List[Permission] = []
+        self.required_permissions: list[Permission] = []
+        self.required_streams: list[str] = []
+        self.is_update_required: bool = data.get('isUpdateRequired', False)
 
         for required_permission in data.get('requiredPermissions'):
             for name, permission in required_permission.items():
-                stream_id = f'{self.name}_{name}'
                 self.required_permissions.append(
-                    Permission(stream_id, permission, name))
+                    Permission(name, permission, name))
+        for required_stream in data.get('requiredStreams'):
+            for stream in required_stream.values():
+                self.required_streams.append(Stream(stream['id'],stream['parent'],stream['name']))
 
+
+class Stream:
+    def __init__(self, stream_id, parent, default_name) -> None:
+        self.stream_id = stream_id
+        self.default_name = default_name
+        self.parent = parent
 
 class Permission:
     def __init__(self, stream_id, level, default_name) -> None:
@@ -76,9 +85,13 @@ class BotService(metaclass=Singleton):
     async def connect_to_bot(self, username: str, bot_name: str, token: str) -> None:
         bot_user_name = f'{bot_name}_{username}'
         bot_exists = self.user_service.bot_user_exist(bot_user_name)
+        descriptor = self.get_bot_descriptor(bot_name)
         if not bot_exists:
             self.user_service.create_bot_user(bot_user_name, bot_user_name)
-        await CoreEngine().create_personal_agent(bot_user_name, token)
+            descriptor.is_update_required = True
+
+
+        await CoreEngine().create_personal_agent(bot_user_name, token, descriptor)
         return self.get_status(bot_user_name)
 
     def search_user_bots(self, username: str):

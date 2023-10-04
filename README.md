@@ -81,10 +81,17 @@ EREBOTS 3.0 is a scenario and platform agnostic multi-agent chatbot system. Able
 | HOST_LOG_DIRECTORY_PATH     | CORE                  | Path to the directory where the logs are stored on the host system.     |
 | LOG_LEVEL                   | CORE                  | Level of the log system. Can be INFO / WARNING / ERROR / DEBUG          |
 
+### Pryv Database Configuration
+
+| Name                         | Project               | Description                                       |
+|------------------------------|-----------------------|---------------------------------------------------|
+| PRYV_SERVER_URL              | CORE                  | Base URL to access Pryv API                       |
+| PRYV_PROJECT_ID              | CORE                  | Name of the application in pryv                   | 
+
 ### Miscellaneous
 
-| Name                       | Project | Description                                                                   |
-|----------------------------|---------|-------------------------------------------------------------------------------|
-| SPADE_PORT                 | CORE    | Port where the API of erebot is listening                                     |
+| Name                       | Project | Description                                                                     |
+|----------------------------|---------|---------------------------------------------------------------------------------|
+| SPADE_PORT                 | CORE    | Port where the API of erebot is listening                                       |
 | MODULE_DIRECTORY_PATH      | CUSTOM  | Directory containing the custom FSMs configuration known as "bots" for the user |
-| MAXIMUM_CLIENT_PER_GATEWAY | CORE    | Maximum number of active websocket connection per gateway agent               |
+| MAXIMUM_CLIENT_PER_GATEWAY | CORE    | Maximum number of active websocket connection per gateway agent                 |

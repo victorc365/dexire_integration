@@ -5,22 +5,25 @@ from mas.enums.message import MessageThread, MessageMetadata, MessageDirection, 
 
 
 class SendHemerappOutgoingMessageBehaviour(OneShotBehaviour):
-    def __init__(self, to, sender, body, performative) -> None:
+    def __init__(self, to, sender, body, performative, metadata: dict) -> None:
         super().__init__()
+        metadata.update({
+            MessageMetadata.PERFORMATIVE.value: performative,
+            MessageMetadata.TARGET.value: MessageTarget.HEMERAPP.value,
+            MessageMetadata.DIRECTION.value: MessageDirection.OUTGOING.value
+        })
         self.message = Message(
             to=to,
             sender=sender,
             body=body,
             thread=MessageThread.USER_THREAD.value,
-            metadata={
-                MessageMetadata.PERFORMATIVE.value: performative,
-                MessageMetadata.TARGET.value: MessageTarget.HEMERAPP.value,
-                MessageMetadata.DIRECTION.value: MessageDirection.OUTGOING.value
-            }
+            metadata=metadata
         )
 
     async def run(self) -> None:
+        self.agent.persistence_service.save_message_to_history(self.message)
         await self.send(self.message)
+
 
 class SendHemerappIncomingMessageBehaviour(OneShotBehaviour):
     def __init__(self, to, sender, body, performative) -> None:

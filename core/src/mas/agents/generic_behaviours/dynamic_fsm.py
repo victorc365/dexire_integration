@@ -2,6 +2,7 @@ import asyncio
 
 from spade.behaviour import FSMBehaviour, State
 
+from mas.agents.generic_behaviours.send_message_behaviour import SendHemerappOutgoingMessageBehaviour
 from mas.enums.message import MessageThread, MessageMetadata, MessagePerformative, MessageDirection, MessageTarget, \
     MessageContext
 from services.chat_service import ChatService
@@ -20,19 +21,22 @@ class DynamicState(State):
 
     async def run(self) -> None:
         gateway = ChatService().get_gateway(self.agent.id)
-        message = Message()
-        message.to = gateway
-        message.sender = self.agent.id
-        message.metadata = {
-            MessageMetadata.PERFORMATIVE.value: MessagePerformative.INFORM.value,
-            MessageMetadata.DIRECTION.value: MessageDirection.OUTGOING.value,
-            MessageMetadata.TARGET.value: MessageTarget.HEMERAPP.value,
+        metadata = {
             MessageMetadata.CONTEXT.value: MessageContext.PROFILING.value,
             MessageMetadata.ANSWER_TYPE.value: self.answer_type,
-            MessageMetadata.ANSWERS.value: self.answers}
-        message.body = self.text
-        message.thread = MessageThread.USER_THREAD.value
-        await self.send(message)
+        }
+
+        if self.answers is not None:
+            metadata[MessageMetadata.ANSWERS.value] = self.answers
+
+        behaviour = SendHemerappOutgoingMessageBehaviour(
+            to=gateway,
+            sender=self.agent.id,
+            body=self.text,
+            performative=MessagePerformative.INFORM.value,
+            metadata=metadata
+        )
+        self.agent.add_behaviour(behaviour)
 
         while self.mailbox_size() == 0:
             await asyncio.sleep(1)
