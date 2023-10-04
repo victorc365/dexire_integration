@@ -5,5 +5,13 @@ isDev: true
 isPryvRequired: true
 hasProfilingBehaviour: false
 requiredPermissions:
-  - exercices: read
-  - nutrition: manage
+  - devbot3: manage
+requiredStreams:
+  - exercises:
+      name: exercises
+      parent: devbot3
+      id: devbot3_exercises
+  - nutrition:
+      name: nutrition
+      parent: devbot3
+      id: devbot3_nutrition

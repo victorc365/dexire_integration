@@ -5,5 +5,13 @@ isDev: true
 isPryvRequired: false
 hasProfilingBehaviour: true
 requiredPermissions:
-  - diary: read
-  - test: read
+  - devbot: manage
+requiredStreams:
+  - diary:
+      name: diary
+      parent: devbot
+      id: devbot_diary
+  - test:
+      name: test
+      parent: devbot
+      id: devbot_test

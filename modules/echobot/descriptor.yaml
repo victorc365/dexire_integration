@@ -5,5 +5,13 @@ isDev: true
 isPryvRequired: true
 hasProfilingBehaviour: false
 requiredPermissions:
-  - profiling: manage
-  - messages: manage
+  - echobot: manage
+requiredStreams:
+  - profiling:
+      name: profiling
+      parent: echobot
+      id: echobot_profiling
+  - messages:
+      name: messages
+      parent: echobot
+      id: echobot_messages
