@@ -25,3 +25,8 @@ class ProfilingFSMBehaviour(DynamicFSMBehaviour):
 
     def setup(self) -> None:
         super().setup()
+
+    async def on_end(self) -> None:
+        profile = self.agent.profile
+        persistence_service = self.agent.persistence_service
+        persistence_service.save_data(profile, 'profiling')
