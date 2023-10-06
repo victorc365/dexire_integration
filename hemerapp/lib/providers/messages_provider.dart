@@ -48,8 +48,20 @@ class MessagesProvider with ChangeNotifier {
                   MessageModel messageModel =
                       MessageModel.fromJson(jsonDecode(event));
                   developer.log(messageModel.body!);
-                  _messages.add(messageModel);
-                  currentContext = messageModel.metadata?['context'];
+                  String context = messageModel.metadata?['context'];
+                  if(context == 'history') {
+                    List<dynamic> jsonHistory = jsonDecode(messageModel.body!);
+                    List<MessageModel> history = [];
+                    for(var hist in jsonHistory) {
+                      var m = MessageModel(hist['to'], hist['sender'], hist['body'], null, null);
+                      history.add(m);
+                    }
+                    _messages.insertAll(0, history);
+                  } else {
+                    _messages.add(messageModel);
+                  }
+
+                  currentContext = context;
                   notifyListeners();
                 });
               } on Exception {
