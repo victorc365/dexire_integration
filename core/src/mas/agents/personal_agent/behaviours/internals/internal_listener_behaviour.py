@@ -57,23 +57,20 @@ class InternalListenerBehaviour(CyclicBehaviour):
             case MessageType.OPENED_WEBSOCKET.value:
                 gateway = message.sender
                 history = self.agent.persistence_service.get_history()
+                message = json.dumps(history)
+                metadata = {MessageMetadata.CONTEXT.value: MessageContext.HISTORY.value}
                 if len(history) == 0:
                     # send welcome message
                     message = BotService().get_welcome_message(self.agent.id.split('_')[0])
-                    self.agent.add_behaviour(SendHemerappOutgoingMessageBehaviour(
-                        to=gateway,
-                        sender=self.agent.id,
-                        body=message,
-                        performative=MessagePerformative.INFORM.value,
-                        metadata={
-                            MessageMetadata.CONTEXT.value: MessageContext.WELCOMING.value
-                        }
-                    ))
-                    print(message)
-                else:
-                    # send history
-                    pass
+                    metadata = {MessageMetadata.CONTEXT.value: MessageContext.WELCOMING.value}
 
+                self.agent.add_behaviour(SendHemerappOutgoingMessageBehaviour(
+                    to=gateway,
+                    sender=self.agent.id,
+                    body=message,
+                    performative=MessagePerformative.INFORM.value,
+                    metadata=metadata
+                ))
                 profiling_configuration = BotService().get_bot_profiling(self.agent.id.split('_')[0])
                 if profiling_configuration is not None:
                     self.agent.add_contextual_behaviour(MessageContext.PROFILING.value,

@@ -112,5 +112,5 @@ class PryvPersistenceService(AbstractPersistenceService):
                 sender=sender,
                 body=body
             )
-            messages.append(message)
+            messages.append(message.__dict__)
         return messages

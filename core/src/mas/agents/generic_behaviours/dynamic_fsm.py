@@ -25,9 +25,9 @@ class DynamicState(State):
             MessageMetadata.CONTEXT.value: MessageContext.PROFILING.value,
             MessageMetadata.ANSWER_TYPE.value: self.answer_type,
         }
-
+        print(json.dumps(self.answers))
         if self.answers is not None:
-            metadata[MessageMetadata.ANSWERS.value] = self.answers
+            metadata[MessageMetadata.ANSWERS.value] = json.dumps(self.answers)
 
         behaviour = SendHemerappOutgoingMessageBehaviour(
             to=gateway,
