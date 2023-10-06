@@ -10,10 +10,10 @@ class BotModel(AbstractModel):
     description: str = Field(description='A description of the bot')
     url: str = Field(description='Url of the server serving the bot')
     is_dev: bool = Field(
-        description='Indicate wether the bot is still under development or not',
+        description='Indicate whether the bot is still under development or not',
         alias='isDev')
     is_pryv_required: bool = Field(
-        description='Indicate wether the bot is using pryv as database.',
+        description='Indicate weather the bot is using pryv as database.',
         alias='isPryvRequired'
     )
     required_permissions: List[RequiredPermissionModel] = Field(
@@ -22,7 +22,7 @@ class BotModel(AbstractModel):
     )
     model_config = ConfigDict(json_schema_extra={
         'name': 'DevBot',
-        'url': 'http://my-url.com',
+        'url': 'https://my-url.com',
         'isDev': True,
         'isPryvRequired': True,
         'required_permissions': [
