@@ -1,7 +1,7 @@
 from spade.behaviour import OneShotBehaviour
 from spade.message import Message
 
-from mas.enums.message import MessageThread, MessageMetadata, MessageDirection, MessageTarget
+from mas.enums.message import MessageThread, MessageMetadata, MessageDirection, MessageTarget, MessageContext
 
 
 class SendHemerappOutgoingMessageBehaviour(OneShotBehaviour):
@@ -21,7 +21,10 @@ class SendHemerappOutgoingMessageBehaviour(OneShotBehaviour):
         )
 
     async def run(self) -> None:
-        self.agent.persistence_service.save_message_to_history(self.message)
+        is_persisted_message = not self.message.get_metadata(
+            MessageMetadata.CONTEXT.value) == MessageContext.HISTORY.value
+        if is_persisted_message:
+            self.agent.persistence_service.save_message_to_history(self.message)
         await self.send(self.message)
 
 

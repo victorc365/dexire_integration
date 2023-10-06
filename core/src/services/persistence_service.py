@@ -109,7 +109,8 @@ class PryvPersistenceService(AbstractPersistenceService):
         params = {
             'streams': f'{self.module_name}_messages',
             'skip': skip,
-            'limit': limit
+            'limit': limit,
+            'sortAscending': True
         }
         response = requests.get(url, params=params, headers=self.headers)
 
@@ -124,12 +125,12 @@ class PryvPersistenceService(AbstractPersistenceService):
             to = bot_name if bot_name in content['_to'] else self.username
             sender = bot_name if bot_name in content['_sender'] else self.username
             body = content['_body']
-            message = Message(
-                to=to,
-                sender=sender,
-                body=body
-            )
-            messages.append(message.__dict__)
+            message = {
+                'to':str(to),
+                'sender':str(sender),
+                'body':body
+            }
+            messages.append(message)
         return messages
 
     def get_profile(self) -> dict:
