@@ -71,8 +71,10 @@ class InternalListenerBehaviour(CyclicBehaviour):
                     performative=MessagePerformative.INFORM.value,
                     metadata=metadata
                 ))
-                profiling_configuration = BotService().get_bot_profiling(self.agent.id.split('_')[0])
-                if profiling_configuration is not None:
-                    self.agent.add_contextual_behaviour(MessageContext.PROFILING.value,
-                                                        ProfilingFSMBehaviour(profiling_configuration),
-                                                        get_profiling_fsm_template())
+
+                if len(self.agent.profile) == 0:
+                    profiling_configuration = BotService().get_bot_profiling(self.agent.id.split('_')[0])
+                    if profiling_configuration is not None:
+                        self.agent.add_contextual_behaviour(MessageContext.PROFILING.value,
+                                                            ProfilingFSMBehaviour(profiling_configuration),
+                                                            get_profiling_fsm_template())
