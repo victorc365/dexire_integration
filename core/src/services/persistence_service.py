@@ -1,3 +1,4 @@
+import json
 from abc import ABC, abstractmethod
 from enums.environment import Environment
 from http import HTTPStatus
@@ -69,7 +70,19 @@ class PryvPersistenceService(AbstractPersistenceService):
                 raise Exception(f'Stream not created: {response.status_code}/{response.text}')
 
     def save_data(self, data, table: str):
-        pass
+        url = f'{self.url}/events'
+        event = {
+            'streamIds': [f'{self.module_name}_{table}'],
+            'type': 'profile/json',
+            'content': json.dumps(data)
+        }
+
+        response = requests.post(url, json=event, headers=self.headers)
+
+        if response.status_code == HTTPStatus.BAD_REQUEST:
+            raise ValueError(f'Pryv Create Event with Invalid input: {response.status_code}/{response.text}')
+        if response.status_code != HTTPStatus.CREATED:
+            raise Exception(f'Event not created: {response.status_code}/{response.text}')
 
     def save_message_to_history(self, message: Message) -> None:
         url = f'{self.url}/events'
@@ -91,7 +104,7 @@ class PryvPersistenceService(AbstractPersistenceService):
         url = f'{self.url}/events'
         params = {
             'streams': f'{self.module_name}_messages',
-            'skip': 1,
+            'skip': skip,
             'limit': limit
         }
         response = requests.get(url, params=params, headers=self.headers)

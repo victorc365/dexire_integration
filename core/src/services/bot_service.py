@@ -15,6 +15,7 @@ class BotProfilingConfig:
         self.name: str = data.get('name', 'undefined')
         self.version: str = data.get('version', 'undefined')
         self.description: str = data.get('description', 'undefined')
+        self.invalid_answer_message: str = data.get('invalid_answer_message', None)
         self.states: dict = data.get('states', 'undefined')
 
 
