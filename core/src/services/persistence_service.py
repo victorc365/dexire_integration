@@ -3,7 +3,7 @@ from enums.environment import Environment
 from http import HTTPStatus
 import requests
 import os
-
+from spade.message import Message
 from mas.enums.message import MessageMetadata
 
 
@@ -31,8 +31,19 @@ class AbstractPersistenceService(ABC):
         """Deploy the provided database model"""
         pass
 
+    @abstractmethod
+    def get_history(self, skip: int = 0, limit: int = 10) -> list[Message]:
+        """ Get the history of the messages in the conversation.
 
-# Todo - check bug that token does not give right permissions the first time we receive it.
+            Get the history of messages in the conversation from your database.
+            The returned array of messages is sorted from newest to oldest.
+
+            skip: The number of items to skip in the results.
+            limit: The number of items to return in the results
+        """
+        pass
+
+
 class PryvPersistenceService(AbstractPersistenceService):
 
     def __init__(self, username: str, module_name: str, token: str):
@@ -60,7 +71,7 @@ class PryvPersistenceService(AbstractPersistenceService):
     def save_data(self, data, table: str):
         pass
 
-    def save_message_to_history(self, message):
+    def save_message_to_history(self, message: Message) -> None:
         url = f'{self.url}/events'
         pryv_type = message.get_metadata(MessageMetadata.CONTEXT.value)
         event = {
@@ -75,3 +86,31 @@ class PryvPersistenceService(AbstractPersistenceService):
             raise ValueError(f'Pryv Create Event with Invalid input: {response.status_code}/{response.text}')
         if response.status_code != HTTPStatus.CREATED:
             raise Exception(f'Message Event not created: {response.status_code}/{response.text}')
+
+    def get_history(self, skip: int = 0, limit: int = 10) -> list[Message]:
+        url = f'{self.url}/events'
+        params = {
+            'streams': f'{self.module_name}_messages',
+            'skip': 1,
+            'limit': limit
+        }
+        response = requests.get(url, params=params, headers=self.headers)
+
+        if response.status_code != HTTPStatus.OK:
+            raise Exception(f'Exception while getting history of conversation: {response.status_code}/{response.text}')
+
+        data = response.json()
+        messages = []
+        bot_name = f'{self.module_name}_{self.username}'
+        for event in data['events']:
+            content = event['content']
+            to = bot_name if bot_name in content['_to'] else self.username
+            sender = bot_name if bot_name in content['_sender'] else self.username
+            body = content['_body']
+            message = Message(
+                to=to,
+                sender=sender,
+                body=body
+            )
+            messages.append(message)
+        return messages

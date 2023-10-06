@@ -13,7 +13,7 @@ class SendHemerappOutgoingMessageBehaviour(OneShotBehaviour):
             MessageMetadata.DIRECTION.value: MessageDirection.OUTGOING.value
         })
         self.message = Message(
-            to=to,
+            to=str(to),
             sender=sender,
             body=body,
             thread=MessageThread.USER_THREAD.value,
