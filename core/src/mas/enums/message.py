@@ -22,6 +22,7 @@ class MessageContext(Enum):
     finite state machines. When a message arrives in the MessageRouter of an agent, it is re-routed according to its
     context.
     """
+    WELCOMING = 'welcoming'
     PROFILING = 'profiling'
     CONTEXTUAL = 'contextual'
     PERSUASION = 'persuasion'

@@ -2,12 +2,14 @@ import json
 
 from spade.behaviour import CyclicBehaviour
 from enums.status import Status
+from mas.agents.generic_behaviours.send_message_behaviour import SendHemerappOutgoingMessageBehaviour
 from mas.agents.personal_agent.behaviours.internals.register_to_gateway_behaviour import FreeSlotGatewayRequestMessage
 from mas.agents.personal_agent.behaviours.profiling_fsm import ProfilingFSMBehaviour
 from mas.enums.message import MessagePerformative, MessageType, MessageMetadata, MessageContext
 from services.bot_service import BotService
 from services.chat_service import ChatService
 from utils.communication_utils import get_profiling_fsm_template
+from spade.message import Message
 
 
 class InternalListenerBehaviour(CyclicBehaviour):
@@ -41,7 +43,7 @@ class InternalListenerBehaviour(CyclicBehaviour):
                     self.presence.subscribe(self.agent.last_gateway)
 
     async def run(self) -> None:
-        message = await self.receive(timeout=1)
+        message: Message = await self.receive(timeout=1)
 
         if message is None:
             return
@@ -53,6 +55,25 @@ class InternalListenerBehaviour(CyclicBehaviour):
             case MessageType.AVAILABLE_GATEWAYS.value:
                 await self._process_available_gateways_message(message)
             case MessageType.OPENED_WEBSOCKET.value:
+                gateway = message.sender
+                history = self.agent.persistence_service.get_history()
+                if len(history) == 0:
+                    # send welcome message
+                    message = BotService().get_welcome_message(self.agent.id.split('_')[0])
+                    self.agent.add_behaviour(SendHemerappOutgoingMessageBehaviour(
+                        to=gateway,
+                        sender=self.agent.id,
+                        body=message,
+                        performative=MessagePerformative.INFORM.value,
+                        metadata={
+                            MessageMetadata.CONTEXT.value: MessageContext.WELCOMING.value
+                        }
+                    ))
+                    print(message)
+                else:
+                    # send history
+                    pass
+
                 profiling_configuration = BotService().get_bot_profiling(self.agent.id.split('_')[0])
                 if profiling_configuration is not None:
                     self.agent.add_contextual_behaviour(MessageContext.PROFILING.value,

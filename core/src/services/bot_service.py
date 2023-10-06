@@ -27,7 +27,7 @@ class Bot:
         self.is_pryv_required: bool = data.get('isPryvRequired', False)
         self.has_profiling_behaviour: bool = data.get('hasProfilingBehaviour', False)
         self.required_permissions: list[Permission] = []
-        self.required_streams: list[str] = []
+        self.required_streams: list[Stream] = []
         self.is_update_required: bool = data.get('isUpdateRequired', False)
 
         for required_permission in data.get('requiredPermissions'):
@@ -94,7 +94,7 @@ class BotService(metaclass=Singleton):
         await CoreEngine().create_personal_agent(bot_user_name, token, descriptor)
         return self.get_status(bot_user_name)
 
-    def search_user_bots(self, username: str) -> list[Bot]:
+    def search_user_bots(self, username: str) -> list[Bot] | None:
         if username is None:
             return
         users: list = self.user_service.search_bots(username)['users']
@@ -112,5 +112,14 @@ class BotService(metaclass=Singleton):
                 data = yaml.load(file, Loader=SafeLoader)
                 bot_profiling = BotProfilingConfig(data)
                 return bot_profiling
+        except FileNotFoundError:
+            return None
+
+    def get_welcome_message(self, bot_name: str) -> str:
+        welcome_file = f'{self.bots_folder}/{bot_name}/welcome.txt'
+        try:
+            with open(welcome_file) as file:
+                message = file.read()
+                return message
         except FileNotFoundError:
             return None
