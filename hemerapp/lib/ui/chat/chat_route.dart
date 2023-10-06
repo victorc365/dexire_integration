@@ -189,6 +189,43 @@ class ChatRouteState extends State<ChatRoute> {
 
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
+      actions: [
+        PopupMenuButton<MenuItem>(
+            onSelected: (value) {
+              switch (value) {
+                case MenuItem.profile:
+                  break;
+                case MenuItem.feedback:
+                  break;
+                case MenuItem.delete:
+                  break;
+                case MenuItem.logout:
+                  Provider.of<SecureStorageProvider>(context, listen: false)
+                      .removeCredentials(bot?.name);
+                  Navigator.of(context).pushNamed('/');
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: MenuItem.profile,
+                    child: Text('My Profile'),
+                  ),
+                  const PopupMenuItem(
+                    value: MenuItem.feedback,
+                    child: Text('Feedback'),
+                  ),
+                  const PopupMenuItem(
+                    value: MenuItem.logout,
+                    child: Text('Log out'),
+                  ),
+                  const PopupMenuItem(
+                    value: MenuItem.delete,
+                    child: Text('Delete'),
+                  ),
+                ]),
+      ],
+      iconTheme: const IconThemeData(color: Colors.black),
       elevation: 0,
       automaticallyImplyLeading: false,
       backgroundColor: Colors.white,
@@ -245,13 +282,11 @@ class ChatRouteState extends State<ChatRoute> {
                 ],
               ),
             ),
-            const Icon(
-              Icons.settings,
-              color: Colors.black54,
-            )
           ],
         ),
       )),
     );
   }
 }
+
+enum MenuItem { profile, feedback, logout, delete }
