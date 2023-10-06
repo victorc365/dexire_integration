@@ -44,6 +44,10 @@ class AbstractPersistenceService(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_profile(self) -> dict:
+        pass
+
 
 class PryvPersistenceService(AbstractPersistenceService):
 
@@ -127,3 +131,20 @@ class PryvPersistenceService(AbstractPersistenceService):
             )
             messages.append(message.__dict__)
         return messages
+
+    def get_profile(self) -> dict:
+        url = f'{self.url}/events'
+        params = {
+            'streams': f'{self.module_name}_profiling'
+        }
+
+        response = requests.get(url, params=params, headers=self.headers)
+
+        if response.status_code != HTTPStatus.OK:
+            raise Exception(f'Exception while getting history of conversation: {response.status_code}/{response.text}')
+        data = response.json()
+        events = data['events']
+        if len(events) == 0:
+            return {}
+
+        return events[0]['content']

@@ -23,7 +23,7 @@ class PersonalAgent(BasicAgent):
         self.message_router = MessagesRouterBehaviour()
         self.module_name, self.user = bot_user_name.split('_', 1)
         self.persistence_service = PryvPersistenceService(self.user, self.module_name, token)
-        self.profile = {}
+        self.profile = self.persistence_service.get_profile()
         if descriptor is not None and descriptor.is_update_required:
             self.persistence_service.deploy_model(descriptor.required_streams)
         try:
