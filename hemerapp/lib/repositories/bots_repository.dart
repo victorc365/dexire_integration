@@ -28,10 +28,7 @@ class BotsRepository {
     final uri = Uri.http(_erebotsApiUrl, _botsEndpoint, null);
     final response = await http.get(uri);
     if (response.statusCode == HttpStatus.ok) {
-      final parsedBots = jsonDecode(response.body).cast<Map<String, dynamic>>();
-      return parsedBots
-          .map<BotModel>((json) => BotModel.fromJson(json))
-          .toList();
+      return parseBotsJson(response.body);
     } else {
       throw Exception("Failed to load bots");
     }
@@ -42,12 +39,20 @@ class BotsRepository {
         _erebotsApiUrl, '$_botsEndpoint/contacts', {'username': username});
     final response = await http.get(uri);
     if (response.statusCode == HttpStatus.ok) {
-      final parsedBots = jsonDecode(response.body).cast<Map<String, dynamic>>();
+      return parseBotsJson(response.body);
+    } else {
+      throw Exception("Failed to load contacts");
+    }
+  }
+
+  List<BotModel> parseBotsJson(json) {
+    try {
+      final parsedBots = jsonDecode(json).cast<Map<String, dynamic>>();
       return parsedBots
           .map<BotModel>((json) => BotModel.fromJson(json))
           .toList();
-    } else {
-      throw Exception("Failed to load contacts");
+    } on Exception catch (_) {
+      throw Exception("Impossible to parse received JSON");
     }
   }
 

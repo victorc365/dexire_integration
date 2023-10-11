@@ -19,12 +19,8 @@ class PryvRepository {
     _headers = {HttpHeaders.contentTypeHeader: 'application/json'};
   }
 
-  Future<AuthenticationResponseModel> postAuthenticationRequest(
-      String url,
-      String botName,
-      List<RequestedPermissionModel> requestedPermissions) async {
+  (String, String) handlePryvUrl(url) {
     String endpoint = '';
-
     if (url.contains("https://")) {
       url = url.replaceAll("https://", "");
     }
@@ -32,6 +28,16 @@ class PryvRepository {
       endpoint = url.substring(url.indexOf("/"), url.length);
       url = url.substring(0, url.indexOf("/"));
     }
+    return (url, endpoint);
+  }
+
+  Future<AuthenticationResponseModel> postAuthenticationRequest(
+      String url,
+      String botName,
+      List<RequestedPermissionModel> requestedPermissions) async {
+    String endpoint = '';
+
+    (url, endpoint) = handlePryvUrl(url);
 
     final data =
         jsonEncode(AuthenticationRequestModel(botName, requestedPermissions));
@@ -47,13 +53,7 @@ class PryvRepository {
   Future<(String?, String?)> pollAuthenticationResult(
       String url, String botName) async {
     String endpoint = '';
-    if (url.contains("https://")) {
-      url = url.replaceAll("https://", "");
-    }
-    if (url.contains("/")) {
-      endpoint = url.substring(url.indexOf("/"), url.length);
-      url = url.substring(0, url.indexOf("/"));
-    }
+    (url, endpoint) = handlePryvUrl(url);
 
     final uri = Uri.https(url, endpoint, null);
     while (true) {
