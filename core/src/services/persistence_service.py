@@ -142,7 +142,7 @@ class PryvPersistenceService(AbstractPersistenceService):
         response = requests.get(url, params=params, headers=self.headers)
 
         if response.status_code != HTTPStatus.OK:
-            raise Exception(f'Exception while getting history of conversation: {response.status_code}/{response.text}')
+            raise Exception(f'Exception while getting profile: {response.status_code}/{response.text}')
         data = response.json()
         events = data['events']
         if len(events) == 0:
