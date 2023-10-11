@@ -23,7 +23,6 @@ class EchoState(State):
         reply.metadata = {'performative': 'inform', 'direction': 'outgoing', 'target': 'hemerapp',
                           'context': 'contextual'}
         reply.body = message.body
-        print(f'contextual reply: {reply}')
         await self.send(reply)
 
 
@@ -41,4 +40,3 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
 
     async def on_start(self):
         await super().on_start()
-        print(f"{self.agent.bot_username}")

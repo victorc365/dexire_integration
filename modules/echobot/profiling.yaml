@@ -1,0 +1,27 @@
+name: registering user
+version: 0.0.1
+description: Profiling questions to know more about the user.
+invalid_answer_message: I think you made a mistake. Can you please, provide me with a valid answer.
+states:
+  - question_1:
+      text: What is your name?
+      field: name
+      answer_type: string
+      transition: question_2
+  - question_2:
+      text: What is your surname ?
+      field: surname
+      answer_type: string
+      transition: question_3
+  - question_3:
+      text: What is your birth year ?
+      field: birthdate
+      answer_type: integer
+      transition: question_4
+  - question_4:
+      text: What is your gender ?
+      field: gender
+      answer_type: options
+      answers:
+        - male
+        - female

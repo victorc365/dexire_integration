@@ -30,9 +30,8 @@ class GatewayAgent(BasicAgent):
 
     async def register_websocket(self, bot_user_name, websocket):
         if bot_user_name.lower() in self.clients.keys():
-            self.clients[bot_user_name] = websocket
+            self.clients[bot_user_name.lower()] = websocket
             await self.listen_on_websocket(bot_user_name, websocket)
-
         else:
             self.logger.error(f'Ignored websocket connection from {bot_user_name} because it was unexpected.')
 
@@ -51,7 +50,5 @@ class GatewayAgent(BasicAgent):
                 data = await websocket.receive_text()
                 self.add_behaviour(
                     FormatMessageBehaviour(data, MessageDirection.INCOMING.value, MessageTarget.HEMERAPP.value))
-                print("started")
         except WebSocketDisconnect:
-            print("oups")
             self.clients[bot_user_name] = None

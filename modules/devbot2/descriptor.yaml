@@ -1,9 +1,0 @@
-name: devbot2
-description: Another bot used for development.
-url: http://test.com
-isDev: true
-isPryvRequired: true
-hasProfilingBehaviour: false
-requiredPermissions:
-  - mushrooms: read
-  - toto: manage

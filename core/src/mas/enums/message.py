@@ -6,7 +6,8 @@ class MessageMetadata(Enum):
 
     Each incoming/outgoing message comes with a set of metadata that helps erebots to process them effectively.
     """
-
+    ANSWER_TYPE = 'answer_type'
+    ANSWERS = 'answers'
     CONTEXT = 'context'
     DIRECTION = 'direction'
     TARGET = 'target'
@@ -21,6 +22,8 @@ class MessageContext(Enum):
     finite state machines. When a message arrives in the MessageRouter of an agent, it is re-routed according to its
     context.
     """
+    HISTORY = 'history'
+    WELCOMING = 'welcoming'
     PROFILING = 'profiling'
     CONTEXTUAL = 'contextual'
     PERSUASION = 'persuasion'

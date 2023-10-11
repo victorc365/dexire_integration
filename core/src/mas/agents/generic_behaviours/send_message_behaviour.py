@@ -1,32 +1,41 @@
 from spade.behaviour import OneShotBehaviour
 from spade.message import Message
 
-from mas.enums.message import MessageThread, MessageMetadata, MessageDirection, MessageTarget
+from mas.enums.message import MessageThread, MessageMetadata, MessageDirection, MessageTarget, MessageContext
 
 
 class SendHemerappOutgoingMessageBehaviour(OneShotBehaviour):
-    def __init__(self, to, sender, body, performative) -> None:
+    def __init__(self, to, sender, body, performative, metadata: dict) -> None:
         super().__init__()
+        metadata.update({
+            MessageMetadata.PERFORMATIVE.value: performative,
+            MessageMetadata.TARGET.value: MessageTarget.HEMERAPP.value,
+            MessageMetadata.DIRECTION.value: MessageDirection.OUTGOING.value
+        })
+        # to is cast to string for safety because spade messages accept only string for "to".
+        # If user of this class give the "to" attribute from another spade message (to=message.to) as parameter, it will be
+        # an aioxmpp.JID instead of a string.
         self.message = Message(
-            to=to,
+            to=str(to),
             sender=sender,
             body=body,
             thread=MessageThread.USER_THREAD.value,
-            metadata={
-                MessageMetadata.PERFORMATIVE.value: performative,
-                MessageMetadata.TARGET.value: MessageTarget.HEMERAPP.value,
-                MessageMetadata.DIRECTION.value: MessageDirection.OUTGOING.value
-            }
+            metadata=metadata
         )
 
     async def run(self) -> None:
+        is_persisted_message = not self.message.get_metadata(
+            MessageMetadata.CONTEXT.value) == MessageContext.HISTORY.value
+        if is_persisted_message:
+            self.agent.persistence_service.save_message_to_history(self.message)
         await self.send(self.message)
+
 
 class SendHemerappIncomingMessageBehaviour(OneShotBehaviour):
     def __init__(self, to, sender, body, performative) -> None:
         super().__init__()
         self.message = Message(
-            to=to,
+            to=str(to),
             sender=sender,
             body=body,
             thread=MessageThread.USER_THREAD.value,
@@ -51,7 +60,7 @@ class SendInternalMessageBehaviour(OneShotBehaviour):
     def __init__(self, to, sender, body, performative, message_type) -> None:
         super().__init__()
         self.message = Message(
-            to=to,
+            to=str(to),
             sender=sender,
             body=body,
             thread=MessageThread.INTERNAL_THREAD.value,
@@ -75,7 +84,7 @@ class SendMessageBehaviour(OneShotBehaviour):
     def __init__(self, to, sender, body, thread, metadata) -> None:
         super().__init__()
         self.message = Message(
-            to=to,
+            to=str(to),
             sender=sender,
             body=body,
             thread=thread,

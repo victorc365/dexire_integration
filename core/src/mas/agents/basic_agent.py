@@ -34,11 +34,12 @@ class BasicSetupBehaviour(OneShotBehaviour):
 class BasicAgent(Agent):
     def __init__(self, name: str):
         self.logger = logging.getLogger(f'[{name}]')
-        self.bot_username = name
+        self.bot_username = name.lower()
         self.id = create_jid(name)
+        self.bot_name = self.id.split('_')[0]
         self.authorized_subscriptions = [AgentType.AMS_AGENT.value, AgentType.DF_AGENT.value]
         self.role = None
-        password = name
+        password = self.bot_username
         super().__init__(self.id, password)
 
     async def setup(self) -> None:

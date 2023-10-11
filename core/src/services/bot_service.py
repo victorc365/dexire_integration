@@ -1,5 +1,4 @@
 import os
-from typing import List
 
 import yaml
 from yaml.loader import SafeLoader
@@ -16,6 +15,7 @@ class BotProfilingConfig:
         self.name: str = data.get('name', 'undefined')
         self.version: str = data.get('version', 'undefined')
         self.description: str = data.get('description', 'undefined')
+        self.invalid_answer_message: str = data.get('invalid_answer_message', None)
         self.states: dict = data.get('states', 'undefined')
 
 
@@ -27,13 +27,24 @@ class Bot:
         self.is_dev: bool = data.get('isDev', True)
         self.is_pryv_required: bool = data.get('isPryvRequired', False)
         self.has_profiling_behaviour: bool = data.get('hasProfilingBehaviour', False)
-        self.required_permissions: List[Permission] = []
+        self.required_permissions: list[Permission] = []
+        self.required_streams: list[Stream] = []
+        self.is_update_required: bool = data.get('isUpdateRequired', False)
 
         for required_permission in data.get('requiredPermissions'):
             for name, permission in required_permission.items():
-                stream_id = f'{self.name}_{name}'
                 self.required_permissions.append(
-                    Permission(stream_id, permission, name))
+                    Permission(name, permission, name))
+        for required_stream in data.get('requiredStreams'):
+            for stream in required_stream.values():
+                self.required_streams.append(Stream(stream['id'], stream['parent'], stream['name']))
+
+
+class Stream:
+    def __init__(self, stream_id, parent, default_name) -> None:
+        self.stream_id = stream_id
+        self.default_name = default_name
+        self.parent = parent
 
 
 class Permission:
@@ -73,15 +84,18 @@ class BotService(metaclass=Singleton):
                 self.bots.append(bot_descriptor.name.lower())
         return bot_descriptors
 
-    async def connect_to_bot(self, username: str, bot_name: str, token: str) -> None:
+    async def connect_to_bot(self, username: str, bot_name: str, token: str) -> bool:
         bot_user_name = f'{bot_name}_{username}'
         bot_exists = self.user_service.bot_user_exist(bot_user_name)
+        descriptor = self.get_bot_descriptor(bot_name)
         if not bot_exists:
             self.user_service.create_bot_user(bot_user_name, bot_user_name)
-        await CoreEngine().create_personal_agent(bot_user_name, token)
+            descriptor.is_update_required = True
+
+        await CoreEngine().create_personal_agent(bot_user_name, token, descriptor)
         return self.get_status(bot_user_name)
 
-    def search_user_bots(self, username: str):
+    def search_user_bots(self, username: str) -> list[Bot] | None:
         if username is None:
             return
         users: list = self.user_service.search_bots(username)['users']
@@ -92,13 +106,21 @@ class BotService(metaclass=Singleton):
             bots.append(descriptor)
         return bots
 
-    def get_bot_profiling(self, bot_name: str):
-        bots = os.listdir(self.bots_folder)
-        for bot in bots:
-            if bot_name == bot:
-                profiling_file = f'{self.bots_folder}/{bot}/profiling.yaml'
-                with open(profiling_file) as file:
-                    data = yaml.load(file, Loader=SafeLoader)
-                    bot_profiling = BotProfilingConfig(data)
-                    return bot_profiling
-        return None
+    def get_bot_profiling(self, bot_name: str) -> BotProfilingConfig | None:
+        profiling_file = f'{self.bots_folder}/{bot_name}/profiling.yaml'
+        try:
+            with open(profiling_file) as file:
+                data = yaml.load(file, Loader=SafeLoader)
+                bot_profiling = BotProfilingConfig(data)
+                return bot_profiling
+        except FileNotFoundError:
+            return None
+
+    def get_welcome_message(self, bot_name: str) -> str:
+        welcome_file = f'{self.bots_folder}/{bot_name}/welcome.txt'
+        try:
+            with open(welcome_file) as file:
+                message = file.read()
+                return message
+        except FileNotFoundError:
+            return None
