@@ -12,6 +12,9 @@ class SendHemerappOutgoingMessageBehaviour(OneShotBehaviour):
             MessageMetadata.TARGET.value: MessageTarget.HEMERAPP.value,
             MessageMetadata.DIRECTION.value: MessageDirection.OUTGOING.value
         })
+        # to is cast to string for safety because spade messages accept only string for "to".
+        # If user of this class give the "to" attribute from another spade message (to=message.to) as parameter, it will be
+        # an aioxmpp.JID instead of a string.
         self.message = Message(
             to=str(to),
             sender=sender,
@@ -32,7 +35,7 @@ class SendHemerappIncomingMessageBehaviour(OneShotBehaviour):
     def __init__(self, to, sender, body, performative) -> None:
         super().__init__()
         self.message = Message(
-            to=to,
+            to=str(to),
             sender=sender,
             body=body,
             thread=MessageThread.USER_THREAD.value,
@@ -57,7 +60,7 @@ class SendInternalMessageBehaviour(OneShotBehaviour):
     def __init__(self, to, sender, body, performative, message_type) -> None:
         super().__init__()
         self.message = Message(
-            to=to,
+            to=str(to),
             sender=sender,
             body=body,
             thread=MessageThread.INTERNAL_THREAD.value,
@@ -81,7 +84,7 @@ class SendMessageBehaviour(OneShotBehaviour):
     def __init__(self, to, sender, body, thread, metadata) -> None:
         super().__init__()
         self.message = Message(
-            to=to,
+            to=str(to),
             sender=sender,
             body=body,
             thread=thread,

@@ -36,6 +36,7 @@ class BasicAgent(Agent):
         self.logger = logging.getLogger(f'[{name}]')
         self.bot_username = name.lower()
         self.id = create_jid(name)
+        self.bot_name = self.id.split('_')[0]
         self.authorized_subscriptions = [AgentType.AMS_AGENT.value, AgentType.DF_AGENT.value]
         self.role = None
         password = self.bot_username

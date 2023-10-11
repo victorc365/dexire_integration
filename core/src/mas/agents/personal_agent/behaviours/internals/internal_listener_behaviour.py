@@ -61,7 +61,7 @@ class InternalListenerBehaviour(CyclicBehaviour):
                 metadata = {MessageMetadata.CONTEXT.value: MessageContext.HISTORY.value}
                 if len(history) == 0:
                     # send welcome message
-                    message = BotService().get_welcome_message(self.agent.id.split('_')[0])
+                    message = BotService().get_welcome_message(self.agent.bot_name)
                     metadata = {MessageMetadata.CONTEXT.value: MessageContext.WELCOMING.value}
 
                 self.agent.add_behaviour(SendHemerappOutgoingMessageBehaviour(
@@ -73,7 +73,7 @@ class InternalListenerBehaviour(CyclicBehaviour):
                 ))
 
                 if len(self.agent.profile) == 0:
-                    profiling_configuration = BotService().get_bot_profiling(self.agent.id.split('_')[0])
+                    profiling_configuration = BotService().get_bot_profiling(self.agent.bot_name)
                     if profiling_configuration is not None:
                         self.agent.add_contextual_behaviour(MessageContext.PROFILING.value,
                                                             ProfilingFSMBehaviour(profiling_configuration),
