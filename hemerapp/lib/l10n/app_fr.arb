@@ -4,6 +4,16 @@
   "logout": "Déconnexion",
   "profile": "Profil",
   "bots": "Bots",
-  "settings": "Paramètres"
+  "settings": "Paramètres",
+  "chats": "Chats",
+  "conversations": "Conversations",
+  "addNew": "Nouveau",
+  "hintSearch": "Recherche...",
+  "hintKeyboard": "Ecrire...",
+  "contacts": "Contacts",
+  "offline": "Hors ligne",
+  "online": "En ligne",
+  "languages": "Langues"
+
 
 }

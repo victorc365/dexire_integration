@@ -1,15 +1,15 @@
-import 'dart:async';
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:hemerapp/models/bot_model.dart';
 import 'package:hemerapp/models/message_model.dart';
-import 'package:hemerapp/repositories/bots_repository.dart';
-import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
-import 'package:flutter_chat_ui/flutter_chat_ui.dart';
-import 'package:uuid/uuid.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:hemerapp/providers/bots_provider.dart';
+import 'package:hemerapp/providers/messages_provider.dart';
+import 'package:hemerapp/providers/pryv_provider.dart';
+import 'package:hemerapp/providers/secure_storage_provider.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
+import 'dart:developer' as developer;
 
 class ChatRoute extends StatefulWidget {
   const ChatRoute({super.key});
@@ -19,122 +19,274 @@ class ChatRoute extends StatefulWidget {
 }
 
 class ChatRouteState extends State<ChatRoute> {
-  final Uuid uuid = const Uuid();
-  String token = 'undefined';
-  bool isConnected = false;
-  final List<types.Message> _messages = [];
-  WebSocketChannel? channel;
-  late BotModel bot;
-  late String username;
-  late types.User _user;
-
-  final FlutterSecureStorage storage = const FlutterSecureStorage();
+  String username = '';
+  String botStatus = '';
+  String content = '';
+  BotModel? bot;
+  late MessagesProvider messagesProvider;
 
   @override
   void initState() {
     super.initState();
-  }
-
-  Future<bool> _connectToBot() async {
-    bot = ModalRoute.of(context)!.settings.arguments as BotModel;
-    if (bot.isPryvRequired) {
-      token = (await storage.read(key: bot.name))!;
-      username = (await storage.read(key: 'username'))!;
-    } else {
-      username = 'Anonymous';
-    }
-    _user = types.User(id: username);
-    if (!isConnected) {
-      await connectToBot(bot.name, username, token);
-    }
-    Timer.periodic(const Duration(seconds: 2), (timer) async {
-      if (!isConnected) {
-        String status = await getStatus("${bot.name}_$username");
-        if (status.toLowerCase() == BotStatus.running.name) {
-          isConnected = true;
-          if (isConnected && channel == null) {
-            while (channel == null) {
-              try {
-                channel = openWebsocketChannel(username, bot.name);
-                channel?.stream.listen((event) {
-                  MessageModel messageModel =
-                      MessageModel.fromJson(jsonDecode(event));
-                  if (messageModel != null) {
-                    // TODO - Modify to use id and timestamp coming from backend
-                    // when pryv is added
-                    types.Message message = types.TextMessage(
-                      id: uuid.v1(),
-                      author: types.User(id: messageModel.sender!),
-                      text: jsonDecode(messageModel.body!)['text'],
-                      createdAt: DateTime.now().millisecondsSinceEpoch,
-                    );
-                    _messages.insert(0, message);
-                  }
-                });
-              } on Exception catch (e) {
-                continue;
-              }
-            }
-          }
+    bot = Provider.of<BotsProvider>(context, listen: false).currentBot;
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      Provider.of<SecureStorageProvider>(context, listen: false)
+          .getCredentials(bot?.name)
+          .then((_) {
+        final secureStorage =
+            Provider.of<SecureStorageProvider>(context, listen: false);
+        if (secureStorage.isLoginRequired) {
+          Provider.of<PryvProvider>(context, listen: false)
+              .initiateLogin(bot!, context);
+        } else {
+          final token = secureStorage.token;
+          username = secureStorage.username!;
+          Provider.of<MessagesProvider>(context, listen: false)
+              .openChannel(username, bot?.name, token);
         }
-      } else {
-        timer.cancel();
-      }
+      });
     });
-
-    return isConnected;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        bottom: false,
-        child: Column(
-          children: [
-            Expanded(
-              child: FutureBuilder<bool>(
-                  future: _connectToBot(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return Chat(
-                        messages: _messages,
-                        onSendPressed: _handleSendPressed,
-                        user: _user,
-                      );
-                    }
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }),
-            )
-          ],
-        ),
-      ),
-    );
-  }
+    return Consumer<SecureStorageProvider>(builder: (context, value, child) {
+      if (value.isLoading) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      }
 
-  void _addMessage(types.Message message) {
-    setState(() {
-      _messages.insert(0, message);
+      return Scaffold(
+        appBar: _buildAppBar(context),
+        body: Consumer<MessagesProvider>(
+          builder: (context, value, child) {
+            if (value.isLoading) {
+              SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+                setState(() {
+                  botStatus = AppLocalizations.of(context)!.offline;
+                });
+              });
+
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+
+            if (botStatus == AppLocalizations.of(context)!.offline) {
+              SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+                setState(() {
+                  botStatus = AppLocalizations.of(context)!.online;
+                });
+              });
+            }
+
+            final List<MessageModel> messages = value.messages;
+            return Stack(
+              children: [
+                //chat bubble view
+                ListView.builder(
+                    itemCount: messages.length,
+                    itemBuilder: ((context, index) {
+                      return Container(
+                        padding: const EdgeInsets.only(
+                            left: 14, right: 14, top: 10, bottom: 10),
+                        child: Align(
+                          alignment:
+                              messages[index].to == username.toLowerCase()
+                                  ? Alignment.topLeft
+                                  : Alignment.topRight,
+                          child: Container(
+                            decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                color: (messages[index].to ==
+                                        username.toLowerCase())
+                                    ? Colors.grey.shade200
+                                    : Colors.blue[200]),
+                            padding: const EdgeInsets.all(16),
+                            child: Text(
+                              messages[index].body!,
+                              style: const TextStyle(fontSize: 15),
+                            ),
+                          ),
+                        ),
+                      );
+                    })),
+                Align(
+                  alignment: Alignment.bottomLeft,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.only(left: 10, bottom: 10, top: 10),
+                    height: 60,
+                    width: double.infinity,
+                    color: Colors.white,
+                    child: Row(
+                      children: [
+                        Container(
+                          height: 30,
+                          width: 30,
+                          decoration: BoxDecoration(
+                            color: Colors.lightBlue,
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: const Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 15,
+                        ),
+                        Expanded(
+                            child: TextField(
+                          onChanged: (value) => setState(() {
+                            content = value;
+                          }),
+                          decoration: InputDecoration(
+                              hintText:
+                                  AppLocalizations.of(context)!.hintKeyboard,
+                              hintStyle: const TextStyle(color: Colors.black54),
+                              border: InputBorder.none),
+                        )),
+                        const SizedBox(
+                          width: 15,
+                        ),
+                        FloatingActionButton(
+                          onPressed: () {
+                            if (content.isNotEmpty) {
+                              MessageModel message = MessageModel(
+                                  '${bot?.name}_$username',
+                                  username,
+                                  content,
+                                  null,
+                                  null);
+                              value.sendMessage(message);
+                              setState(() {
+                                content = '';
+                              });
+                            }
+                          },
+                          backgroundColor: Colors.blue,
+                          elevation: 0,
+                          child: const Icon(
+                            Icons.send,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                )
+              ],
+            );
+          },
+        ),
+      );
     });
   }
 
-  void _handleSendPressed(types.PartialText message) {
-    final textMessage = types.TextMessage(
-      author: _user,
-      createdAt: DateTime.now().millisecondsSinceEpoch,
-      id: uuid.v1(),
-      text: message.text,
+  AppBar _buildAppBar(BuildContext context) {
+    return AppBar(
+      actions: [
+        PopupMenuButton<MenuItem>(
+            onSelected: (value) {
+              switch (value) {
+                case MenuItem.profile:
+                  break;
+                case MenuItem.feedback:
+                  break;
+                case MenuItem.delete:
+                  break;
+                case MenuItem.logout:
+                  Provider.of<SecureStorageProvider>(context, listen: false)
+                      .removeCredentials(bot?.name);
+                  Navigator.of(context).pushNamed('/');
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: MenuItem.profile,
+                    child: Text('My Profile'),
+                  ),
+                  const PopupMenuItem(
+                    value: MenuItem.feedback,
+                    child: Text('Feedback'),
+                  ),
+                  const PopupMenuItem(
+                    value: MenuItem.logout,
+                    child: Text('Log out'),
+                  ),
+                  const PopupMenuItem(
+                    value: MenuItem.delete,
+                    child: Text('Delete'),
+                  ),
+                ]),
+      ],
+      iconTheme: const IconThemeData(color: Colors.black),
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      backgroundColor: Colors.white,
+      flexibleSpace: SafeArea(
+          child: Container(
+        padding: const EdgeInsets.only(
+          right: 16,
+        ),
+        child: Row(
+          children: [
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).pushNamed('/');
+              },
+              icon: const Icon(
+                Icons.arrow_back,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(
+              width: 2,
+            ),
+            CircleAvatar(
+              backgroundImage: bot?.icon != null
+                  ? NetworkImage(bot!.icon!)
+                  : Image.asset("assets/images/defaultBotIcon.png").image,
+              maxRadius: 20,
+            ),
+            const SizedBox(
+              width: 12,
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    bot!.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 6,
+                  ),
+                  Text(
+                    botStatus,
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 13,
+                    ),
+                  )
+                ],
+              ),
+            ),
+          ],
+        ),
+      )),
     );
-
-    _addMessage(textMessage);
-    MessageModel formattedMessage = MessageModel(
-        "${bot.name}_${_user.id}",
-        _user.id,
-        jsonEncode(textMessage.toJson()),
-        null,
-        {'target': 'hemerapp'});
-    channel!.sink.add(jsonEncode(formattedMessage));
   }
 }
+
+enum MenuItem { profile, feedback, logout, delete }

@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:hemerapp/repositories/pryv_repository.dart';
+import 'package:hemerapp/providers/pryv_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class WebView extends StatefulWidget {
-  const WebView({super.key, required this.url, required this.pollUrl, required this.botName});
+  const WebView(
+      {super.key,
+      required this.url,
+      required this.pollUrl,
+      required this.botName});
+
   final String url;
   final String pollUrl;
   final String botName;
+
   @override
   WebViewState createState() => WebViewState();
 }
@@ -15,6 +22,7 @@ class WebView extends StatefulWidget {
 class WebViewState extends State<WebView> {
   late Future<bool> _isAuthGranted;
   bool isRefreshing = false;
+
   @override
   void initState() {
     super.initState();
@@ -41,7 +49,8 @@ class WebViewState extends State<WebView> {
   }
 
   Future<bool> _checkAuth(String url, String botName) async {
-    return pollAuthenticationResult(url, botName);
+    return Provider.of<PryvProvider>(context, listen: false)
+        .pollAuthenticationResult(botName, context);
   }
 
   @override
@@ -50,13 +59,17 @@ class WebViewState extends State<WebView> {
         future: _isAuthGranted,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            if (snapshot!.data!) {
-                Navigator.pop(context);
-            } else if(!isRefreshing){
+            if (snapshot.data!) {
+              SchedulerBinding.instance.addPostFrameCallback((_) {
+                Navigator.of(context).pushNamed('/chat');
+              });
+            } else if (!isRefreshing) {
               isRefreshing = true;
-              SchedulerBinding.instance.addPostFrameCallback((_) => setState(() {
-                _isAuthGranted = _checkAuth(widget.pollUrl, widget.botName);
-              }));
+              SchedulerBinding.instance
+                  .addPostFrameCallback((_) => setState(() {
+                        _isAuthGranted =
+                            _checkAuth(widget.pollUrl, widget.botName);
+                      }));
             }
           }
           return Scaffold(
