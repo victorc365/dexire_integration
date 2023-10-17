@@ -6,6 +6,7 @@ import 'package:hemerapp/providers/bots_provider.dart';
 import 'package:hemerapp/providers/messages_provider.dart';
 import 'package:hemerapp/providers/pryv_provider.dart';
 import 'package:hemerapp/providers/secure_storage_provider.dart';
+import 'package:hemerapp/ui/chat/custom_keyboard.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -24,13 +25,14 @@ class ChatRouteState extends State<ChatRoute> {
   BotModel? bot;
   late MessagesProvider messagesProvider;
   final TextEditingController _textController = TextEditingController();
+  final ScrollController _controller = ScrollController();
 
-  void _handleSubmitted(String text, value) {
+  void _handleSubmitted(String text, MessagesProvider messagesProvider) {
     _textController.clear();
     if (text.isNotEmpty) {
       MessageModel message =
           MessageModel('${bot?.name}_$username', username, text, null, null);
-      value.sendMessage(message);
+      messagesProvider.sendMessage(message);
     }
   }
 
@@ -82,98 +84,56 @@ class ChatRouteState extends State<ChatRoute> {
               );
             }
 
-            if (botStatus == AppLocalizations.of(context)!.offline) {
-              SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+            SchedulerBinding.instance.addPostFrameCallback((timeStamp) {
+              if (botStatus == AppLocalizations.of(context)!.offline) {
                 setState(() {
                   botStatus = AppLocalizations.of(context)!.online;
                 });
-              });
-            }
+              }
+              _controller.jumpTo(_controller.position.maxScrollExtent);
+            });
 
             final List<MessageModel> messages = value.messages;
-            return Stack(
+            return Column(
               children: [
                 //chat bubble view
-                ListView.builder(
-                    itemCount: messages.length,
-                    itemBuilder: ((context, index) {
-                      return Container(
-                        padding: const EdgeInsets.only(
-                            left: 14, right: 14, top: 10, bottom: 10),
-                        child: Align(
-                          alignment:
-                              messages[index].to == username.toLowerCase()
-                                  ? Alignment.topLeft
-                                  : Alignment.topRight,
-                          child: Container(
-                            decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                color: (messages[index].to ==
-                                        username.toLowerCase())
-                                    ? Colors.grey.shade200
-                                    : Colors.blue[200]),
-                            padding: const EdgeInsets.all(16),
-                            child: Text(
-                              messages[index].body!,
-                              style: const TextStyle(fontSize: 15),
+                Expanded(
+                  child: ListView.builder(
+                      controller: _controller,
+                      itemCount: value.messages.length,
+                      itemExtent: null,
+                      shrinkWrap: true,
+                      physics: const BouncingScrollPhysics(),
+                      itemBuilder: ((context, index) {
+                        return Container(
+                          padding: const EdgeInsets.only(
+                              left: 14, right: 14, top: 10, bottom: 10),
+                          child: Align(
+                            alignment:
+                                messages[index].to == username.toLowerCase()
+                                    ? Alignment.topLeft
+                                    : Alignment.topRight,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  color: (messages[index].to ==
+                                          username.toLowerCase())
+                                      ? Colors.grey.shade200
+                                      : Colors.blue[200]),
+                              padding: const EdgeInsets.all(16),
+                              child: Text(
+                                messages[index].body!,
+                                style: const TextStyle(fontSize: 15),
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    })),
-                Align(
-                  alignment: Alignment.bottomLeft,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.only(left: 10, bottom: 10, top: 10),
-                    height: 60,
-                    width: double.infinity,
-                    color: Colors.white,
-                    child: Row(
-                      children: [
-                        Container(
-                          height: 30,
-                          width: 30,
-                          decoration: BoxDecoration(
-                            color: Colors.lightBlue,
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: const Icon(
-                            Icons.add,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(
-                          width: 15,
-                        ),
-                        Expanded(
-                            child: TextField(
-                          controller: _textController,
-                          decoration: InputDecoration(
-                              hintText:
-                                  AppLocalizations.of(context)!.hintKeyboard,
-                              hintStyle: const TextStyle(color: Colors.black54),
-                              border: InputBorder.none),
-                        )),
-                        const SizedBox(
-                          width: 15,
-                        ),
-                        FloatingActionButton(
-                          onPressed: () {
-                            _handleSubmitted(_textController.text, value);
-                          },
-                          backgroundColor: Colors.blue,
-                          elevation: 0,
-                          child: const Icon(
-                            Icons.send,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
+                        );
+                      })),
+                ),
+                CustomKeyboard(
+                  textController: _textController,
+                  handleSubmitted: _handleSubmitted,
+                  messagesProvider: value,
                 )
               ],
             );
