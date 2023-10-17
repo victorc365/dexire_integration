@@ -98,37 +98,42 @@ class ChatRouteState extends State<ChatRoute> {
               children: [
                 //chat bubble view
                 Expanded(
-                  child: ListView.builder(
-                      controller: _controller,
-                      itemCount: value.messages.length,
-                      itemExtent: null,
-                      shrinkWrap: true,
-                      physics: const BouncingScrollPhysics(),
-                      itemBuilder: ((context, index) {
-                        return Container(
-                          padding: const EdgeInsets.only(
-                              left: 14, right: 14, top: 10, bottom: 10),
-                          child: Align(
-                            alignment:
-                                messages[index].to == username.toLowerCase()
-                                    ? Alignment.topLeft
-                                    : Alignment.topRight,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                  color: (messages[index].to ==
-                                          username.toLowerCase())
-                                      ? Colors.grey.shade200
-                                      : Colors.blue[200]),
-                              padding: const EdgeInsets.all(16),
-                              child: Text(
-                                messages[index].body!,
-                                style: const TextStyle(fontSize: 15),
+                  child: GestureDetector(
+                    onTap: () {
+                      FocusScope.of(context).unfocus();
+                    },
+                    child: ListView.builder(
+                        controller: _controller,
+                        itemCount: value.messages.length,
+                        itemExtent: null,
+                        shrinkWrap: true,
+                        physics: const BouncingScrollPhysics(),
+                        itemBuilder: ((context, index) {
+                          return Container(
+                            padding: const EdgeInsets.only(
+                                left: 14, right: 14, top: 10, bottom: 10),
+                            child: Align(
+                              alignment:
+                                  messages[index].to == username.toLowerCase()
+                                      ? Alignment.topLeft
+                                      : Alignment.topRight,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(20),
+                                    color: (messages[index].to ==
+                                            username.toLowerCase())
+                                        ? Colors.grey.shade200
+                                        : Colors.blue[200]),
+                                padding: const EdgeInsets.all(16),
+                                child: Text(
+                                  messages[index].body!,
+                                  style: const TextStyle(fontSize: 15),
+                                ),
                               ),
                             ),
-                          ),
-                        );
-                      })),
+                          );
+                        })),
+                  ),
                 ),
                 CustomKeyboard(
                   textController: _textController,
