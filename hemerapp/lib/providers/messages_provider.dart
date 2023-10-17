@@ -50,6 +50,7 @@ class MessagesProvider with ChangeNotifier {
                   developer.log(messageModel.body!);
                   String context = messageModel.metadata?['context'];
                   if(context == 'history') {
+                    currentContext = 'contextual';
                     List<dynamic> jsonHistory = jsonDecode(messageModel.body!);
                     List<MessageModel> history = [];
                     for(var hist in jsonHistory) {
@@ -59,9 +60,9 @@ class MessagesProvider with ChangeNotifier {
                     _messages.insertAll(0, history);
                   } else {
                     _messages.add(messageModel);
+                    currentContext = context;
                   }
 
-                  currentContext = context;
                   notifyListeners();
                 });
               } on Exception {

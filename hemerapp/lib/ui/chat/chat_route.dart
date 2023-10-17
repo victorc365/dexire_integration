@@ -21,9 +21,18 @@ class ChatRoute extends StatefulWidget {
 class ChatRouteState extends State<ChatRoute> {
   String username = '';
   String botStatus = '';
-  String content = '';
   BotModel? bot;
   late MessagesProvider messagesProvider;
+  final TextEditingController _textController = TextEditingController();
+
+  void _handleSubmitted(String text, value) {
+    _textController.clear();
+    if (text.isNotEmpty) {
+      MessageModel message =
+          MessageModel('${bot?.name}_$username', username, text, null, null);
+      value.sendMessage(message);
+    }
+  }
 
   @override
   void initState() {
@@ -140,9 +149,7 @@ class ChatRouteState extends State<ChatRoute> {
                         ),
                         Expanded(
                             child: TextField(
-                          onChanged: (value) => setState(() {
-                            content = value;
-                          }),
+                          controller: _textController,
                           decoration: InputDecoration(
                               hintText:
                                   AppLocalizations.of(context)!.hintKeyboard,
@@ -154,18 +161,7 @@ class ChatRouteState extends State<ChatRoute> {
                         ),
                         FloatingActionButton(
                           onPressed: () {
-                            if (content.isNotEmpty) {
-                              MessageModel message = MessageModel(
-                                  '${bot?.name}_$username',
-                                  username,
-                                  content,
-                                  null,
-                                  null);
-                              value.sendMessage(message);
-                              setState(() {
-                                content = '';
-                              });
-                            }
+                            _handleSubmitted(_textController.text, value);
                           },
                           backgroundColor: Colors.blue,
                           elevation: 0,
