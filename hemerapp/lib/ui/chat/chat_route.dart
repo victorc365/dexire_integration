@@ -7,6 +7,8 @@ import 'package:hemerapp/providers/messages_provider.dart';
 import 'package:hemerapp/providers/pryv_provider.dart';
 import 'package:hemerapp/providers/secure_storage_provider.dart';
 import 'package:hemerapp/ui/chat/custom_keyboard.dart';
+import 'package:hemerapp/ui/feedback/feedback_dialog.dart';
+import 'package:hemerapp/ui/profile/profile_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
@@ -23,6 +25,7 @@ class ChatRouteState extends State<ChatRoute> {
   String username = '';
   String botStatus = '';
   BotModel? bot;
+  List<String>? options;
   late MessagesProvider messagesProvider;
   final TextEditingController _textController = TextEditingController();
   final ScrollController _controller = ScrollController();
@@ -139,6 +142,7 @@ class ChatRouteState extends State<ChatRoute> {
                   textController: _textController,
                   handleSubmitted: _handleSubmitted,
                   messagesProvider: value,
+                  options: options,
                 )
               ],
             );
@@ -155,8 +159,20 @@ class ChatRouteState extends State<ChatRoute> {
             onSelected: (value) {
               switch (value) {
                 case MenuItem.profile:
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return ProfileDialog();
+                    },
+                  );
                   break;
                 case MenuItem.feedback:
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return FeedbackDialog();
+                    },
+                  );
                   break;
                 case MenuItem.delete:
                   break;

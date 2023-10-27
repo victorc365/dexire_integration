@@ -6,9 +6,9 @@ class CustomKeyboard extends StatelessWidget {
   final TextEditingController textController;
   final Function handleSubmitted;
   final MessagesProvider messagesProvider;
-
+  final List<String>? options;
   const CustomKeyboard(
-      {super.key, required this.textController, required this.handleSubmitted, required this.messagesProvider});
+      {super.key, required this.textController, required this.handleSubmitted, required this.messagesProvider, required this.options});
 
   @override
   Widget build(BuildContext context) {
@@ -39,6 +39,7 @@ class CustomKeyboard extends StatelessWidget {
             ),
             Expanded(
                 child: TextField(
+                  keyboardType: options == null? TextInputType.text: TextInputType.none,
                   controller: textController,
                   decoration: InputDecoration(
                       hintText: AppLocalizations.of(context)!.hintKeyboard,
