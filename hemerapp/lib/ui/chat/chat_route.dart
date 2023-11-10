@@ -37,6 +37,7 @@ class ChatRouteState extends State<ChatRoute> {
           MessageModel('${bot?.name}_$username', username, text, null, null);
       messagesProvider.sendMessage(message);
     }
+    options = null;
   }
 
   @override

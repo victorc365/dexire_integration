@@ -49,12 +49,13 @@ class MessagesProvider with ChangeNotifier {
                       MessageModel.fromJson(jsonDecode(event));
                   developer.log(messageModel.body!);
                   String context = messageModel.metadata?['context'];
-                  if(context == 'history') {
+                  if (context == 'history') {
                     currentContext = 'contextual';
                     List<dynamic> jsonHistory = jsonDecode(messageModel.body!);
                     List<MessageModel> history = [];
-                    for(var hist in jsonHistory) {
-                      var m = MessageModel(hist['to'], hist['sender'], hist['body'], null, null);
+                    for (var hist in jsonHistory) {
+                      var m = MessageModel(
+                          hist['to'], hist['sender'], hist['body'], null, null);
                       history.add(m);
                     }
                     _messages.insertAll(0, history);
@@ -84,6 +85,15 @@ class MessagesProvider with ChangeNotifier {
     message.metadata?['context'] = currentContext;
     message.metadata?['target'] = target;
     _messages.add(message);
+    channel!.sink.add(jsonEncode(message));
+    currentContext = 'contextual';
+    notifyListeners();
+  }
+
+  Future<void> sendInternalMessage(MessageModel message) async {
+    message.metadata ??= {};
+    message.metadata?['context'] = currentContext;
+    message.metadata?['target'] = target;
     channel!.sink.add(jsonEncode(message));
     currentContext = 'contextual';
     notifyListeners();

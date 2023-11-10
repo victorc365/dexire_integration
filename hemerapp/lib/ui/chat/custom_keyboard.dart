@@ -67,3 +67,14 @@ class CustomKeyboard extends StatelessWidget {
     );
   }
 }
+
+
+
+class CustomPad extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    throw UnimplementedError();
+  }
+
+}
