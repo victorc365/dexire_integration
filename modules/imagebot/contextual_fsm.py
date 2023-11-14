@@ -4,13 +4,14 @@ from spade.message import Message
 
 from mas.agents.personal_agent.behaviours.contextual_fsm import AbstractContextualFSMBehaviour
 from spade.behaviour import State
+import json
 
 
-class EchoState(State):
+class ReplyState(State):
 
     def __init__(self) -> None:
         super().__init__()
-        self.next_state = "echoState"
+        self.next_state = "replyState"
 
     async def run(self) -> None:
         while self.mailbox_size() == 0:
@@ -21,9 +22,13 @@ class EchoState(State):
         reply.to = str(message.sender)
         reply.sender = str(message.to)
         reply.metadata = {'performative': 'inform', 'direction': 'outgoing', 'target': 'hemerapp',
-                          'context': 'contextual', 'body_format': 'text'}
-        reply.body = str(message.body)
+                          'context': 'contextual', 'body_format': 'image'}
+        reply.body = json.dumps({
+            'image_url': 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/Hamburger_%28black_bg%29.jpg/250px-Hamburger_%28black_bg%29.jpg',
+            'description': 'Super Healthy Burger'
+        })
         self.agent.persistence_service.save_message_to_history(reply)
+
         await self.send(reply)
 
 
@@ -34,10 +39,10 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
     def setup(self):
         super().setup()
 
-        self.add_state(name="echoState",
-                       state=EchoState(),
+        self.add_state(name="replyState",
+                       state=ReplyState(),
                        initial=True)
-        self.add_transition("echoState", "echoState")
+        self.add_transition("replyState", "replyState")
 
     async def on_start(self):
         await super().on_start()

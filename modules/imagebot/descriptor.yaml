@@ -1,0 +1,17 @@
+name: imagebot
+description: Simple bot that replies to messages by sending a burger picture.
+url: http://test.com
+isDev: true
+isPryvRequired: true
+hasProfilingBehaviour: false
+requiredPermissions:
+  - imagebot: manage
+requiredStreams:
+  - profiling:
+      name: profiling
+      parent: imagebot
+      id: imagebot_profiling
+  - messages:
+      name: messages
+      parent: imagebot
+      id: imagebot_messages

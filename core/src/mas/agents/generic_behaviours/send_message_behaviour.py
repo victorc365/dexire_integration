@@ -18,7 +18,7 @@ class SendHemerappOutgoingMessageBehaviour(OneShotBehaviour):
         self.message = Message(
             to=str(to),
             sender=sender,
-            body=body,
+            body=str(body),
             thread=MessageThread.USER_THREAD.value,
             metadata=metadata
         )
@@ -37,7 +37,7 @@ class SendHemerappIncomingMessageBehaviour(OneShotBehaviour):
         self.message = Message(
             to=str(to),
             sender=sender,
-            body=body,
+            body=str(body),
             thread=MessageThread.USER_THREAD.value,
             metadata={
                 MessageMetadata.PERFORMATIVE.value: performative,
@@ -62,7 +62,7 @@ class SendInternalMessageBehaviour(OneShotBehaviour):
         self.message = Message(
             to=str(to),
             sender=sender,
-            body=body,
+            body=str(body),
             thread=MessageThread.INTERNAL_THREAD.value,
             metadata={
                 MessageMetadata.PERFORMATIVE.value: performative,
@@ -86,7 +86,7 @@ class SendMessageBehaviour(OneShotBehaviour):
         self.message = Message(
             to=str(to),
             sender=sender,
-            body=body,
+            body=str(body),
             thread=thread,
             metadata=metadata
         )

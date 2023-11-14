@@ -29,7 +29,6 @@ class MessagesRouterBehaviour(CyclicBehaviour):
 
         if message is None:
             return
-
         if message.thread == MessageThread.USER_THREAD.value:
             self.agent.persistence_service.save_message_to_history(message)
 

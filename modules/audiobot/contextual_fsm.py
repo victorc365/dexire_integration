@@ -22,8 +22,7 @@ class EchoState(State):
         reply.sender = str(message.to)
         reply.metadata = {'performative': 'inform', 'direction': 'outgoing', 'target': 'hemerapp',
                           'context': 'contextual', 'body_format': 'text'}
-        reply.body = str(message.body)
-        self.agent.persistence_service.save_message_to_history(reply)
+        reply.body = message.body
         await self.send(reply)
 
 

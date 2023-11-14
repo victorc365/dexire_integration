@@ -1,0 +1,2 @@
+Hello. My name is ImageBot.
+I am a bot specifically made to answer to your messages by a burger image in order to show the system capabilities.

@@ -68,7 +68,7 @@ class InternalListenerBehaviour(CyclicBehaviour):
                 self.agent.add_behaviour(SendHemerappOutgoingMessageBehaviour(
                     to=gateway,
                     sender=self.agent.id,
-                    body=message,
+                    body=str(message),
                     performative=MessagePerformative.INFORM.value,
                     metadata=metadata
                 ))

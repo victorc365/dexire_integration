@@ -80,7 +80,6 @@ class PryvPersistenceService(AbstractPersistenceService):
             'type': 'profile/json',
             'content': json.dumps(data)
         }
-
         response = requests.post(url, json=event, headers=self.headers)
 
         if response.status_code == HTTPStatus.BAD_REQUEST:
@@ -96,9 +95,7 @@ class PryvPersistenceService(AbstractPersistenceService):
             'type': f'{pryv_type}/json',
             'content': message.__dict__
         }
-
         response = requests.post(url, json=event, headers=self.headers)
-
         if response.status_code == HTTPStatus.BAD_REQUEST:
             raise ValueError(f'Pryv Create Event with Invalid input: {response.status_code}/{response.text}')
         if response.status_code != HTTPStatus.CREATED:
@@ -125,12 +122,17 @@ class PryvPersistenceService(AbstractPersistenceService):
             to = bot_name if bot_name in content['_to'] else self.username
             sender = bot_name if bot_name in content['_sender'] else self.username
             body = content['_body']
+            print(body)
+            if 'image_url' in body:
+                body_format = MessageBodyFormat.IMAGE.value
+            else:
+                body_format = MessageBodyFormat.TEXT.value
             message = {
                 'to': str(to),
                 'sender': str(sender),
                 'body': body,
                 'metadata': {
-                    MessageMetadata.BODY_FORMAT.value: MessageBodyFormat.TEXT.value
+                    MessageMetadata.BODY_FORMAT.value: body_format
                 }
             }
             messages.append(message)
