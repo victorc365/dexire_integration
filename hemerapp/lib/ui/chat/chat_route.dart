@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:hemerapp/models/bot_model.dart';
@@ -129,11 +131,12 @@ class ChatRouteState extends State<ChatRoute> {
                                 isUser: message.to == username.toLowerCase(),
                               );
                             case 'image':
+                               var body =   jsonDecode(message.body!);
                               return ImageMessage(
                                 imageUrl:
-                                message.body!['image_url'],
+                                body['image_url'],
                                 isUser: message.to == username.toLowerCase(),
-                                description: message.body!['description'],
+                                description: body['description'],
                               );
                             case 'gif':
                               return null;
