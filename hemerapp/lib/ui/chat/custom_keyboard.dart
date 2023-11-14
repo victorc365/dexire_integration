@@ -71,6 +71,8 @@ class CustomKeyboard extends StatelessWidget {
 
 
 class CustomPad extends StatelessWidget {
+  const CustomPad({super.key});
+
   @override
   Widget build(BuildContext context) {
     // TODO: implement build

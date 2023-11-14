@@ -7,6 +7,7 @@ import 'package:hemerapp/providers/messages_provider.dart';
 import 'package:hemerapp/providers/pryv_provider.dart';
 import 'package:hemerapp/providers/secure_storage_provider.dart';
 import 'package:hemerapp/ui/chat/custom_keyboard.dart';
+import 'package:hemerapp/ui/chat/messages/text_message.dart';
 import 'package:hemerapp/ui/feedback/feedback_dialog.dart';
 import 'package:hemerapp/ui/profile/profile_dialog.dart';
 import 'package:provider/provider.dart';
@@ -113,29 +114,29 @@ class ChatRouteState extends State<ChatRoute> {
                         shrinkWrap: true,
                         physics: const BouncingScrollPhysics(),
                         itemBuilder: ((context, index) {
-                          return Container(
-                            padding: const EdgeInsets.only(
-                                left: 14, right: 14, top: 10, bottom: 10),
-                            child: Align(
-                              alignment:
-                                  messages[index].to == username.toLowerCase()
-                                      ? Alignment.topLeft
-                                      : Alignment.topRight,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(20),
-                                    color: (messages[index].to ==
-                                            username.toLowerCase())
-                                        ? Colors.grey.shade200
-                                        : Colors.blue[200]),
-                                padding: const EdgeInsets.all(16),
-                                child: Text(
-                                  messages[index].body!,
-                                  style: const TextStyle(fontSize: 15),
-                                ),
-                              ),
-                            ),
-                          );
+                          var message = messages[index];
+                          print("lol");
+                          developer.log(message.toJson().toString());
+                          String format = message.metadata?['body_format'];
+                          print(format);
+
+                          switch (format) {
+                            case 'text_to_speech':
+                              return null;
+                            case 'text':
+                              return TextMessage(
+                                text: message.body!,
+                                isUser: message.to == username.toLowerCase(),
+                              );
+                            case 'image':
+                              return null;
+                            case 'image_text':
+                              return null;
+                            case 'gif':
+                              return null;
+                            default:
+                              return null;
+                          }
                         })),
                   ),
                 ),

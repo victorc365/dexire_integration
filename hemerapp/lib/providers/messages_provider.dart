@@ -16,7 +16,6 @@ class MessagesProvider with ChangeNotifier {
   bool isLoading = false;
   bool _isConnected = false;
   List<MessageModel> _messages = [];
-
   List<MessageModel> get messages => _messages;
 
   WebSocketChannel? channel;
@@ -55,7 +54,7 @@ class MessagesProvider with ChangeNotifier {
                     List<MessageModel> history = [];
                     for (var hist in jsonHistory) {
                       var m = MessageModel(
-                          hist['to'], hist['sender'], hist['body'], null, null);
+                          hist['to'], hist['sender'], hist['body'], null,  hist['metadata']);
                       history.add(m);
                     }
                     _messages.insertAll(0, history);
@@ -84,6 +83,7 @@ class MessagesProvider with ChangeNotifier {
     message.metadata ??= {};
     message.metadata?['context'] = currentContext;
     message.metadata?['target'] = target;
+    message.metadata?['body_format'] = 'text';
     _messages.add(message);
     channel!.sink.add(jsonEncode(message));
     currentContext = 'contextual';
