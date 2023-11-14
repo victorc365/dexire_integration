@@ -1,6 +1,14 @@
 from enum import Enum
 
 
+class MessageBodyFormat(Enum):
+    IMAGE_TEXT = 'image_text'
+    IMAGE = 'image'
+    GIF = 'gif'
+    TEXT = 'text'
+    TEXT_TO_SPEECH = 'text_to_speech'
+
+
 class MessageMetadata(Enum):
     """Enumeration of metadata that can be attached to a Message.
 
@@ -8,6 +16,7 @@ class MessageMetadata(Enum):
     """
     ANSWER_TYPE = 'answer_type'
     ANSWERS = 'answers'
+    BODY_FORMAT = 'body_format'
     CONTEXT = 'context'
     DIRECTION = 'direction'
     TARGET = 'target'

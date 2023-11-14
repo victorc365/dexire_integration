@@ -3,7 +3,7 @@ import asyncio
 from spade.behaviour import FSMBehaviour, State
 
 from mas.agents.generic_behaviours.send_message_behaviour import SendHemerappOutgoingMessageBehaviour
-from mas.enums.message import MessageMetadata, MessagePerformative, MessageContext
+from mas.enums.message import MessageMetadata, MessagePerformative, MessageContext, MessageBodyFormat
 from services.chat_service import ChatService
 import json
 
@@ -41,6 +41,7 @@ class DynamicState(State):
         metadata = {
             MessageMetadata.CONTEXT.value: MessageContext.PROFILING.value,
             MessageMetadata.ANSWER_TYPE.value: self.answer_type,
+            MessageMetadata.BODY_FORMAT.value: MessageBodyFormat.TEXT.value
         }
         if self.answers is not None:
             metadata[MessageMetadata.ANSWERS.value] = json.dumps(self.answers)

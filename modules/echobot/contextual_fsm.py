@@ -21,7 +21,7 @@ class EchoState(State):
         reply.to = str(message.sender)
         reply.sender = str(message.to)
         reply.metadata = {'performative': 'inform', 'direction': 'outgoing', 'target': 'hemerapp',
-                          'context': 'contextual'}
+                          'context': 'contextual', 'body_format': 'text'}
         reply.body = message.body
         await self.send(reply)
 

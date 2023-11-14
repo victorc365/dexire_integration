@@ -5,7 +5,7 @@ from enums.status import Status
 from mas.agents.generic_behaviours.send_message_behaviour import SendHemerappOutgoingMessageBehaviour
 from mas.agents.personal_agent.behaviours.internals.register_to_gateway_behaviour import FreeSlotGatewayRequestMessage
 from mas.agents.personal_agent.behaviours.profiling_fsm import ProfilingFSMBehaviour
-from mas.enums.message import MessagePerformative, MessageType, MessageMetadata, MessageContext
+from mas.enums.message import MessagePerformative, MessageType, MessageMetadata, MessageContext, MessageBodyFormat
 from services.bot_service import BotService
 from services.chat_service import ChatService
 from utils.communication_utils import get_profiling_fsm_template
@@ -62,7 +62,8 @@ class InternalListenerBehaviour(CyclicBehaviour):
                 if len(history) == 0:
                     # send welcome message
                     message = BotService().get_welcome_message(self.agent.bot_name)
-                    metadata = {MessageMetadata.CONTEXT.value: MessageContext.WELCOMING.value}
+                    metadata = {MessageMetadata.CONTEXT.value: MessageContext.WELCOMING.value,
+                                MessageMetadata.BODY_FORMAT.value: MessageBodyFormat.TEXT.value}
 
                 self.agent.add_behaviour(SendHemerappOutgoingMessageBehaviour(
                     to=gateway,

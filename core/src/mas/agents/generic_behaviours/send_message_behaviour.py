@@ -12,9 +12,9 @@ class SendHemerappOutgoingMessageBehaviour(OneShotBehaviour):
             MessageMetadata.TARGET.value: MessageTarget.HEMERAPP.value,
             MessageMetadata.DIRECTION.value: MessageDirection.OUTGOING.value
         })
-        # to is cast to string for safety because spade messages accept only string for "to".
-        # If user of this class give the "to" attribute from another spade message (to=message.to) as parameter, it will be
-        # an aioxmpp.JID instead of a string.
+        # to is cast to string for safety because spade messages accept only string for "to". If user of this class
+        # give the "to" attribute from another spade message (to=message.to) as parameter, it will be an aioxmpp.JID
+        # instead of a string.
         self.message = Message(
             to=str(to),
             sender=sender,

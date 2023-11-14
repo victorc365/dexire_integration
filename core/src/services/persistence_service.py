@@ -5,7 +5,7 @@ from http import HTTPStatus
 import requests
 import os
 from spade.message import Message
-from mas.enums.message import MessageMetadata
+from mas.enums.message import MessageMetadata, MessageBodyFormat
 
 
 class AbstractPersistenceService(ABC):
@@ -126,9 +126,12 @@ class PryvPersistenceService(AbstractPersistenceService):
             sender = bot_name if bot_name in content['_sender'] else self.username
             body = content['_body']
             message = {
-                'to':str(to),
-                'sender':str(sender),
-                'body':body
+                'to': str(to),
+                'sender': str(sender),
+                'body': body,
+                'metadata': {
+                    MessageMetadata.BODY_FORMAT.value: MessageBodyFormat.TEXT.value
+                }
             }
             messages.append(message)
         return messages
