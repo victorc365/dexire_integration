@@ -8,7 +8,7 @@ class MessageModel {
 
   String? to;
   String? sender;
-  String? body;
+  dynamic? body;
   String? thread;
   Map<String, dynamic>? metadata;
 

@@ -9,7 +9,7 @@ part of 'message_model.dart';
 MessageModel _$MessageModelFromJson(Map<String, dynamic> json) => MessageModel(
       json['to'] as String?,
       json['sender'] as String?,
-      json['body'] as String?,
+      json['body'] as dynamic?,
       json['thread'] as String?,
       json['metadata'] as Map<String, dynamic>?,
     );

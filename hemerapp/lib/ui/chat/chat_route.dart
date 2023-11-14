@@ -15,6 +15,8 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'dart:developer' as developer;
 
+import 'messages/image_message.dart';
+
 class ChatRoute extends StatefulWidget {
   const ChatRoute({super.key});
 
@@ -115,10 +117,8 @@ class ChatRouteState extends State<ChatRoute> {
                         physics: const BouncingScrollPhysics(),
                         itemBuilder: ((context, index) {
                           var message = messages[index];
-                          print("lol");
                           developer.log(message.toJson().toString());
                           String format = message.metadata?['body_format'];
-                          print(format);
 
                           switch (format) {
                             case 'text_to_speech':
@@ -129,9 +129,12 @@ class ChatRouteState extends State<ChatRoute> {
                                 isUser: message.to == username.toLowerCase(),
                               );
                             case 'image':
-                              return null;
-                            case 'image_text':
-                              return null;
+                              return ImageMessage(
+                                imageUrl:
+                                message.body!['image_url'],
+                                isUser: message.to == username.toLowerCase(),
+                                description: message.body!['description'],
+                              );
                             case 'gif':
                               return null;
                             default:
