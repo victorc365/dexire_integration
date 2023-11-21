@@ -73,6 +73,17 @@ class InternalListenerBehaviour(CyclicBehaviour):
                     metadata=metadata
                 ))
 
+                metadata = {MessageMetadata.CONTEXT.value: MessageContext.KEYBOARD.value,
+                            MessageMetadata.BODY_FORMAT.value: MessageBodyFormat.TEXT.value}
+                if self.agent.custom_keyboard is not None:
+                    self.agent.add_behaviour(SendHemerappOutgoingMessageBehaviour(
+                        to=gateway,
+                        sender=self.agent.id,
+                        body=str(self.agent.custom_keyboard),
+                        performative=MessagePerformative.INFORM.value,
+                        metadata=metadata
+                    ))
+
                 if len(self.agent.profile) == 0:
                     profiling_configuration = BotService().get_bot_profiling(self.agent.bot_name)
                     if profiling_configuration is not None:

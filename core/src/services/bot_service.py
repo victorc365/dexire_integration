@@ -1,6 +1,7 @@
 import os
 
 import yaml
+import json
 from yaml.loader import SafeLoader
 
 from enums.environment import Environment
@@ -124,3 +125,12 @@ class BotService(metaclass=Singleton):
                 return message
         except FileNotFoundError:
             return None
+
+    def get_custom_keyboard(self, bot_name: str) -> str:
+        custom_keyboard_file = f'{self.bots_folder}/{bot_name}/custom_keyboard.json'
+        try:
+            with open(custom_keyboard_file) as file:
+                keyboard = json.load(file)
+        except FileNotFoundError:
+            return None
+        return keyboard

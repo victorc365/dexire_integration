@@ -36,6 +36,7 @@ class MessageContext(Enum):
     PROFILING = 'profiling'
     CONTEXTUAL = 'contextual'
     PERSUASION = 'persuasion'
+    KEYBOARD = 'keyboard'
 
 
 class MessageDirection(Enum):

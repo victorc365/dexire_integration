@@ -7,6 +7,10 @@ hasProfilingBehaviour: false
 requiredPermissions:
   - audiobot: manage
 requiredStreams:
+  - profiling:
+        name: profiling
+        parent: audiobot
+        id: audiobot_profiling
   - messages:
       name: messages
       parent: audiobot

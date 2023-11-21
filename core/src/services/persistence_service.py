@@ -122,11 +122,11 @@ class PryvPersistenceService(AbstractPersistenceService):
             to = bot_name if bot_name in content['_to'] else self.username
             sender = bot_name if bot_name in content['_sender'] else self.username
             body = content['_body']
-            print(body)
-            if 'image_url' in body:
-                body_format = MessageBodyFormat.IMAGE.value
+            metadata = content['metadata']
+            if MessageMetadata.BODY_FORMAT.value in metadata.keys():
+                body_format = metadata[MessageMetadata.BODY_FORMAT.value]
             else:
-                body_format = MessageBodyFormat.TEXT.value
+                body_format = 'text'
             message = {
                 'to': str(to),
                 'sender': str(sender),
