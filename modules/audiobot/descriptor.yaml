@@ -1,0 +1,17 @@
+name: audiobot
+description: Simple bot that replies by coping the user message as audio message.
+url: http://test.com
+isDev: true
+isPryvRequired: true
+hasProfilingBehaviour: false
+requiredPermissions:
+  - audiobot: manage
+requiredStreams:
+  - profiling:
+        name: profiling
+        parent: audiobot
+        id: audiobot_profiling
+  - messages:
+      name: messages
+      parent: audiobot
+      id: audiobot_messages

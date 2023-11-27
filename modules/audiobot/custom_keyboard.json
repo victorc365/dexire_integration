@@ -1,0 +1,16 @@
+{
+  "items": [
+    {
+      "label": "Text Bot",
+      "action": "TEXT"
+    },
+    {
+      "label": "Audio Bot",
+      "action": "AUDIO"
+    },
+    {
+      "label": "Image Bot",
+      "action": "IMAGE"
+    }
+  ]
+}

@@ -6,11 +6,12 @@ from mas.agents.personal_agent.behaviours.contextual_fsm import AbstractContextu
 from spade.behaviour import State
 
 
-class EchoState(State):
+class AudioState(State):
 
     def __init__(self) -> None:
         super().__init__()
-        self.next_state = "echoState"
+        self.name = 'audioState'
+        self.next_state = "audioState"
 
     async def run(self) -> None:
         while self.mailbox_size() == 0:
@@ -21,8 +22,8 @@ class EchoState(State):
         reply.to = str(message.sender)
         reply.sender = str(message.to)
         reply.metadata = {'performative': 'inform', 'direction': 'outgoing', 'target': 'hemerapp',
-                          'context': 'contextual', 'body_format': 'text'}
-        reply.body = str(message.body)
+                          'context': 'contextual', 'body_format': 'text_to_speech'}
+        reply.body = message.body
         self.agent.persistence_service.save_message_to_history(reply)
         await self.send(reply)
 
@@ -33,11 +34,11 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
 
     def setup(self):
         super().setup()
-
-        self.add_state(name="echoState",
-                       state=EchoState(),
+        audio_state = AudioState()
+        self.add_state(name=audio_state.name,
+                       state=audio_state,
                        initial=True)
-        self.add_transition("echoState", "echoState")
+        self.add_transition(audio_state.name, audio_state.next_state)
 
     async def on_start(self):
         await super().on_start()

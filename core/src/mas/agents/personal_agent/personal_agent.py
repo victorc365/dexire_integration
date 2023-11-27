@@ -6,7 +6,7 @@ from mas.agents.personal_agent.behaviours.internals.setup_behaviour import Setup
 from enums.status import Status
 from mas.agents.personal_agent.behaviours.messages_router import MessagesRouterBehaviour
 from mas.enums.message import MessageContext
-from services.bot_service import Bot
+from services.bot_service import Bot, BotService
 from services.persistence_service import PryvPersistenceService
 from utils.communication_utils import get_internal_thread_template, get_user_thread_template, \
     get_contextual_fsm_template
@@ -31,6 +31,8 @@ class PersonalAgent(BasicAgent):
                                              'ContextualFSM')
         except ModuleNotFoundError:
             self.contextual_module = None
+
+        self.custom_keyboard = BotService().get_custom_keyboard(self.module_name)
 
     async def setup(self):
         await super().setup()

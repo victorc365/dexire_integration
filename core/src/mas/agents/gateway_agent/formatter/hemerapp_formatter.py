@@ -11,7 +11,7 @@ class HemerappIncomingMessage(Message):
         super().__init__(
             to=to,
             sender=sender,
-            body=body,
+            body=str(body),
             thread=MessageThread.USER_THREAD.value,
             metadata={
                 MessageMetadata.PERFORMATIVE.value: performative,
@@ -36,7 +36,7 @@ class HemerappFormatter(AbstractFormatter):
         return HemerappIncomingMessage(
             to=create_jid(message_json['to']),
             performative=MessagePerformative.INFORM.value,
-            body=message_json['body'],
+            body=str(message_json['body']),
             direction=MessageDirection.INCOMING.value,
             context=message_json['metadata']['context']
         )
@@ -47,6 +47,6 @@ class HemerappFormatter(AbstractFormatter):
         return HemerappOutgoingMessage(
             to=to,
             sender=sender,
-            body=message.body,
+            body=str(message.body),
             metadata=message.metadata
         )
