@@ -1,0 +1,21 @@
+name: nvcbot
+description: Simple bot that replies by coping the user message.
+url: http://test.com
+isDev: true
+isPryvRequired: true
+hasProfilingBehaviour: false
+requiredPermissions:
+  - nvcbot: manage
+requiredStreams:
+  - profiling:
+      name: profiling
+      parent: nvcbot
+      id: nvcbot_profiling
+  - messages:
+      name: messages
+      parent: nvcbot
+      id: nvcbot_messages
+  - healthscores:
+      name: healthscores
+      parent: nvcbot
+      id: nvcbot_healthscores
