@@ -10,6 +10,7 @@ import 'package:hemerapp/providers/pryv_provider.dart';
 import 'package:hemerapp/providers/secure_storage_provider.dart';
 import 'package:hemerapp/ui/chat/custom_keyboard.dart';
 import 'package:hemerapp/ui/chat/messages/text_message.dart';
+import 'package:hemerapp/ui/chat/messages/text_to_speech_message.dart';
 import 'package:hemerapp/ui/feedback/feedback_dialog.dart';
 import 'package:hemerapp/ui/profile/profile_dialog.dart';
 import 'package:provider/provider.dart';
@@ -30,7 +31,8 @@ class ChatRouteState extends State<ChatRoute> {
   String username = '';
   String botStatus = '';
   BotModel? bot;
-  List<String>? options;
+  List<Map<String, String>>? botKeyboard;
+  List<Map<String, String>>? options;
   late MessagesProvider messagesProvider;
   final TextEditingController _textController = TextEditingController();
   final ScrollController _controller = ScrollController();
@@ -121,21 +123,21 @@ class ChatRouteState extends State<ChatRoute> {
                           var message = messages[index];
                           developer.log(message.toJson().toString());
                           String format = message.metadata?['body_format'];
-
+                          bool isUser = message.to == username.toLowerCase();
                           switch (format) {
                             case 'text_to_speech':
-                              return null;
+                              return TextToSpeechMessage(
+                                  text: message.body!, isUser: isUser);
                             case 'text':
                               return TextMessage(
                                 text: message.body!,
-                                isUser: message.to == username.toLowerCase(),
+                                isUser: isUser,
                               );
                             case 'image':
-                               var body =   jsonDecode(message.body!);
+                              var body = jsonDecode(message.body!);
                               return ImageMessage(
-                                imageUrl:
-                                body['image_url'],
-                                isUser: message.to == username.toLowerCase(),
+                                imageUrl: body['image_url'],
+                                isUser: isUser,
                                 description: body['description'],
                               );
                             case 'gif':
@@ -150,7 +152,7 @@ class ChatRouteState extends State<ChatRoute> {
                   textController: _textController,
                   handleSubmitted: _handleSubmitted,
                   messagesProvider: value,
-                  options: options,
+                  options: null,
                 )
               ],
             );

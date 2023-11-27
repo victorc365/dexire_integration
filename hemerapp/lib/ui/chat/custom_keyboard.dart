@@ -6,9 +6,14 @@ class CustomKeyboard extends StatelessWidget {
   final TextEditingController textController;
   final Function handleSubmitted;
   final MessagesProvider messagesProvider;
-  final List<String>? options;
+  final List<Map<String, String>>? options;
+
   const CustomKeyboard(
-      {super.key, required this.textController, required this.handleSubmitted, required this.messagesProvider, required this.options});
+      {super.key,
+      required this.textController,
+      required this.handleSubmitted,
+      required this.messagesProvider,
+      required this.options});
 
   @override
   Widget build(BuildContext context) {
@@ -21,17 +26,23 @@ class CustomKeyboard extends StatelessWidget {
         color: Colors.white,
         child: Row(
           children: [
-            Container(
-              height: 30,
-              width: 30,
-              decoration: BoxDecoration(
-                color: Colors.lightBlue,
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: const Icon(
-                Icons.add,
-                color: Colors.white,
-                size: 20,
+            GestureDetector(
+              onTap: (){
+                FocusManager.instance.primaryFocus?.unfocus();
+              },
+              child: Container(
+                height: 30,
+                width: 30,
+                decoration: BoxDecoration(
+                  color: Colors.lightBlue,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: const Icon(
+                  Icons.keyboard,
+                  color: Colors.white,
+                  size: 20,
+                ),
+
               ),
             ),
             const SizedBox(
@@ -39,13 +50,14 @@ class CustomKeyboard extends StatelessWidget {
             ),
             Expanded(
                 child: TextField(
-                  keyboardType: options == null? TextInputType.text: TextInputType.none,
-                  controller: textController,
-                  decoration: InputDecoration(
-                      hintText: AppLocalizations.of(context)!.hintKeyboard,
-                      hintStyle: const TextStyle(color: Colors.black54),
-                      border: InputBorder.none),
-                )),
+              keyboardType:
+                  options == null ? TextInputType.text : TextInputType.none,
+              controller: textController,
+              decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context)!.hintKeyboard,
+                  hintStyle: const TextStyle(color: Colors.black54),
+                  border: InputBorder.none),
+            )),
             const SizedBox(
               width: 15,
             ),
@@ -68,8 +80,6 @@ class CustomKeyboard extends StatelessWidget {
   }
 }
 
-
-
 class CustomPad extends StatelessWidget {
   const CustomPad({super.key});
 
@@ -78,5 +88,4 @@ class CustomPad extends StatelessWidget {
     // TODO: implement build
     throw UnimplementedError();
   }
-
 }

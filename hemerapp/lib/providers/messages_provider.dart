@@ -16,6 +16,8 @@ class MessagesProvider with ChangeNotifier {
   bool isLoading = false;
   bool _isConnected = false;
   List<MessageModel> _messages = [];
+  Map<String, dynamic>? keyboardOptions;
+
   List<MessageModel> get messages => _messages;
 
   WebSocketChannel? channel;
@@ -48,19 +50,31 @@ class MessagesProvider with ChangeNotifier {
                       MessageModel.fromJson(jsonDecode(event));
                   developer.log(messageModel.body!);
                   String context = messageModel.metadata?['context'];
-                  if (context == 'history') {
-                    currentContext = 'contextual';
-                    List<dynamic> jsonHistory = jsonDecode(messageModel.body!);
-                    List<MessageModel> history = [];
-                    for (var hist in jsonHistory) {
-                      var m = MessageModel(
-                          hist['to'], hist['sender'], hist['body'], null,  hist['metadata']);
-                      history.add(m);
-                    }
-                    _messages.insertAll(0, history);
-                  } else {
-                    _messages.add(messageModel);
-                    currentContext = context;
+
+                  switch (context) {
+                    case 'history':
+                      currentContext = 'contextual';
+                      List<dynamic> jsonHistory =
+                          jsonDecode(messageModel.body!);
+                      List<MessageModel> history = [];
+                      for (var hist in jsonHistory) {
+                        var m = MessageModel(hist['to'], hist['sender'],
+                            hist['body'], null, hist['metadata']);
+                        history.add(m);
+                      }
+                      _messages.insertAll(0, history);
+                      break;
+                    case 'keyboard':
+                      Map<String, dynamic> test = jsonDecode(messageModel.body!);
+                      developer.log(test.toString());
+
+                      keyboardOptions = test;
+                      print("keyboardOptions");
+                      break;
+                    default:
+                      _messages.add(messageModel);
+                      currentContext = context;
+                      break;
                   }
 
                   notifyListeners();

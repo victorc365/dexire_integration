@@ -17,7 +17,7 @@ class FeedbackDialog extends StatelessWidget {
 
   Widget contentBox(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         shape: BoxShape.rectangle,
         color: Colors.white,
@@ -26,7 +26,7 @@ class FeedbackDialog extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Text(
+          const Text(
             'Feedback Form',
             style: TextStyle(
               fontSize: 20,
