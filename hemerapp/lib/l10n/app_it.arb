@@ -4,5 +4,14 @@
   "logout": "Esci",
   "profile": "Profilo",
   "bots": "Bots",
-  "settings": "Impostazioni"
+  "settings": "Impostazioni",
+  "chats": "chats",
+  "conversations": "conversations",
+  "addNew": "add new",
+  "hintSearch": "search...",
+  "hintKeyboard": "Write message...",
+  "contacts": "contacts",
+  "offline": "offline",
+  "online": "online",
+  "languages": "Languages"
 }

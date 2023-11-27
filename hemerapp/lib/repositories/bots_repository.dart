@@ -6,51 +6,80 @@ import 'package:http/http.dart' as http;
 import 'package:hemerapp/models/bot_model.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-final String _erebotsApiUrl =
-    dotenv.get('EREBOTS_API_URL', fallback: 'localhost:8080');
+class BotsRepository {
+  late String _erebotsApiUrl;
+  late String _erebotsWebsocketUrl;
+  late String _erebotsApiVersion;
+  late String _botsEndpoint;
+  late Map<String, String> _headers;
 
-final String _erebotsWebsocketUrl =
-    dotenv.get('EREBOTS_WEBSOCKET_URL', fallback: 'localhost:8080');
+  BotsRepository() {
+    _erebotsApiUrl = dotenv.get('EREBOTS_API_URL', fallback: 'localhost:8080');
 
-final String _erebotsApiVersion = dotenv.get('EREBOTS_API_VERSION');
-final String _botsEndpoint = '/$_erebotsApiVersion/bots';
-const Map<String, String> _headers = {
-  HttpHeaders.contentTypeHeader: 'application/json'
-};
+    _erebotsWebsocketUrl =
+        dotenv.get('EREBOTS_WEBSOCKET_URL', fallback: 'localhost:8080');
 
-Future<List<BotModel>> fetchBots() async {
-  final uri = Uri.http(_erebotsApiUrl, _botsEndpoint, null);
-  final response = await http.get(uri);
-  if (response.statusCode == HttpStatus.ok) {
-    final parsedBots = jsonDecode(response.body).cast<Map<String, dynamic>>();
-    return parsedBots.map<BotModel>((json) => BotModel.fromJson(json)).toList();
-  } else {
-    throw Exception("Failed to load bots");
+    _erebotsApiVersion = dotenv.get('EREBOTS_API_VERSION');
+    _botsEndpoint = '/$_erebotsApiVersion/bots';
+    _headers = {HttpHeaders.contentTypeHeader: 'application/json'};
   }
-}
 
-Future<String?> connectToBot(
-    String botName, String username, String token) async {
-  final uri = Uri.http(_erebotsApiUrl, '$_botsEndpoint/$botName/connect', null);
-  final data = jsonEncode({'username': username, 'token': token});
-  final response = await http.post(uri, body: data, headers: _headers);
-  if (response.statusCode == HttpStatus.created) {
-    return response.body;
+  Future<List<BotModel>> fetchBots() async {
+    final uri = Uri.http(_erebotsApiUrl, _botsEndpoint, null);
+    final response = await http.get(uri);
+    if (response.statusCode == HttpStatus.ok) {
+      return parseBotsJson(response.body);
+    } else {
+      throw Exception("Failed to load bots");
+    }
   }
-  return null;
-}
 
-Future<String> getStatus(String botUsername) async {
-  final uri =
-      Uri.http(_erebotsApiUrl, '$_botsEndpoint/$botUsername/status', null);
-  final response = await http.get(uri, headers: _headers);
-  if (response.statusCode == HttpStatus.ok) {
-    return jsonDecode(response.body);
+  Future<List<BotModel>> fetchContacts(String username) async {
+    final uri = Uri.http(
+        _erebotsApiUrl, '$_botsEndpoint/contacts', {'username': username});
+    final response = await http.get(uri);
+    if (response.statusCode == HttpStatus.ok) {
+      return parseBotsJson(response.body);
+    } else {
+      throw Exception("Failed to load contacts");
+    }
   }
-  throw Exception("Unreachable endpoint");
-}
 
-WebSocketChannel openWebsocketChannel(String username, String botname) {
-  return WebSocketChannel.connect(
-      Uri.parse("$_erebotsWebsocketUrl/$username/$botname"));
+  List<BotModel> parseBotsJson(json) {
+    try {
+      final parsedBots = jsonDecode(json).cast<Map<String, dynamic>>();
+      return parsedBots
+          .map<BotModel>((json) => BotModel.fromJson(json))
+          .toList();
+    } on Exception catch (_) {
+      throw Exception("Impossible to parse received JSON");
+    }
+  }
+
+  Future<String?> connectToBot(
+      String botName, String username, String token) async {
+    final uri =
+        Uri.http(_erebotsApiUrl, '$_botsEndpoint/$botName/connect', null);
+    final data = jsonEncode({'username': username, 'token': token});
+    final response = await http.post(uri, body: data, headers: _headers);
+    if (response.statusCode == HttpStatus.created) {
+      return response.body;
+    }
+    return null;
+  }
+
+  Future<String> getStatus(String botUsername) async {
+    final uri =
+        Uri.http(_erebotsApiUrl, '$_botsEndpoint/$botUsername/status', null);
+    final response = await http.get(uri, headers: _headers);
+    if (response.statusCode == HttpStatus.ok) {
+      return jsonDecode(response.body);
+    }
+    throw Exception("Unreachable endpoint");
+  }
+
+  WebSocketChannel openWebsocketChannel(String username, String botname) {
+    return WebSocketChannel.connect(
+        Uri.parse("$_erebotsWebsocketUrl/$username/$botname"));
+  }
 }

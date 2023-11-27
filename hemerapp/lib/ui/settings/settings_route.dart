@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hemerapp/hemerapp.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SettingsRoute extends StatefulWidget {
   const SettingsRoute({super.key});
@@ -9,22 +10,57 @@ class SettingsRoute extends StatefulWidget {
 }
 
 class _SettingsRouteState extends State<SettingsRoute> {
+  @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body:  Center(
-        child: Column(
-          children: [
-            Row(
+    return Column(
+      children: [
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 16, right: 16, top: 10),
+            child: Row(
               children: [
-                LanguageButton(languageCode: 'en',),
-                LanguageButton(languageCode: 'fr',),
-                LanguageButton(languageCode: 'de',),
-                LanguageButton(languageCode: 'it',),
+                Text(
+                  AppLocalizations.of(context)!.settings,
+                  style: const TextStyle(
+                      fontSize: 32, fontWeight: FontWeight.bold),
+                ),
               ],
-            )
-          ],
+            ),
+          ),
         ),
-      ),
+        Padding(
+          padding: const EdgeInsets.only(left: 16, top: 32, right: 16),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!.languages,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              const Row(
+                children: [
+                  LanguageButton(
+                    languageCode: 'en',
+                  ),
+                  LanguageButton(
+                    languageCode: 'fr',
+                  ),
+                  LanguageButton(
+                    languageCode: 'de',
+                  ),
+                  LanguageButton(
+                    languageCode: 'it',
+                  ),
+                ],
+              )
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -34,6 +70,7 @@ class LanguageButton extends StatelessWidget {
     super.key,
     required this.languageCode,
   });
+
   final String languageCode;
 
   @override
@@ -41,8 +78,8 @@ class LanguageButton extends StatelessWidget {
     return TextButton(
       child: Text(languageCode.toUpperCase()),
       onPressed: () {
-        Hemerapp.of(context).setLocale(
-            Locale.fromSubtags(languageCode: languageCode));
+        Hemerapp.of(context)
+            .setLocale(Locale.fromSubtags(languageCode: languageCode));
       },
     );
   }
