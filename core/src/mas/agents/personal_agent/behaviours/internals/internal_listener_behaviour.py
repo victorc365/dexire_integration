@@ -79,7 +79,7 @@ class InternalListenerBehaviour(CyclicBehaviour):
                     self.agent.add_behaviour(SendHemerappOutgoingMessageBehaviour(
                         to=gateway,
                         sender=self.agent.id,
-                        body=str(self.agent.custom_keyboard),
+                        body=json.dumps(self.agent.custom_keyboard),
                         performative=MessagePerformative.INFORM.value,
                         metadata=metadata
                     ))
