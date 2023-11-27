@@ -10,7 +10,8 @@ class AudioState(State):
 
     def __init__(self) -> None:
         super().__init__()
-        self.next_state = "audiobot"
+        self.name = 'audioState'
+        self.next_state = "audioState"
 
     async def run(self) -> None:
         while self.mailbox_size() == 0:
@@ -24,7 +25,6 @@ class AudioState(State):
                           'context': 'contextual', 'body_format': 'text_to_speech'}
         reply.body = message.body
         self.agent.persistence_service.save_message_to_history(reply)
-
         await self.send(reply)
 
 
@@ -34,11 +34,11 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
 
     def setup(self):
         super().setup()
-
-        self.add_state(name="audioState",
-                       state=AudioState(),
+        audio_state = AudioState()
+        self.add_state(name=audio_state.name,
+                       state=audio_state,
                        initial=True)
-        self.add_transition("audioState", "audioState")
+        self.add_transition(audio_state.name, audio_state.next_state)
 
     async def on_start(self):
         await super().on_start()

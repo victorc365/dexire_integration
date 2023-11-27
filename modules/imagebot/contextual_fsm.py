@@ -11,6 +11,7 @@ class ReplyState(State):
 
     def __init__(self) -> None:
         super().__init__()
+        self.name = "replyState"
         self.next_state = "replyState"
 
     async def run(self) -> None:
@@ -38,11 +39,11 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
 
     def setup(self):
         super().setup()
-
-        self.add_state(name="replyState",
-                       state=ReplyState(),
+        reply_state = ReplyState()
+        self.add_state(name=reply_state.name,
+                       state=reply_state,
                        initial=True)
-        self.add_transition("replyState", "replyState")
+        self.add_transition(reply_state.name, reply_state.next_state)
 
     async def on_start(self):
         await super().on_start()
