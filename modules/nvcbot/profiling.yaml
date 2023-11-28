@@ -10,23 +10,28 @@ states:
       transition: question_2
   - question_2:
       text: What is your weight?
-      field: surname
+      field: weight
       answer_type: integer
       transition: question_3
   - question_3:
       text: What is your height?
-      field: birthdate
+      field: height
       answer_type: integer
       transition: question_4
   - question_4:
+      text: What is your age?
+      field: age
+      answer_type: integer
+      transition: question_5
+  - question_5:
       text: What is your gender?
       field: gender
       answer_type: options
       answers:
         - male
         - female
-      transition: question_5
-  - question_5:
+      transition: question_6
+  - question_6:
       text: What is your sports level?
       field: sports
       answer_type: options

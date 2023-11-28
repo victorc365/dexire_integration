@@ -1,7 +1,8 @@
 import pandas as pd
-from application.recommendations.health_module import create_health_rating_scores
-from application.recommendations.preferences_module import create_user_recipes
-from application import DATASETS_DIR, CACHE_DIR
+from modules.nvcbot.recommendations.health_module import create_health_rating_scores
+from modules.nvcbot.recommendations.preferences_module import create_user_recipes
+
+from modules.nvcbot import DATASETS_DIR, CACHE_DIR
 
 import pickle
 

@@ -2,10 +2,10 @@ import pandas as pd
 import pickle
 import ast
 
-from application import CACHE_DIR, DATASETS_DIR
-from application.explanations.item_user_based_explanations import TreeManager
-from application.explanations.sentence_generator import get_sentence, get_single_food_fact, get_counter_sentence
-from application.explanations.counter_explanations import get_counter_explanation
+from modules.nvcbot import DATASETS_DIR, CACHE_DIR
+from modules.nvcbot.explanations.item_user_based_explanations import TreeManager
+from modules.nvcbot.explanations.sentence_generator import get_sentence, get_single_food_fact, get_counter_sentence
+from modules.nvcbot.explanations.counter_explanations import get_counter_explanation
 
 from database_models import *
 
@@ -14,8 +14,8 @@ def get_explanations(uuid, recommended_recipe):
 
     user_recipes = user_recipes.replace("-", 0)
 
-    user_prefs = ast.literal_eval(list(IngredientSpecificationLogs.select().where(IngredientSpecificationLogs.uuid == uuid))[-1].user_data)['wanted_items']
-    cuisine_prefs = ast.literal_eval(list(CuisineSpecificationLogs.select().where(CuisineSpecificationLogs.uuid == uuid))[-1].user_data)['wanted_items']
+    #user_prefs = ast.literal_eval(list(IngredientSpecificationLogs.select().where(IngredientSpecificationLogs.uuid == uuid))[-1].user_data)['wanted_items']
+    #cuisine_prefs = ast.literal_eval(list(CuisineSpecificationLogs.select().where(CuisineSpecificationLogs.uuid == uuid))[-1].user_data)['wanted_items']
 
     with open(CACHE_DIR / "user_profiles" / f"{uuid}.pkl", 'rb') as handle:
         user_profile = pickle.load(handle)  

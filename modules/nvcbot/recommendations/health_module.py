@@ -1,5 +1,5 @@
 import pandas as pd
-from application import DATASETS_DIR
+import pathlib
 
 def text_cleaning(cols):
     if cols == '< 1':
@@ -22,7 +22,7 @@ meal_type_percentage = {
 }
 
 def create_health_rating_scores(user_profile):
-    nutritional_values = pd.read_pickle(DATASETS_DIR / "archive" / "diyetkolik_calories.pkl")
+    nutritional_values = pd.read_pickle(pathlib.Path(__file__).parent / "data" / "diyetkolik_calories.pkl")
 
     user_based_score_df = pd.DataFrame()
     user_based_score_df.index = nutritional_values.index
@@ -59,6 +59,8 @@ class HealthModule:
             user_bmr = 10*self.user_weight + 6.25*self.user_height - 5*self.user_age + 5
         else:
             user_bmr = 10*self.user_weight + 6.25*self.user_height - 5*self.user_age - 161
+
+        self.user_bmr = user_bmr
         return user_bmr
 
     def amr(self):
@@ -69,6 +71,8 @@ class HealthModule:
         user_recipe_amr = user_daily_amr * meal_type_percentage[self.meal_type]
 
         self.user_amr = user_recipe_amr
+
+        print("amr stuff: ", self.user_bmr, activity_factor[self.user_exercice], user_daily_amr, meal_type_percentage[self.meal_type], user_recipe_amr)
 
         return user_recipe_amr
 
@@ -133,8 +137,11 @@ class HealthModule:
     def calculate_scores(self, recipe_df: pd.DataFrame) -> pd.DataFrame:
         user_based_score_df = pd.DataFrame()
 
+        user_based_score_df.index = recipe_df.index
+
         bins = [-1, (1 - self.cv) * self.user_amr, self.user_amr,
                 (1 + self.cv) * self.user_amr]
+        
         user_based_score_df['amr_score'] = pd.cut(
             recipe_df['calories'], bins=bins, labels=[1, 3, 5])
         user_based_score_df['amr_score'] = user_based_score_df['amr_score'].astype(
@@ -175,3 +182,5 @@ class HealthModule:
 
         user_based_score_df['health_score'] = user_based_score_df[[
             "fat_score", "protein_score", "carb_score"]].mean(axis=1)
+        
+        return user_based_score_df[["fat_score", "protein_score", "carb_score", "amr_score", "health_score"]]

@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
-from application.ontology import expand_classes
 
-from application import DATASETS_DIR, CACHE_DIR
+from modules.nvcbot.ontology import expand_classes
+from modules.nvcbot import DATASETS_DIR, CACHE_DIR
 
 def create_user_recipes(habits):
     habits = [habit for habit in habits if habit != "No Restrictions"]

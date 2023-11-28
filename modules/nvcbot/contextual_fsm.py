@@ -5,6 +5,11 @@ from core.src.mas.agents.personal_agent.behaviours.contextual_fsm import Abstrac
 from core.src.services.persistence_service import PryvPersistenceService
 import pandas as pd
 
+class RecommendatationState(State):
+    def __init__(self):
+        super().__init__()
+        self.next_state = ""
+
 
 class EchoState(State):
     def __init__(self) -> None:
@@ -24,11 +29,10 @@ class EchoState(State):
         reply.body = message.body
         await self.send(reply)
 
-class RecommendatationState(State):
-    def __init__(self):
+class InitialState(State):
+    def __init__(self) -> None:
         super().__init__()
-        self.next_state = ""
-
+        self.next_state = "echoState"
 
 class ContextualFSM(AbstractContextualFSMBehaviour):
     def __init__(self):
@@ -43,34 +47,38 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
         self.add_transition("echoState", "echoState")
 
     async def on_start(self):
-        self.agent.logger.debug("STARTED.")
-        persistence_service: PryvPersistenceService = self.agent.persistence_service
-        pryv_profile = persistence_service.get_profile()
-        self.agent.logger.debug("PRYV PROF: ", pryv_profile)
-
-        from recommendations.health_module import HealthModule
-        dataset = pd.read_excel("./data/diyetkolik_recipes.xlsx", index_col=0)
-
-        user_data = {
-            "weight": 100,
-            "height": 180,
-            "age": 25,
-            "gender": "male",
-            "sports": "sedentary",
-            "mealtype": "dinner",
-        }
-
-        health_module = HealthModule(user_data)
-
-        user_bmr = health_module.bmr()
-        user_amr = health_module.amr()
-
-        health_scores = health_module.calculate_scores(dataset)
-        user_data["healthscores"] = health_scores.to_json()
-        user_data["bmr"] = user_bmr
-        user_data["amr"] = user_amr
-
-        persistence_service.save_data(user_data, "healthscores")
-        self.agent.logger.debug("INIT COMPLETE")
-
         await super().on_start()
+
+        persistence_service: PryvPersistenceService = self.agent.persistence_service
+
+        import json
+        pryv_profile = json.loads(persistence_service.get_profile())
+
+        dataset = pd.read_excel("./modules/nvcbot/data/diyetkolik_recipes.xlsx", index_col=0)
+        try: 
+            user_data = {
+                "weight": int(pryv_profile["weight"]),
+                "height": int(pryv_profile["height"]),
+                "age": int(pryv_profile["age"]),
+                "gender": pryv_profile["gender"],
+                "sports": pryv_profile["sports"],
+                "mealtype": "dinner", # Always dinner for now. TO DO: Think about this.
+            }
+
+            from modules.nvcbot.recommendations.health_module import HealthModule
+
+            health_module = HealthModule(user_data)
+
+            user_bmr = health_module.bmr()
+            user_amr = health_module.amr()
+
+            health_scores = health_module.calculate_scores(dataset)
+            user_data["healthscores"] = health_scores.to_json()
+            user_data["bmr"] = user_bmr
+            user_data["amr"] = user_amr
+
+            persistence_service.save_data(user_data, "healthscores")
+
+        except Exception as exe:
+            print(exe)
+

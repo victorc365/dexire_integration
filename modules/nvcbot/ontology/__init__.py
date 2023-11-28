@@ -1,17 +1,17 @@
 import owlready2
 import pathlib
 from lxml import etree as ET
-from application import ONTOLOGY_DIR, ONTOLOGY_FILE
+from modules.nvcbot import DATASETS_DIR
 import pickle
 from anytree import Node
 from anytree.exporter import DictExporter
 import itertools
 import typing as t
 
-ONTOLOGY_DIR = pathlib.Path(__file__).parent
+ONTOLOGY_FILE = DATASETS_DIR / "ontology.owl"
 
 onto: owlready2.Ontology = owlready2.get_ontology(
-    str(ONTOLOGY_DIR / "ontology.owl")).load()
+    str(DATASETS_DIR / "ontology.owl")).load()
 
 def expand_classes(list_of_input_classes: t.List) -> t.List:
     list_of_classes = [onto[item_class] for item_class in list_of_input_classes]
