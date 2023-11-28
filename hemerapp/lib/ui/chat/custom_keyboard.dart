@@ -1,19 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:hemerapp/providers/messages_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:hemerapp/ui/chat/bot_keyboard.dart';
+import 'package:hemerapp/ui/chat/erebot_recording_button.dart';
 
 class CustomKeyboard extends StatelessWidget {
   final TextEditingController textController;
   final Function handleSubmitted;
   final MessagesProvider messagesProvider;
   final List<Map<String, String>>? options;
+  final BotKeyboard? botKeyboard;
+  final Function(String) onRecordingEnded;
 
   const CustomKeyboard(
       {super.key,
       required this.textController,
       required this.handleSubmitted,
       required this.messagesProvider,
-      required this.options});
+      required this.botKeyboard,
+      required this.options,
+      required this.onRecordingEnded});
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +33,7 @@ class CustomKeyboard extends StatelessWidget {
         child: Row(
           children: [
             GestureDetector(
-              onTap: (){
+              onTap: () {
                 FocusManager.instance.primaryFocus?.unfocus();
               },
               child: Container(
@@ -42,9 +48,9 @@ class CustomKeyboard extends StatelessWidget {
                   color: Colors.white,
                   size: 20,
                 ),
-
               ),
             ),
+            ErebotRecordingButton(onRecordingEnded: onRecordingEnded),
             const SizedBox(
               width: 15,
             ),

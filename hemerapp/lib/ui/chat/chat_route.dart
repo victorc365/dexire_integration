@@ -8,6 +8,7 @@ import 'package:hemerapp/providers/bots_provider.dart';
 import 'package:hemerapp/providers/messages_provider.dart';
 import 'package:hemerapp/providers/pryv_provider.dart';
 import 'package:hemerapp/providers/secure_storage_provider.dart';
+import 'package:hemerapp/ui/chat/bot_keyboard.dart';
 import 'package:hemerapp/ui/chat/custom_keyboard.dart';
 import 'package:hemerapp/ui/chat/messages/text_message.dart';
 import 'package:hemerapp/ui/chat/messages/text_to_speech_message.dart';
@@ -31,7 +32,7 @@ class ChatRouteState extends State<ChatRoute> {
   String username = '';
   String botStatus = '';
   BotModel? bot;
-  List<Map<String, String>>? botKeyboard;
+  Map<String, dynamic>? botKeyboard;
   List<Map<String, String>>? options;
   late MessagesProvider messagesProvider;
   final TextEditingController _textController = TextEditingController();
@@ -105,6 +106,7 @@ class ChatRouteState extends State<ChatRoute> {
             });
 
             final List<MessageModel> messages = value.messages;
+            botKeyboard = value.botKeyboard;
             return Column(
               children: [
                 //chat bubble view
@@ -128,6 +130,7 @@ class ChatRouteState extends State<ChatRoute> {
                             case 'text_to_speech':
                               return TextToSpeechMessage(
                                   text: message.body!, isUser: isUser);
+                            case 'speech_to_text':
                             case 'text':
                               return TextMessage(
                                 text: message.body!,
@@ -140,6 +143,7 @@ class ChatRouteState extends State<ChatRoute> {
                                 isUser: isUser,
                                 description: body['description'],
                               );
+
                             case 'gif':
                               return null;
                             default:
@@ -152,7 +156,13 @@ class ChatRouteState extends State<ChatRoute> {
                   textController: _textController,
                   handleSubmitted: _handleSubmitted,
                   messagesProvider: value,
+                  botKeyboard: botKeyboard == null
+                      ? null
+                      : BotKeyboard(
+                          items: botKeyboard!['items'],
+                        ),
                   options: null,
+                  onRecordingEnded: (String message) => _handleSubmitted(message, value),
                 )
               ],
             );
