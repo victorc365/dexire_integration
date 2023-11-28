@@ -16,7 +16,7 @@ class MessagesProvider with ChangeNotifier {
   bool isLoading = false;
   bool _isConnected = false;
   List<MessageModel> _messages = [];
-  Map<String, dynamic>? keyboardOptions;
+  Map<String, dynamic>? botKeyboard;
 
   List<MessageModel> get messages => _messages;
 
@@ -65,11 +65,7 @@ class MessagesProvider with ChangeNotifier {
                       _messages.insertAll(0, history);
                       break;
                     case 'keyboard':
-                      Map<String, dynamic> test = jsonDecode(messageModel.body!);
-                      developer.log(test.toString());
-
-                      keyboardOptions = test;
-                      print("keyboardOptions");
+                      botKeyboard = jsonDecode(messageModel.body!);
                       break;
                     default:
                       _messages.add(messageModel);
