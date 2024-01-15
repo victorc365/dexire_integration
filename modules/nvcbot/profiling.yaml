@@ -41,3 +41,13 @@ states:
         - medium
         - highly active
         - everyday
+      transition: question_7
+  - question_7:
+      text: "What are your eating habits? (None, Vegan, Halal, etc...)"
+      field: habits
+      answer_type: options
+      answers:
+        - vegan
+        - halal
+        - vegetarian
+        - none

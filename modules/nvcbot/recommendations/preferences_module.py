@@ -6,15 +6,16 @@ from modules.nvcbot import DATASETS_DIR, CACHE_DIR
 
 def create_user_recipes(habits):
     habits = [habit for habit in habits if habit != "No Restrictions"]
-    if not habits:
-        custom_recipes: pd.DataFrame = pd.read_pickle(DATASETS_DIR / "archive" / "diyetkolik_with_classes.pkl")
-    else:
-        custom_recipes = pd.read_pickle(DATASETS_DIR / "habits" / f"diyetkolik_with_classes_{habits[0]}.pkl")
-        for habit in habits[1:]:
-            new_base = pd.read_pickle(DATASETS_DIR / "habits" / f"diyetkolik_with_classes_{habit}.pkl")
-            both = pd.merge(custom_recipes, new_base, how='inner', right_index=True, left_index=True, suffixes=["", "_y"])
-            both = both.drop([x for x in both.columns if "_y" in x], axis=1)
-
+    # TO DO: Re-enable habits.
+    #if not habits:
+    #    custom_recipes: pd.DataFrame = pd.read_pickle(DATASETS_DIR / "archive" / "diyetkolik_with_classes.pkl")
+    #else:
+    #    custom_recipes = pd.read_pickle(DATASETS_DIR / "habits" / f"diyetkolik_with_classes_{habits[0]}.pkl")
+    #    for habit in habits[1:]:
+    #        new_base = pd.read_pickle(DATASETS_DIR / "habits" / f"diyetkolik_with_classes_{habit}.pkl")
+    #        both = pd.merge(custom_recipes, new_base, how='inner', right_index=True, left_index=True, suffixes=["", "_y"])
+    #        both = both.drop([x for x in both.columns if "_y" in x], axis=1)
+    custom_recipes: pd.DataFrame = pd.read_excel(DATASETS_DIR / "diyetkolik_recipes.xlsx", index_col=0)
     custom_recipes.dropna(inplace=True)
 
     # 0: do not recommend
