@@ -7,8 +7,6 @@ from modules.nvcbot.explanations.item_user_based_explanations import TreeManager
 from modules.nvcbot.explanations.sentence_generator import get_sentence, get_single_food_fact, get_counter_sentence
 from modules.nvcbot.explanations.counter_explanations import get_counter_explanation
 
-from database_models import *
-
 def get_explanations(uuid, recommended_recipe):
     user_recipes: pd.DataFrame = pd.read_pickle(CACHE_DIR / "interactive" / f"{uuid}.pkl")
 
@@ -21,7 +19,8 @@ def get_explanations(uuid, recommended_recipe):
         user_profile = pickle.load(handle)  
 
     nutritional_cols = ["calories", "fat", "carbohydrates", "protein", "fiber"]
-    recipe_cols = ["PrepTime", "CookingTime", "overall", "cuisine_matching_score", "ingredient_matching_score", "final_matching_score"]
+    recipe_cols = ["cooking_style", "meal_type", "taste", "final_matching_score"]
+
     item_based_df = user_recipes[[*nutritional_cols, *recipe_cols, "recommended"]]
 
     item_based_tree = TreeManager(item_based_df)
@@ -30,7 +29,7 @@ def get_explanations(uuid, recommended_recipe):
     explanations = []
 
     features.remove("overall")
-    for feature in features[-3:]: #get the best 3 features
+    for feature in features[-3:]: 
         content, expanded = get_single_food_fact(feature)
         explanations.append({
             "content": content, 
