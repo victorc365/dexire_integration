@@ -106,7 +106,9 @@ class ChatRouteState extends State<ChatRoute> {
             });
 
             final List<MessageModel> messages = value.messages;
+
             botKeyboard = value.botKeyboard;
+
             return Column(
               children: [
                 //chat bubble view
