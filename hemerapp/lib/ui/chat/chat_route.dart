@@ -106,7 +106,7 @@ class ChatRouteState extends State<ChatRoute> {
             });
 
             final List<MessageModel> messages = value.messages;
-
+              
             botKeyboard = value.botKeyboard;
 
             return Column(
@@ -139,11 +139,11 @@ class ChatRouteState extends State<ChatRoute> {
                                 isUser: isUser,
                               );
                             case 'image':
-                              var body = jsonDecode(message.body!);
+                              var body = message.body!;
                               return ImageMessage(
-                                imageUrl: body['image_url'],
+                                imageUrl: body,
                                 isUser: isUser,
-                                description: body['description'],
+                                description: null,
                               );
 
                             case 'gif':
