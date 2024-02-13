@@ -12,23 +12,15 @@ def get_explanations(uuid, recommended_recipe):
 
     user_recipes = user_recipes.replace("-", 0)
 
-    #user_prefs = ast.literal_eval(list(IngredientSpecificationLogs.select().where(IngredientSpecificationLogs.uuid == uuid))[-1].user_data)['wanted_items']
-    #cuisine_prefs = ast.literal_eval(list(CuisineSpecificationLogs.select().where(CuisineSpecificationLogs.uuid == uuid))[-1].user_data)['wanted_items']
+    cols = ["calories", "fat", "carbs", "protein", "fiber", "final_matching_score", "health_score", "recommended"]
 
-    with open(CACHE_DIR / "user_profiles" / f"{uuid}.pkl", 'rb') as handle:
-        user_profile = pickle.load(handle)  
-
-    nutritional_cols = ["calories", "fat", "carbohydrates", "protein", "fiber"]
-    recipe_cols = ["cooking_style", "meal_type", "taste", "final_matching_score"]
-
-    item_based_df = user_recipes[[*nutritional_cols, *recipe_cols, "recommended"]]
+    item_based_df = user_recipes[cols]
 
     item_based_tree = TreeManager(item_based_df)
     importances, indices, features = item_based_tree.get_features()
     
     explanations = []
 
-    features.remove("overall")
     for feature in features[-3:]: 
         content, expanded = get_single_food_fact(feature)
         explanations.append({
@@ -38,13 +30,13 @@ def get_explanations(uuid, recommended_recipe):
         })
 
     #strong counter points is for the factors where recommended recipe is actually better than the counter recipe
-    strong_counter_points, weak_counter_points, counter_recipe = get_counter_explanation(user_recipes, recommended_recipe)
-    counter_explanation_sentence = get_counter_sentence(strong_counter_points[:2], weak_counter_points[2:], recommended_recipe, counter_recipe)
+    #strong_counter_points, weak_counter_points, counter_recipe = get_counter_explanation(user_recipes, recommended_recipe)
+    #counter_explanation_sentence = get_counter_sentence(strong_counter_points[:2], weak_counter_points[2:], recommended_recipe, counter_recipe)
 
-    explanations.append({
-            "content": counter_explanation_sentence, 
-            "expanded": None,
-            "effect": "neutral",
-        },)
+    #explanations.append({
+    #        "content": counter_explanation_sentence, 
+    #        "expanded": None,
+    #        "effect": "neutral",
+    #    },)
 
     return explanations

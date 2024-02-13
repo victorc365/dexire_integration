@@ -34,7 +34,7 @@ def process_ingredients_specs(uuid, wanted_ingredients, unwanted_ingredients, in
         df.loc[unwanted_recipes, "recommended"] = -1
         df.loc[unwanted_recipes, "recommendation_tags"] = df.loc[unwanted_recipes].recommendation_tags.apply(lambda x: x.union(set(["UNWANTED_INGREDIENTS"]))) 
 
-    if wanted_ingredients != []:
+    if wanted_ingredients is not None:
         df["ingredient_matching_score"] = df.ingredient_classes.apply(lambda row: len(np.intersect1d(row, wanted_ingredients)) / len(np.union1d(row, wanted_ingredients)))
         df["final_matching_score"] = df["ingredient_matching_score"] # df["cuisine_matching_score"] +
 

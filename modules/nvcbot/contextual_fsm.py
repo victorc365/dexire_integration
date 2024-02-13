@@ -4,6 +4,7 @@ import traceback
 import pickle
 import pandas as pd
 import typing as t
+import requests
 
 from spade.message import Message
 from spade.behaviour import State
@@ -16,20 +17,33 @@ from modules.nvcbot.explanations import get_explanations
 from modules.nvcbot.recommendations import generate_custom_recipes, get_allergies, get_eating_habits, get_recipe_classes
 from modules.nvcbot.recommendations.preferences_module import process_ingredients_specs
 from modules.nvcbot.recommendations.health_module import HealthModule
-from modules.nvcbot import CACHE_DIR
+from modules.nvcbot import CACHE_DIR, USER_PROFILES_DIR
+from bs4 import BeautifulSoup
 
+
+def get_google_image(query):
+    url = f"https://www.google.com/search?q={query}&tbm=isch" 
+    response = requests.get(url) 
+    soup = BeautifulSoup(response.text, "html.parser") 
+
+    img_tag = soup.find("img", {"class": "yWs4tf"})
+    if img_tag is not None:
+        img_link = img_tag.get("src")
+        return img_link
+    else:
+        return "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Good_Food_Display_-_NCI_Visuals_Online.jpg/1920px-Good_Food_Display_-_NCI_Visuals_Online.jpg"
 
 def prep_keyboard_message(agent_id, buttons: list) -> Message:
     keyboard_message = prep_outgoing_message(agent_id, json.dumps({"items": buttons}), "keyboard")
     return keyboard_message
 
-def prep_outgoing_message(agent_id, body, context="contextual"):
+def prep_outgoing_message(agent_id, body, context="contextual", body_format="text"):
     message = Message()
     message.sender = agent_id
     message.to = "gateway_agent_1@localhost"
     message.thread = "user-thread"
     message.metadata = {'performative': 'inform', 'direction': 'outgoing', 'target': 'hemerapp',
-                            'context': context, 'body_format': 'text'}
+                            'context': context, 'body_format': body_format}
     message.body = body
 
     return message
@@ -41,7 +55,7 @@ class EatingHabitsState(State):
         super().__init__()
 
     async def run(self) -> None:
-        await asyncio.sleep(2)
+        await asyncio.sleep(3)
 
         try: 
             print("SENDING EATING HABITS")
@@ -83,7 +97,7 @@ class AllergyState(State):
                 message = await self.receive(REPLY_TIMEOUT)
 
             user_dict = {"allergies": allergies}
-            with open(CACHE_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
                 pickle.dump(user_dict, file)
 
             print("ALLERGIES DONE: ", allergies)
@@ -112,11 +126,11 @@ class IngredientPreferenceState(State):
                 message = await self.receive(REPLY_TIMEOUT)
             
 
-            with open(CACHE_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
                 user_dict = pickle.load(file)
                 user_dict[f"{self.preference_type}_classes"] = user_recipe_classes
             
-            with open(CACHE_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
                 pickle.dump(user_dict, file)
 
         except:
@@ -167,7 +181,7 @@ class InternalCalculationsState(State):
 
             generate_custom_recipes(self.agent.id, pryv_profile, health_scores, "interactive")
 
-            with open(CACHE_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
                 user_dict = pickle.load(file)
 
             process_ingredients_specs(self.agent.id, user_dict["like_classes"], user_dict["dislike_classes"])
@@ -189,14 +203,15 @@ class RecommendationState(State):
             explanations = get_explanations(self.agent.id, max_row)
 
             await self.send(prep_outgoing_message(self.agent.id, max_row["title"])) # send message
-            await self.send(prep_outgoing_message(self.agent.id, max_row["ingredients"])) # send messag
-            await self.send(prep_outgoing_message(self.agent.id, max_row["preparation"]))
+            await self.send(prep_outgoing_message(self.agent.id, get_google_image(max_row["title"]), body_format="image")) # send messag
+            await self.send(prep_outgoing_message(self.agent.id, max_row["ingredients"]))
             await self.send(prep_outgoing_message(self.agent.id, explanations[0]["content"]))
 
             def get_recommendation_actions() -> list:
                 return [
                     {"label": "Accept", "action": "ACCEPT"},
                     {"label": "Deny", "action": "DENY"},
+                    {"label": "More information", "action": "MORE_INFO"},
                 ]
 
             keyboard_message = prep_keyboard_message(self.agent.id, get_recommendation_actions())
@@ -204,11 +219,19 @@ class RecommendationState(State):
 
             reply = await self.receive(REPLY_TIMEOUT)
             
-            if reply.body == "ACCEPT":
-                self.set_next_state("acceptState")
-            
-            elif reply.body == "DENY":
-                self.set_next_state("denyState")
+            while True:
+                if reply.body == "ACCEPT":
+                    self.set_next_state("acceptState")
+                    break
+
+                elif reply.body == "DENY":
+                    self.set_next_state("denyState")
+                    break
+
+                elif reply.body == "MORE_INFO":
+                    await self.send(prep_outgoing_message(self.agent.id, max_row["preparation"]))
+
+                reply = await self.receive(REPLY_TIMEOUT)
 
         except:
             traceback.print_exc()
@@ -286,7 +309,7 @@ class RecipeFeedbackState(FeedbackState):
         while reply.body != "CONTINUE": 
             filter_ingredients.append(reply.body)
         
-        process_ingredients_specs(self.agent.id, [], filter_ingredients)
+        process_ingredients_specs(self.agent.id, None, filter_ingredients)
 
         
 

@@ -84,7 +84,7 @@ phrases = {
         "is a recipe that is mindful of calorie impact", "is a recipe that helps maintain a balanced calorie intake",
         "is a recipe that encourages portion control for calorie management"],
 
-    "carbohydrates": [
+    "carbs": [
         "Has a favorable carbohydrate profile",
         "Provides a healthy amount of carbohydrates",
         "Offers a nutritious carbohydrate content",
@@ -276,7 +276,7 @@ phrases = {
         "is well-suited to your individual liking",
         "is a recipe that perfectly matches your preferences",
     ],
-    "overall": [
+    "health_score": [
         "Is typically better for your health",
         "Tends to be more healthful for you",
         "Is generally considered healthier for you",
@@ -292,7 +292,7 @@ phrases = {
 
 expanded = {
 'calories': "Calories are necessary to provide energy for bodily functions and physical activities, but they need to be balanced because consuming excessive calories can lead to weight gain and associated health issues such as obesity, while consuming too few calories can result in nutrient deficiencies and inadequate energy levels.",
-'carbohydrates': "Carbohydrates are a primary source of energy for the body, supporting brain function, physical performance, and fueling various metabolic processes, but they need to be balanced because consuming excessive carbohydrates, particularly refined ones, can contribute to weight gain, insulin resistance, and an increased risk of chronic diseases, while insufficient carbohydrate intake can lead to low energy levels and nutrient deficiencies.",
+'carbs': "Carbohydrates are a primary source of energy for the body, supporting brain function, physical performance, and fueling various metabolic processes, but they need to be balanced because consuming excessive carbohydrates, particularly refined ones, can contribute to weight gain, insulin resistance, and an increased risk of chronic diseases, while insufficient carbohydrate intake can lead to low energy levels and nutrient deficiencies.",
 'PrepTime': None,
 'CookingTime': None,
 'oven_temp': None,
@@ -303,7 +303,7 @@ expanded = {
 'ingredient_matching_score': "",
 'cuisine_matching_score': "",
 'final_matching_score': "",
-'overall': "",
+'health_score': "",
 }
 ## [
 # 'cuisine_matching_score', 
@@ -327,8 +327,8 @@ def get_sentence(factors: tuple[str]):
     return sentence
 
 def get_counter_sentence(strong_item_factors, weak_item_factors, recommended_recipe, counter_recipe):
-    counter_recipe_name: str = counter_recipe.RecipeNameEnglish
-    recommended_recipe_name: str = recommended_recipe.RecipeNameEnglish
+    counter_recipe_name: str = counter_recipe.title
+    recommended_recipe_name: str = recommended_recipe.title
 
     print(phrases.keys())
 

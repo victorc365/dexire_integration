@@ -4,8 +4,8 @@ import difflib
 def compare_recipes(recipe_a, recipe_b):
     columns = [
                 "final_matching_score",
-                "overall",
-                "carbohydrates",
+                "health_score",
+                "carbs",
                 "protein",
                 "fat",
                 "calories",
@@ -25,7 +25,7 @@ def calculate_similarity_score(row, target):
 
 def get_counter_explanation(recipes_df: pd.DataFrame, recommendation: pd.DataFrame):
     not_recommended: pd.DataFrame = recipes_df[recipes_df.recommended==0].head(5)
-    best_worst_recipe_idx = not_recommended.Classes.apply(lambda row: calculate_similarity_score(row, recommendation.Classes)).idxmax()
+    best_worst_recipe_idx = not_recommended.ingredient_classes.apply(lambda row: calculate_similarity_score(row, recommendation.ingredient_classes)).idxmax()
     best_worst_recipe = not_recommended.loc[best_worst_recipe_idx]
     strong_points, weak_points = compare_recipes(recommendation, best_worst_recipe)[-2:]
     return strong_points, weak_points, best_worst_recipe
