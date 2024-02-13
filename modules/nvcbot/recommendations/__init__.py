@@ -31,7 +31,10 @@ def generate_custom_recipes(uid, user_profile, user_health_scores, interaction):
     merged_profile["overall"] = merged_profile.health_score.transform(lambda row: row / row.max(), axis=0)
     merged_profile.sort_values(by=["overall"], ascending=False, inplace=True)
     one_thirds = merged_profile.shape[0] // 3
+    
     merged_profile.loc[merged_profile.tail(one_thirds).index, "recommended"] = -1
+    merged_profile.loc[merged_profile.head(one_thirds).index, "recommended"] = 1
+
     merged_profile.loc[merged_profile.tail(one_thirds).index, "recommendation_tags"] = \
     merged_profile.loc[merged_profile.tail(one_thirds).index].recommendation_tags.apply(lambda x: x.union(set(["UNHEALTHY_RECIPE"]))) 
     merged_profile.to_pickle(CACHE_DIR / f"{interaction}" / f"{uid}.pkl")

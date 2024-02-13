@@ -198,7 +198,11 @@ class RecommendationState(State):
             cached_dataset_dir: pd.DataFrame = CACHE_DIR / "interactive" / f"{self.agent.id}.pkl"
             cached_dataset = pd.read_pickle(cached_dataset_dir)
 
-            max_row = cached_dataset.loc[cached_dataset.recommended == 0].nlargest(1, 'total_score').iloc[0]
+            max_row = cached_dataset.loc[cached_dataset.recommended != -1].nlargest(1, 'total_score').iloc[0]
+
+            cached_dataset.at[max_row.index, "recommended"] = -1
+            cached_dataset.to_pickle(cached_dataset_dir)
+            
             self.agent.last_recipe = max_row
             explanations = get_explanations(self.agent.id, max_row)
 
