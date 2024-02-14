@@ -123,11 +123,11 @@ class CustomPad extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: Row(
             children: [
-              Expanded(child: _buildButton("Back", "BACK", "left_arrow")),
+              Expanded(child: _buildButton("Back", "BACK")),
               const SizedBox(width: 10,),
               Expanded(child: _buildButton("Home", "HOME", "home")),
               const SizedBox(width: 10,),
-              Expanded(child: _buildButton("Back", "CONTINUE", "right_arrow")),
+              Expanded(child: _buildButton("Continue", "CONTINUE")),
 
             ],
           ),
