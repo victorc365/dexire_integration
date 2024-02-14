@@ -7,7 +7,7 @@ from modules.nvcbot.explanations.item_user_based_explanations import TreeManager
 from modules.nvcbot.explanations.sentence_generator import get_sentence, get_single_food_fact, get_counter_sentence
 from modules.nvcbot.explanations.counter_explanations import get_counter_explanation
 
-def get_explanations(uuid, recommended_recipe):
+def get_explanations(uuid, recommended_recipe) -> list[str]:
     user_recipes: pd.DataFrame = pd.read_pickle(CACHE_DIR / "interactive" / f"{uuid}.pkl")
 
     user_recipes = user_recipes.replace("-", 0)

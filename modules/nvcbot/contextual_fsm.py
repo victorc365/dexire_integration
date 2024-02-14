@@ -17,6 +17,7 @@ from modules.nvcbot.explanations import get_explanations
 from modules.nvcbot.recommendations import generate_custom_recipes, get_allergies, get_eating_habits, get_recipe_classes
 from modules.nvcbot.recommendations.preferences_module import process_ingredients_specs
 from modules.nvcbot.recommendations.health_module import HealthModule
+from modules.nvcbot.db.models import *
 from modules.nvcbot import CACHE_DIR, USER_PROFILES_DIR
 from bs4 import BeautifulSoup
 
@@ -185,6 +186,9 @@ class InternalCalculationsState(State):
                 user_dict = pickle.load(file)
 
             process_ingredients_specs(self.agent.id, user_dict["like_classes"], user_dict["dislike_classes"])
+
+            UserSpecificationLogs({"uuid": self.agent.id, "user_data": json.dumps(user_dict)}).save()
+
             print("calculations done!")
         except:
             traceback.print_exc()
@@ -198,13 +202,22 @@ class RecommendationState(State):
             cached_dataset_dir: pd.DataFrame = CACHE_DIR / "interactive" / f"{self.agent.id}.pkl"
             cached_dataset = pd.read_pickle(cached_dataset_dir)
 
-            max_row = cached_dataset.loc[cached_dataset.recommended != -1].nlargest(1, 'total_score').iloc[0]
+            max_row = cached_dataset.loc[cached_dataset.recommended != -1].nlargest(1, 'total_score')
 
-            cached_dataset.at[max_row.index, "recommended"] = -1
+            recipe_idx = max_row.index[0]
+
+            cached_dataset.at[recipe_idx, "recommended"] = -1
             cached_dataset.to_pickle(cached_dataset_dir)
             
-            self.agent.last_recipe = max_row
+            max_row = max_row.iloc[0]
+
             explanations = get_explanations(self.agent.id, max_row)
+
+            offer_log_dict = {
+                "uuid": self.agent.id,
+                "recipe_info": max_row.to_dict(),
+                "explanation": ";".join([item["content"] for item in explanations])
+            }
 
             await self.send(prep_outgoing_message(self.agent.id, max_row["title"])) # send message
             await self.send(prep_outgoing_message(self.agent.id, get_google_image(max_row["title"]), body_format="image")) # send messag
@@ -226,10 +239,12 @@ class RecommendationState(State):
             while True:
                 if reply.body == "ACCEPT":
                     self.set_next_state("acceptState")
+                    OfferRoundLogs({"is_accepted": True, **offer_log_dict}).save()
                     break
 
                 elif reply.body == "DENY":
                     self.set_next_state("denyState")
+                    OfferRoundLogs({"is_accepted": False, **offer_log_dict}).save()
                     break
 
                 elif reply.body == "MORE_INFO":
@@ -276,6 +291,10 @@ class FeedbackState(State):
             await self.send(prep_keyboard_message(self.agent.id, feedback_items()))
 
             reply = await self.receive(REPLY_TIMEOUT)
+
+
+            ### try self.last_recipe see if it persists.
+            FeedbackLogs({"uuid": self.agent.id}).save()
 
             self.feedback_action(reply.body)
 
