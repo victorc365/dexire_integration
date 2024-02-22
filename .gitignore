@@ -4,4 +4,4 @@
 **/logs
 **/__pycache__/**
 
-modules/nvcbot/cache/*
+**modules/nvcbot/cache/*
