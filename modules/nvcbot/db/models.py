@@ -1,9 +1,11 @@
 from peewee import *
 import datetime
 import json
+import pathlib
+import os
 
-db: SqliteDatabase = SqliteDatabase('logs.sqlite3')
-
+db: SqliteDatabase = SqliteDatabase(str(pathlib.Path(__file__).parent / 'logs.sqlite3'))
+    
 class JSONField(TextField):
     def db_value(self, value):
         # serialize JSON to string
@@ -39,6 +41,9 @@ class RoundSummary(BaseModel):
     total_offers = IntegerField()
     is_terminated = BooleanField()
 
+
+if not os.path.exists(str(pathlib.Path(__file__).parent / 'logs.sqlite3')):
+    db.create_tables([UserSpecificationLogs, OfferRoundLogs, FeedbackLogs, RoundSummary])
 
 if __name__ == "__main__":
     db.create_tables([UserSpecificationLogs, OfferRoundLogs, FeedbackLogs, RoundSummary])
