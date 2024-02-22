@@ -50,7 +50,17 @@ def prep_outgoing_message(agent_id, body, context="contextual", body_format="tex
     return message
     
 REPLY_TIMEOUT = 60
-        
+
+def get_user_dict(agent_id) -> t.Dict:
+    with open(USER_PROFILES_DIR /  f'{agent_id}.pkl', 'rb') as file:
+        user_dict = pickle.load(file)
+    return user_dict
+
+def set_user_dict(agent_id, user_dict) -> None:
+    with open(USER_PROFILES_DIR /  f'{agent_id}.pkl', 'wb') as file:
+        pickle.dump(user_dict, file)
+
+
 class EatingHabitsState(State):
     def __init__(self) -> None:
         super().__init__()
@@ -75,6 +85,15 @@ class EatingHabitsState(State):
                 message = await self.receive(REPLY_TIMEOUT)
 
             print("EATING HABITS DONE: ", user_eating_habits)
+
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
+                user_dict = pickle.load(file)
+            
+            user_dict["eating_habits"] = user_eating_habits
+
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
+                pickle.dump(user_dict, file)
+
             self.set_next_state("allergyState")
 
         except:
@@ -97,7 +116,10 @@ class AllergyState(State):
 
                 message = await self.receive(REPLY_TIMEOUT)
 
-            user_dict = {"allergies": allergies}
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
+                user_dict = pickle.load(file)
+
+            user_dict["allergies"] = allergies
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
                 pickle.dump(user_dict, file)
 
@@ -153,13 +175,13 @@ class LikedItemsState(IngredientPreferenceState):
         await super().run()
         self.set_next_state("internalCalculationsState")
 
+
 class InternalCalculationsState(State):
     async def run(self) -> None:
         print("Running calculations...")
         persistence_service: PryvPersistenceService = self.agent.persistence_service
 
         def get_user_health_scores(persistence_service: PryvPersistenceService):
-            import requests
             url = f'{persistence_service.url}/events'
             params = {
                 'streams': f'{persistence_service.module_name}_healthscores'
@@ -179,15 +201,15 @@ class InternalCalculationsState(State):
 
             ## TO DO: Revise interactive. Are we having traditional vs interactive here too?
             health_scores["healthscores"] = json.loads(health_scores["healthscores"])
-
-            generate_custom_recipes(self.agent.id, pryv_profile, health_scores, "interactive")
-
+            
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
                 user_dict = pickle.load(file)
 
+            pryv_profile["habits"] = user_dict["eating_habits"]
+            generate_custom_recipes(self.agent.id, pryv_profile, health_scores, "interactive")
             process_ingredients_specs(self.agent.id, user_dict["like_classes"], user_dict["dislike_classes"])
 
-            UserSpecificationLogs({"uuid": self.agent.id, "user_data": json.dumps(user_dict)}).save()
+            UserSpecificationLogs(**{"uuid": self.agent.id, "user_data": json.dumps(user_dict)}).save()
 
             print("calculations done!")
         except:
@@ -209,55 +231,71 @@ class RecommendationState(State):
             cached_dataset.at[recipe_idx, "recommended"] = -1
             cached_dataset.to_pickle(cached_dataset_dir)
             
-            max_row = max_row.iloc[0]
+            max_row = max_row.loc[recipe_idx]
+            
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
+                user_dict = pickle.load(file)
 
             explanations = get_explanations(self.agent.id, max_row)
 
+
+            recipe_info = max_row.to_dict()
+            recipe_info["recommendation_tags"] = list(recipe_info["recommendation_tags"])
             offer_log_dict = {
                 "uuid": self.agent.id,
-                "recipe_info": max_row.to_dict(),
+                "recipe_info": recipe_info,
                 "explanation": ";".join([item["content"] for item in explanations])
             }
 
             await self.send(prep_outgoing_message(self.agent.id, max_row["title"])) # send message
-            await self.send(prep_outgoing_message(self.agent.id, get_google_image(max_row["title"]), body_format="image")) # send messag
             await self.send(prep_outgoing_message(self.agent.id, max_row["ingredients"]))
-            await self.send(prep_outgoing_message(self.agent.id, explanations[0]["content"]))
+
+            if user_dict["explanation_pref"]:
+                await self.send(prep_outgoing_message(self.agent.id, explanations[0]["content"]))
 
             def get_recommendation_actions() -> list:
                 return [
                     {"label": "Accept", "action": "ACCEPT"},
                     {"label": "Deny", "action": "DENY"},
-                    {"label": "More information", "action": "MORE_INFO"},
+                    {"label": "Photo", "action": "IMAGE"},
+                    {"label": "More explanation", "action": "MORE_EXPLANATION"},
+                    {"label": "How to cook?", "action": "MORE_INFO"},
                 ]
 
             keyboard_message = prep_keyboard_message(self.agent.id, get_recommendation_actions())
             await self.send(keyboard_message)
 
             reply = await self.receive(REPLY_TIMEOUT)
-            
+    
+
             while True:
                 if reply.body == "ACCEPT":
-                    self.set_next_state("acceptState")
-                    OfferRoundLogs({"is_accepted": True, **offer_log_dict}).save()
+                    OfferRoundLogs(**{"action": "ACCEPT", **offer_log_dict}).save()
+                    self.set_next_state("finalState")
                     break
 
                 elif reply.body == "DENY":
+                    OfferRoundLogs(**{"action": "DENY", **offer_log_dict}).save()
                     self.set_next_state("denyState")
-                    OfferRoundLogs({"is_accepted": False, **offer_log_dict}).save()
                     break
 
                 elif reply.body == "MORE_INFO":
+                    OfferRoundLogs(**{"action": "MORE_INFO", **offer_log_dict}).save()
                     await self.send(prep_outgoing_message(self.agent.id, max_row["preparation"]))
+
+                elif reply.body == "MORE_EXPLANATION":
+                    OfferRoundLogs(**{"action": "MORE_EXPLANATION", **offer_log_dict}).save()
+                    await self.send(prep_outgoing_message(self.agent.id, explanations[1]["content"]))
+                    await self.send(prep_outgoing_message(self.agent.id, explanations[1]["expanded"]))
+
+                elif reply.body == "IMAGE":
+                    OfferRoundLogs(**{"action": "IMAGE", **offer_log_dict}).save()
+                    await self.send(prep_outgoing_message(self.agent.id, get_google_image(max_row["title"]), body_format="image"))
 
                 reply = await self.receive(REPLY_TIMEOUT)
 
         except:
             traceback.print_exc()
-
-class AcceptState(State):
-    async def run(self) -> None:
-        ...
 
 class DenyState(State):
     async def run(self) -> None:
@@ -273,10 +311,12 @@ class DenyState(State):
         keyboard_message = prep_keyboard_message(self.agent.id, get_feedback_actions())
         await self.send(keyboard_message)
 
+        reply = await self.receive(REPLY_TIMEOUT)
+
         self.set_next_state(
             {"RECIPE": "recipeFeedbackState", 
              "EXPLANATION": "explanationFeedbackState", 
-             "NO_FEEDBACK": "recommendationState"}[keyboard_message.body])
+             "NO_FEEDBACK": "recommendationState"}[reply.body])
 
 class FeedbackState(State):
     feedback_type: str
@@ -291,24 +331,30 @@ class FeedbackState(State):
             await self.send(prep_keyboard_message(self.agent.id, feedback_items()))
 
             reply = await self.receive(REPLY_TIMEOUT)
+            action = reply.body
 
+            last_row = OfferRoundLogs.select().where(OfferRoundLogs.uuid == self.agent.id).order_by(OfferRoundLogs.id.desc()).limit(1).first()
 
-            ### try self.last_recipe see if it persists.
-            FeedbackLogs({"uuid": self.agent.id}).save()
+            feedback_results = await self.feedback_action(last_row.recipe_info)
 
-            self.feedback_action(reply.body)
+            FeedbackLogs(**{"uuid": self.agent.id,
+                            "offer_id": last_row.id,
+                            "feedback_type": self.feedback_type,
+                            "feedback": str([action, *feedback_results])}).save()
 
             await self.send(prep_outgoing_message(self.agent.id, f"Would you like to give another feedback?")) # send message
             await self.send(prep_keyboard_message(self.agent.id, [{"label": "Yes", "action": "YES"}, {"label": "No", "action": "NO"}]))
-
+            
             reply = await self.receive(REPLY_TIMEOUT)
-
             if reply.body == "NO":
-                break
+                self.set_next_state("recommendationState")
+            else:
+                self.set_next_state("denyState")
+            
+            break
 
-        self.set_next_state("recommendationState")
     
-    async def feedback_action(self, type: str) -> None:
+    async def feedback_action(self, recipe_info) -> list:
         ...
 
 class RecipeFeedbackState(FeedbackState):
@@ -320,21 +366,21 @@ class RecipeFeedbackState(FeedbackState):
                                    "RECENTLY_EATEN": "I ate the following recently...",
                                    }
     
-    async def feedback_action(self, type: str) -> None:
+    async def feedback_action(self, recipe_info) -> None:
         await self.send(prep_outgoing_message(self.agent.id, f"Which of the ingredients?")) # send message
-
-        list_of_ingredients = self.agent.last_recipe.ingredients_list
-        await self.send(prep_keyboard_message(self.agent.id, [{"label": ingredient, "action": ingredient} for ingredient in list_of_ingredients]))
+        
+        list_of_ingredients = recipe_info["ingredients_list"]
+        await self.send(prep_keyboard_message(self.agent.id, [{"label": ingredient, "action": ingredient} for ingredient in list_of_ingredients.split(", ")]))
 
         filter_ingredients = []
         reply = await self.receive(REPLY_TIMEOUT)
-
         while reply.body != "CONTINUE": 
             filter_ingredients.append(reply.body)
-        
-        process_ingredients_specs(self.agent.id, None, filter_ingredients)
+            reply = await self.receive(REPLY_TIMEOUT)
 
-        
+        process_ingredients_specs(self.agent.id, None, filter_ingredients)
+        return filter_ingredients
+
 
 class ExplanationFeedbackState(FeedbackState):
     def __init__(self):
@@ -346,12 +392,28 @@ class ExplanationFeedbackState(FeedbackState):
                                    "NOT_COMPLETE": "The explanation is incomplete."
                                    }
 
-    async def feedback_action(self, type: str) -> None:
-        ...
+    async def feedback_action(self, recipe_info) -> list:
+        return []
 
 class FinalState(State):
     async def run(self) -> None:
-        ...
+        await self.send(prep_outgoing_message(self.agent.id, "Thanks! We hope you will enjoy this recipe.")) # send message
+        await self.send(prep_outgoing_message(self.agent.id, "Would you like to receive another recipe?")) # send message
+
+        def get_feedback_actions() -> list:
+            return [
+                {"label": "Yes", "action": "YES"},
+                {"label": "No", "action": "NO"},
+            ]
+
+        keyboard_message = prep_keyboard_message(self.agent.id, get_feedback_actions())
+        await self.send(keyboard_message)
+
+        reply = await self.receive(REPLY_TIMEOUT)
+
+        self.set_next_state(
+            {"RECIPE": "recipeFeedbackState", 
+             "NO_FEEDBACK": "recommendationState"}[reply.body])
 
 class ContextualFSM(AbstractContextualFSMBehaviour):
     def __init__(self):
@@ -373,14 +435,14 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
                        state=InternalCalculationsState())
         self.add_state(name="recommendationState",
                        state=RecommendationState())
-        self.add_state(name="acceptState",
-                       state=AcceptState())
         self.add_state(name="denyState",
                        state=DenyState())
         self.add_state(name="recipeFeedbackState",
                        state=RecipeFeedbackState())
         self.add_state(name="explanationFeedbackState",
                        state=ExplanationFeedbackState())
+        self.add_state(name="finalState",
+                       state=FinalState())
         
         self.add_transition("eatingHabitsState", "allergyState")
         self.add_transition("allergyState", "dislikedItemsState")
@@ -388,15 +450,20 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
         self.add_transition("likedItemsState", "internalCalculationsState")
         self.add_transition("internalCalculationsState", "recommendationState")
 
-        self.add_transition("recommendationState", "acceptState")
+        self.add_transition("recommendationState", "finalState")
         self.add_transition("recommendationState", "denyState")
 
         self.add_transition("denyState", "recipeFeedbackState")
         self.add_transition("denyState", "explanationFeedbackState")
 
+        self.add_transition("recipeFeedbackState", "denyState")
+        self.add_transition("explanationFeedbackState", "denyState")
+
         self.add_transition("denyState", "recommendationState")
         self.add_transition("recipeFeedbackState", "recommendationState")
         self.add_transition("explanationFeedbackState", "recommendationState")
+
+        self.add_transition("finalState", "recommendationState")
 
 
     async def on_start(self):
@@ -406,7 +473,7 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
             persistence_service: PryvPersistenceService = self.agent.persistence_service
             pryv_profile = json.loads(persistence_service.get_profile())
             dataset = pd.read_csv("./modules/nvcbot/data/df_final_7000_with_classes.csv", index_col=0)
-
+            print("pryv: ", pryv_profile)
             user_data = {
                 "weight": int(pryv_profile["weight"]),
                 "height": int(pryv_profile["height"]),
@@ -416,18 +483,27 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
                 "mealtype": "dinner", # Always dinner for now. TO DO: Think about this.
             }
 
-
             health_module = HealthModule(user_data)
 
             user_bmr = health_module.bmr()
             user_amr = health_module.amr()
-
-            health_scores = health_module.calculate_scores(dataset)
+            target_profile = {
+                "carbs": 0.2,
+                "fiber": 0.35,
+                "fat": 0.1,
+                "protein": 0.35,
+                "calories": 1
+            }
+            health_scores = health_module.calculate_scores(dataset, target_profile)
             user_data["healthscores"] = health_scores.to_json()
             user_data["bmr"] = user_bmr
             user_data["amr"] = user_amr
 
             persistence_service.save_data(user_data, "healthscores")
+
+            user_dict = {"explanation_pref": pryv_profile["explanation_pref"]}
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
+                pickle.dump(user_dict, file)
 
         except Exception as exe:
             traceback.print_exc()

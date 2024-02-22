@@ -21,14 +21,6 @@ def create_user_recipes(habits):
 def process_ingredients_specs(uuid, wanted_ingredients, unwanted_ingredients, interaction_type="interactive"):
     df: pd.DataFrame = pd.read_pickle(CACHE_DIR / f"{interaction_type}" / f"{uuid}.pkl")
 
-    df.to_pickle(CACHE_DIR / f"{interaction_type}" / "before_ing_specs.pkl")
-    
-    print("------")
-    print(wanted_ingredients)
-    print(unwanted_ingredients)
-    # unwanted_ingredients = expand_classes(unwanted_ingredients)
-    # wanted_ingredients = expand_classes(wanted_ingredients)
-
     for unwanted_ingr in unwanted_ingredients:
         unwanted_recipes = df.ingredient_classes.index[df.ingredient_classes.apply(lambda x: unwanted_ingr in x)]
         df.loc[unwanted_recipes, "recommended"] = -1
@@ -41,7 +33,7 @@ def process_ingredients_specs(uuid, wanted_ingredients, unwanted_ingredients, in
         if df["final_matching_score"].max() != 0:
             df["final_matching_score"] = df["final_matching_score"].transform(lambda x: x / x.max(), axis=0)
 
-        df["total_score"] = df["final_matching_score"] * 0.5 + df["overall"] * 0.5 
+        df["total_score"] = df["final_matching_score"] * 0.5 + df["health_score"] * 0.5 
         df.sort_values("total_score", ascending=False, inplace=True)
 
     df.to_pickle(CACHE_DIR / f"{interaction_type}" / f"{uuid}.pkl")

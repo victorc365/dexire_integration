@@ -300,22 +300,11 @@ expanded = {
 'fat': "Fats are essential for the body as they provide a concentrated source of energy, support the absorption of fat-soluble vitamins, help maintain healthy cell function, contribute to hormone production, and ensure proper insulation and protection of organs, but it's crucial to maintain a balanced intake to avoid negative health effects such as weight gain and increased risk of cardiovascular diseases.",
 'cholesterol': "Cholesterol is essential for various bodily functions, including hormone synthesis, cell membrane structure, and production of vitamin D, but it needs to be balanced because excessive levels of cholesterol can lead to the formation of plaque in the arteries, increasing the risk of heart disease and other cardiovascular problems.",
 'protein': "Proteins are beneficial for the body due to their role in supporting tissue repair, promoting muscle growth and maintenance, facilitating enzyme production for metabolic processes, aiding in hormone regulation, contributing to a healthy immune system, and providing a source of essential amino acids necessary for overall health and well-being.",
-'ingredient_matching_score': "",
-'cuisine_matching_score': "",
 'final_matching_score': "",
-'health_score': "",
+'health_score': ""
 }
-## [
-# 'cuisine_matching_score', 
-# 'ingredient_matching_score', 
-# 'final_matching_score', 
-# 'CookingTime', 
-# 'PrepTime', 
-# 'fiber', 
-# 'calories', 
-# 'protein', 
-# 'fat', 
-# 'carbohydrates'] ##
+
+# ["calories", "fat", "carbs", "protein", "fiber", "final_matching_score", "health_score", "recommended"]
 
 def get_single_food_fact(factor: str):
     return " ".join([random.choice(phrases["recipe"]), random.choice(phrases[factor]).lower()]).capitalize(), expanded[factor]

@@ -8,8 +8,7 @@ from mas.agents.personal_agent.behaviours.messages_router import MessagesRouterB
 from mas.enums.message import MessageContext
 from services.bot_service import Bot, BotService
 from services.persistence_service import PryvPersistenceService
-from utils.communication_utils import get_internal_thread_template, get_user_thread_template, \
-    get_contextual_fsm_template
+from utils.communication_utils import get_internal_thread_template, get_user_thread_template
 
 
 class PersonalAgent(BasicAgent):
@@ -29,7 +28,9 @@ class PersonalAgent(BasicAgent):
         try:
             self.contextual_module = getattr(importlib.import_module(f'modules.{self.module_name}.contextual_fsm'),
                                              'ContextualFSM')
-        except ModuleNotFoundError:
+            print('Module loaded')
+        except ModuleNotFoundError as exe:
+            print(f' Exception loading module: {exe}')
             self.contextual_module = None
 
         self.custom_keyboard = BotService().get_custom_keyboard(self.module_name)
@@ -40,9 +41,6 @@ class PersonalAgent(BasicAgent):
         self.add_behaviour(RegisterToGatewayBehaviour())
         self.add_behaviour(InternalListenerBehaviour(), get_internal_thread_template())
         self.add_behaviour(self.message_router, get_user_thread_template())
-        if self.contextual_module is not None:
-            self.add_contextual_behaviour(MessageContext.CONTEXTUAL.value, self.contextual_module(),
-                                          get_contextual_fsm_template())
         self.logger.debug('Setup and ready!')
 
     def add_contextual_behaviour(self, context: MessageContext, behaviour, template=None):

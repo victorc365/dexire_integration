@@ -2,7 +2,7 @@ from peewee import *
 import datetime
 import json
 
-db = SqliteDatabase('logs.sqlite3')
+db: SqliteDatabase = SqliteDatabase('logs.sqlite3')
 
 class JSONField(TextField):
     def db_value(self, value):
@@ -23,9 +23,10 @@ class UserSpecificationLogs(BaseModel):
 
 class OfferRoundLogs(BaseModel):
     uuid = CharField()
-    is_accepted = BooleanField()
+    action = CharField()
     explanation = CharField()
     recipe_info = JSONField()
+    time_stamp = DateTimeField(default=datetime.datetime.now)
 
 class FeedbackLogs(BaseModel):
     uuid = CharField()
@@ -37,3 +38,7 @@ class RoundSummary(BaseModel):
     uuid = CharField()
     total_offers = IntegerField()
     is_terminated = BooleanField()
+
+
+if __name__ == "__main__":
+    db.create_tables([UserSpecificationLogs, OfferRoundLogs, FeedbackLogs, RoundSummary])

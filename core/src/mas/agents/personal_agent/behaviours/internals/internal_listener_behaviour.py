@@ -10,7 +10,7 @@ from services.bot_service import BotService
 from services.chat_service import ChatService
 from utils.communication_utils import get_profiling_fsm_template
 from spade.message import Message
-
+from utils.communication_utils import get_contextual_fsm_template
 
 class InternalListenerBehaviour(CyclicBehaviour):
     def __init__(self) -> None:
@@ -84,9 +84,12 @@ class InternalListenerBehaviour(CyclicBehaviour):
                         metadata=metadata
                     ))
 
-                if len(self.agent.profile) == 0:
-                    profiling_configuration = BotService().get_bot_profiling(self.agent.bot_name)
-                    if profiling_configuration is not None:
+                profiling_configuration = BotService().get_bot_profiling(self.agent.bot_name)
+                if profiling_configuration is not None:
+                    if len(self.agent.profile) == 0:
                         self.agent.add_contextual_behaviour(MessageContext.PROFILING.value,
                                                             ProfilingFSMBehaviour(profiling_configuration),
                                                             get_profiling_fsm_template())
+                        return
+                self.agent.add_contextual_behaviour(MessageContext.CONTEXTUAL.value, self.agent.contextual_module(), get_contextual_fsm_template())
+

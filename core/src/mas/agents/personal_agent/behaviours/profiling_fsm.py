@@ -1,6 +1,7 @@
 from mas.agents.generic_behaviours.dynamic_fsm import DynamicFSMBehaviour
 from services.bot_service import BotProfilingConfig
-
+from mas.enums.message import MessageContext
+from utils.communication_utils import get_contextual_fsm_template
 
 class ProfilingFSMBehaviour(DynamicFSMBehaviour):
     """ State machine used for user profiling.
@@ -30,3 +31,6 @@ class ProfilingFSMBehaviour(DynamicFSMBehaviour):
         profile = self.agent.profile
         persistence_service = self.agent.persistence_service
         persistence_service.save_data(profile, 'profiling')
+
+        self.agent.add_contextual_behaviour(MessageContext.CONTEXTUAL.value, self.agent.contextual_module(), get_contextual_fsm_template())
+
