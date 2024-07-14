@@ -10,6 +10,7 @@ from uvicorn import Config, Server
 
 def init_logger() -> None:
     log_directory_path = os.environ.get(Environment.LOG_DIRECTORY_PATH.value)
+    print(f"log directory path: {log_directory_path}, val_name: {Environment.LOG_DIRECTORY_PATH.value}")
     log_level = os.environ.get(Environment.LOG_LEVEL.value)
     logging.basicConfig(level=log_level,
                         format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',

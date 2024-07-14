@@ -57,6 +57,8 @@ class Permission:
 
 class BotService(metaclass=Singleton):
     def __init__(self) -> None:
+        import dotenv
+        dotenv.load_dotenv(".env")
         self.user_service: UserService = UserService()
         self.bots_folder = os.environ.get(
             Environment.MODULE_DIRECTORY_PATH.value)

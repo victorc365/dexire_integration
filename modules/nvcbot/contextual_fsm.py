@@ -49,7 +49,7 @@ def prep_outgoing_message(agent_id, body, context="contextual", body_format="tex
 
     return message
     
-REPLY_TIMEOUT = 60
+REPLY_TIMEOUT = 600
 
 def get_user_dict(agent_id) -> t.Dict:
     with open(USER_PROFILES_DIR /  f'{agent_id}.pkl', 'rb') as file:
