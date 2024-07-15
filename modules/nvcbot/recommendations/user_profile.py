@@ -109,13 +109,13 @@ def format_working_status(working_status_str: str) -> str:
 def format_marital_status(marital_status_str: str) -> str:
     ms = marital_status_str.lower()
     if ms == "single":
-        return "single"
+        return "Single"
     elif ms == "married":
-        return "married"
+        return "Married"
     elif ms == "divorced":
-        return "divorced"
+        return "Single"
     elif ms == "widowed":
-        return "divorced"
+        return "Single"
 def format_nutritional_goal(nutrition_goal_str: str) -> str:
     if nutrition_goal_str.lower() == "lose_weight":
         return NutritionGoals.lose_weight

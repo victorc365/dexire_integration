@@ -141,7 +141,8 @@ class AskCulturalFactorState(State):
                 if message.body in system_eating_habits:
                     user_cultural_factors.append(message.body)
                     break
-                message = await self.receive(REPLY_TIMEOUT)
+            
+            message = await self.receive(REPLY_TIMEOUT)
 
             print("CULTURAL FACTORS: ", user_cultural_factors)
 
@@ -185,7 +186,8 @@ class AskFlexiObservantState(State):
                 if message.body in system_eating_habits:
                     flexi_diets.append(message.body)
                     break
-                message = await self.receive(REPLY_TIMEOUT)
+            
+            message = await self.receive(REPLY_TIMEOUT)
 
             print("CULTURAL FACTORS: ", flexi_diets)
 
@@ -226,7 +228,7 @@ class AskMealTypeState(State):
                 if message.body in system_meal_types:
                     meal_type.append(message.body)
                     break
-                message = await self.receive(REPLY_TIMEOUT)
+            message = await self.receive(REPLY_TIMEOUT)
 
             print("Meal type: ", meal_type)
 
@@ -265,7 +267,7 @@ class AskPlaceState(State):
                 if message.body in system_places:
                     places.append(message.body)
                     break
-                message = await self.receive(REPLY_TIMEOUT)
+            message = await self.receive(REPLY_TIMEOUT)
 
             print("Meal type: ", places)
 
@@ -304,9 +306,9 @@ class AskSocialSituationState(State):
                 if message.body in system_social_situations:
                     social.append(message.body)
                     break
-                message = await self.receive(REPLY_TIMEOUT)
+            message = await self.receive(REPLY_TIMEOUT)
 
-            print("Meal type: ", social)
+            print("Social_situation: ", social)
 
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
                 user_dict = pickle.load(file)
@@ -336,14 +338,14 @@ class AskTimeState(State):
             keyboard_message = prep_keyboard_message(self.agent.id, [{"label": time.title(), "action": time} for time in system_times])
             
             await self.send(keyboard_message)
-            
+            meal_time = 0.0
             time_option = []
             message = await self.receive(REPLY_TIMEOUT)
             while message.body != "CONTINUE" and message.body != "NONE":
                 if message.body in system_times:
                     time_option.append(message.body)
                     break
-                message = await self.receive(REPLY_TIMEOUT)
+            message = await self.receive(REPLY_TIMEOUT)
                 
             if len(time_option) > 0:
                 if time_option[0] == "other time":
@@ -405,7 +407,7 @@ class AskRecommendationsState(State):
                     recipe_option.append(message.body)
                     #TODO: show details of the recipe
                     break
-                message = await self.receive(REPLY_TIMEOUT)
+            message = await self.receive(REPLY_TIMEOUT)
             self.set_next_state("finalState")
         except:
             traceback.print_exc()
@@ -767,15 +769,15 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
             print("dataset loaded with shape: ", dataset.shape)
             print("pryv: ", pryv_profile)
             user_data = {
-                "user_name": pryv_profile["name"],
-                "gender": pryv_profile["gender"],
-                "age": int(pryv_profile["age"]),
-                "weight": int(pryv_profile["weight"]),
-                "height": int(pryv_profile["height"]),
-                "working_status": pryv_profile["working_status"],
-                "marital_status": pryv_profile["marital_status"],
-                "life_style": pryv_profile["life_style"],
-                "nutritional_goal": pryv_profile["nutritional_goal"], 
+                "user_name": pryv_profile.get("name", "UserName"),
+                "gender": pryv_profile.get("gender", "male"),
+                "age": int(pryv_profile.get("age", "33")),
+                "weight": int(pryv_profile.get("weight", "70")),
+                "height": int(pryv_profile.get("height", "170")),
+                "working_status": pryv_profile.get("working_status", "Full-time-worker"),
+                "marital_status": pryv_profile.get("marital_status", "Married"),
+                "life_style": pryv_profile.get("life_style", "Very active"),
+                "nutritional_goal": pryv_profile.get("nutritional_goal", "maintain_fit") 
             }
             # load user data model and process data 
             user_profiler = UserProfile(user_data)
@@ -785,7 +787,7 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
                 user_profiler.bmr,
                 user_profiler.life_style
                 )  
-            user_profiler.projected_daily_calories = user_profiler.calculate_projected_calorie_needs()                                                       
+            user_profiler.projected_daily_calories = user_profiler.projected_calorie_needs()                                                       
             complete_user_data = vars(user_profiler)
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
                 pickle.dump(complete_user_data, file)

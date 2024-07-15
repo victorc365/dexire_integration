@@ -67,6 +67,7 @@ class PryvPersistenceService(AbstractPersistenceService):
                 'parentId': stream.parent,
                 'id': stream.stream_id
             }
+            print(f"JSON: {json}")
             response = requests.post(url, json=json, headers=self.headers)
             if response.status_code == HTTPStatus.BAD_REQUEST:
                 raise ValueError(f'Pryv Create Stream with Invalid input: {response.status_code}/{response.text}')
