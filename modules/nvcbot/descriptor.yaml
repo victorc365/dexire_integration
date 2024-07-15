@@ -1,5 +1,5 @@
 name: nvcbot
-description: Simple bot that replies by coping the user message.
+description: Simple bot that provide food recommendations.
 url: http://test.com
 isDev: true
 isPryvRequired: true

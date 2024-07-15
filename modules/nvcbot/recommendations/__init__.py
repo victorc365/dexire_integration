@@ -1,13 +1,40 @@
 import pandas as pd
 from modules.nvcbot.recommendations.preferences_module import create_user_recipes
+from modules.nvcbot.recommendations.default_values import (allergies_queries_dict, 
+                                                           cultural_factors, 
+                                                           meals_calorie_dict, 
+                                                           flexi_probabilities_dict,
+                                                           place_proba_dict,
+                                                           social_situation_proba_dict,
+                                                           time_options)
 
 from modules.nvcbot import DATASETS_DIR, CACHE_DIR, DATASET
 
 import ast
 
 def get_allergies():
-    return ["gluten", "nuts", "dairy", "soy", "shellfish"]
+    return list(allergies_queries_dict.keys())
 
+def get_meals():
+    return list(meals_calorie_dict.keys())
+
+def get_cultural_factors():
+    return list(cultural_factors.keys())
+
+def get_flexi_diet():
+    return list(flexi_probabilities_dict.keys())
+
+def get_places():
+    return list(place_proba_dict.keys())
+
+def get_social_situation():
+    return list(social_situation_proba_dict.keys())
+
+def get_time_options():
+    return list(time_options.keys())
+
+
+# old versions
 
 def get_eating_habits():
     return ["vegan", "vegetarian", "kosher", "halal", "none"]

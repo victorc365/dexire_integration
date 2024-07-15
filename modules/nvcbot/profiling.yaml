@@ -4,46 +4,68 @@ description: Profiling questions to know more about the user.
 invalid_answer_message: I think you made a mistake. Can you please, provide me with a valid answer.
 states:
   - question_1:
-      text: What is your full name?
+      text: What is your name?
       field: name
       answer_type: string
       transition: question_2
   - question_2:
-      text: What is your weight?
-      field: weight
-      answer_type: integer
-      transition: question_3
-  - question_3:
-      text: What is your height?
-      field: height
-      answer_type: integer
-      transition: question_4
-  - question_4:
-      text: What is your age?
-      field: age
-      answer_type: integer
-      transition: question_5
-  - question_5:
-      text: What is your gender?
+      text: What is your clinical gender?
       field: gender
       answer_type: options
       answers:
         - male
         - female
+      transition: question_3
+  - question_3:
+      text: What is your age?
+      field: age
+      answer_type: integer
+      transition: question_4
+  - question_4:
+      text: What is your weight in kilograms?
+      field: weight
+      answer_type: integer
+      transition: question_5
+  - question_5:
+      text: What is your height in centimeters?
+      field: height
+      answer_type: integer
       transition: question_6
   - question_6:
+      text: What is your current working status?
+      field: working_status
+      answer_type: options
+      answers:
+        - employed
+        - unemployed
+        - retired
+        - student
+      transition: question_7
+  - question_7:
+      text: What is your marital_status?
+      field: marital_status
+      answer_type: options
+      answers:
+        - single
+        - married
+        - divorced
+        - widowed
+      transition: question_8
+  - question_8: 
       text: What is your sports level?
-      field: sports
+      field: life_style
       answer_type: options
       answers:
         - sedentary
-        - lowly active
-        - medium
-        - highly active
-        - everyday
-      transition: question_7
-
-  - question_7:
-      text: Would you like to receive explanations? (yes/no)
-      field: explanation_pref
-      answer_type: string
+        - lightly active
+        - moderately active
+        - very active
+    transition: question_9
+  - question_9: 
+      text: What is your nutritional goal?
+      field: nutritional_goal
+      answer_type: options
+      answers:
+        - maintain_current_weight
+        - gain_weight
+        - lose_weight

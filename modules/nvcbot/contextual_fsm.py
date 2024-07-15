@@ -5,6 +5,8 @@ import pickle
 import pandas as pd
 import typing as t
 import requests
+import datetime as dt
+import re
 
 from spade.message import Message
 from spade.behaviour import State
@@ -14,12 +16,23 @@ from core.src.mas.agents.personal_agent.behaviours.contextual_fsm import Abstrac
 from core.src.services.persistence_service import PryvPersistenceService
 
 from modules.nvcbot.explanations import get_explanations
-from modules.nvcbot.recommendations import generate_custom_recipes, get_allergies, get_eating_habits, get_recipe_classes
+from modules.nvcbot.recommendations import (generate_custom_recipes,
+                                            get_allergies, 
+                                            get_meals, 
+                                            get_recipe_classes, 
+                                            get_cultural_factors, 
+                                            get_flexi_diet, 
+                                            get_places,
+                                            get_social_situation,
+                                            get_time_options)
+
 from modules.nvcbot.recommendations.preferences_module import process_ingredients_specs
-from modules.nvcbot.recommendations.health_module import HealthModule
+from modules.nvcbot.recommendations.recommender_service import RecommenderService
 from modules.nvcbot.db.models import *
 from modules.nvcbot import CACHE_DIR, USER_PROFILES_DIR
 from bs4 import BeautifulSoup
+
+from modules.nvcbot.recommendations.user_profile import UserProfile
 
 
 def get_google_image(query):
@@ -59,53 +72,31 @@ def get_user_dict(agent_id) -> t.Dict:
 def set_user_dict(agent_id, user_dict) -> None:
     with open(USER_PROFILES_DIR /  f'{agent_id}.pkl', 'wb') as file:
         pickle.dump(user_dict, file)
+        
+def get_hour_from_text(text: str) -> float:
+    time = dt.datetime.now().strftime("%H.%M")
+    try:
+        result = re.search(r'\d+:\d+', text, re.IGNORECASE)
+        groups = result.groups()
+        time = f"{groups[0]}.{groups[1]}"
+    except:
+        print("Error processing hour from text: ", text)
+    return float(time)
 
 
-class EatingHabitsState(State):
+# Define the state machine behaviour
+class AskAllergiesState(State):
     def __init__(self) -> None:
         super().__init__()
-
+        
     async def run(self) -> None:
         await asyncio.sleep(3)
-
-        try: 
-            print("SENDING EATING HABITS")
-            await self.send(prep_outgoing_message(self.agent.id, "Please state your eating habits.")) # send message
-            system_eating_habits = get_eating_habits()
-            keyboard_message = prep_keyboard_message(self.agent.id, [{"label": habit.title(), "action": habit} for habit in system_eating_habits])
-            
-            await self.send(keyboard_message)
-
-            user_eating_habits = []
-            message = await self.receive(REPLY_TIMEOUT)
-            while message.body != "CONTINUE" and message.body != "NONE":
-                if message.body in system_eating_habits:
-                    user_eating_habits.append(message.body)
-
-                message = await self.receive(REPLY_TIMEOUT)
-
-            print("EATING HABITS DONE: ", user_eating_habits)
-
-            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
-                user_dict = pickle.load(file)
-            
-            user_dict["eating_habits"] = user_eating_habits
-
-            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
-                pickle.dump(user_dict, file)
-
-            self.set_next_state("allergyState")
-
-        except:
-            traceback.print_exc()
-
-class AllergyState(State):
-    async def run(self) -> None:
-        try: 
+        
+        try:
             print("SENDING ALLERGIES")
             await self.send(prep_outgoing_message(self.agent.id, "Please state your allergies."))
             system_allergies = get_allergies()
-            keyboard_message = prep_keyboard_message(self.agent.id, [{"label": allergy, "action": allergy} for allergy in system_allergies])
+            keyboard_message = prep_keyboard_message(self.agent.id, [{"label": allergy.title(), "action": allergy} for allergy in system_allergies])
             await self.send(keyboard_message)
 
             allergies = []
@@ -118,17 +109,308 @@ class AllergyState(State):
 
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
                 user_dict = pickle.load(file)
-
+                
             user_dict["allergies"] = allergies
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
                 pickle.dump(user_dict, file)
 
             print("ALLERGIES DONE: ", allergies)
-            self.set_next_state("dislikedItemsState")
+            self.set_next_state("askCulturalFactorState")
+        except:
+            traceback.print_exc()
+
+class AskCulturalFactorState(State):
+    def __init__(self) -> None:
+        super().__init__()
+        
+    async def run(self) -> None:
+        await asyncio.sleep(3)
+
+        try: 
+            print("SENDING CULTURAL FACTORS")
+            await self.send(prep_outgoing_message(self.agent.id, "Do you follow some of the following diets?")) # send message
+            system_eating_habits = get_cultural_factors()
+            keyboard_message = prep_keyboard_message(self.agent.id, [{"label": habit.replace('_',  ' ').title(), \
+                "action": habit} for habit in system_eating_habits])
+            
+            await self.send(keyboard_message)
+
+            user_cultural_factors = []
+            message = await self.receive(REPLY_TIMEOUT)
+            while message.body != "CONTINUE" and message.body != "NONE":
+                if message.body in system_eating_habits:
+                    user_cultural_factors.append(message.body)
+                    break
+                message = await self.receive(REPLY_TIMEOUT)
+
+            print("CULTURAL FACTORS: ", user_cultural_factors)
+
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
+                user_dict = pickle.load(file)
+            
+            if len(user_cultural_factors) > 0:
+                user_dict["cultural_diet"] = user_cultural_factors[0]
+            else:
+                user_dict["cultural_diet"] = "NotRestriction"
+
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
+                pickle.dump(user_dict, file)
+                
+            if "flexi_observant" in user_cultural_factors:
+                self.set_next_state("askFlexiObservantState")
+            else:
+                self.set_next_state("askMealTypeState")
 
         except:
             traceback.print_exc()
 
+class AskFlexiObservantState(State):
+    def __init__(self) -> None:
+        super().__init__()
+        
+    async def run(self) -> None:
+        await asyncio.sleep(3)
+        
+        try: 
+            print("SENDING FLEXI OBSERVANT")
+            await self.send(prep_outgoing_message(self.agent.id, "Do you follow some of the following flexible diets?")) # send message
+            system_eating_habits = get_flexi_diet()
+            keyboard_message = prep_keyboard_message(self.agent.id, [{"label": habit, "action": habit} for habit in system_eating_habits])
+            
+            await self.send(keyboard_message)
+
+            flexi_diets = []
+            message = await self.receive(REPLY_TIMEOUT)
+            while message.body != "CONTINUE" and message.body != "NONE":
+                if message.body in system_eating_habits:
+                    flexi_diets.append(message.body)
+                    break
+                message = await self.receive(REPLY_TIMEOUT)
+
+            print("CULTURAL FACTORS: ", flexi_diets)
+
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
+                user_dict = pickle.load(file)
+            
+            if len(flexi_diets) > 0:
+                user_dict["flexi_observant"] = flexi_diets[0]
+            else:
+                user_dict["flexi_observant"] = "NotRestriction"
+
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
+                pickle.dump(user_dict, file)
+            self.set_next_state("askMealTypeState")
+
+        except:
+            traceback.print_exc()
+            
+# context states 
+class AskMealTypeState(State):
+    def __init__(self) -> None:
+        super().__init__()
+        
+    async def run(self) -> None:
+        await asyncio.sleep(3)
+        
+        try:
+            print("SENDING MEAL TYPE")
+            await self.send(prep_outgoing_message(self.agent.id, "Which of the following meal types are you going to consume?"))
+            system_meal_types = get_meals()
+            keyboard_message = prep_keyboard_message(self.agent.id, [{"label": meal_type.title(), "action": meal_type} for meal_type in system_meal_types])
+            
+            await self.send(keyboard_message)
+            
+            meal_type = []
+            message = await self.receive(REPLY_TIMEOUT)
+            while message.body != "CONTINUE" and message.body != "NONE":
+                if message.body in system_meal_types:
+                    meal_type.append(message.body)
+                    break
+                message = await self.receive(REPLY_TIMEOUT)
+
+            print("Meal type: ", meal_type)
+
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
+                user_dict = pickle.load(file)
+            
+            if len(meal_type) > 0:
+                user_dict["meal_type"] = meal_type[0]
+            else:
+                user_dict["meal_type"] = "lunch"
+
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
+                pickle.dump(user_dict, file)
+            self.set_next_state("askPlaceState")
+        except:
+            traceback.print_exc()
+            
+class AskPlaceState(State):
+    def __init__(self) -> None:
+        super().__init__()
+        
+    async def run(self) -> None:
+        await asyncio.sleep(3)
+        
+        try:
+            print("SENDING PLACE")
+            await self.send(prep_outgoing_message(self.agent.id, "Where are you going to eat?"))
+            system_places = get_places()
+            keyboard_message = prep_keyboard_message(self.agent.id, [{"label": place.title(), "action": place} for place in system_places])
+            
+            await self.send(keyboard_message)
+            
+            places = []
+            message = await self.receive(REPLY_TIMEOUT)
+            while message.body != "CONTINUE" and message.body != "NONE":
+                if message.body in system_places:
+                    places.append(message.body)
+                    break
+                message = await self.receive(REPLY_TIMEOUT)
+
+            print("Meal type: ", places)
+
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
+                user_dict = pickle.load(file)
+            
+            if len(places) > 0:
+                user_dict["place_of_meal_consumption"] = places[0]
+            else:
+                user_dict["place_of_meal_consumption"] = "home"
+
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
+                pickle.dump(user_dict, file)
+            self.set_next_state("askSocialSituationState")
+        except:
+            traceback.print_exc()
+            
+class AskSocialSituationState(State):
+    def __init__(self) -> None:
+        super().__init__()
+        
+    async def run(self) -> None:
+        await asyncio.sleep(3)
+        
+        try:
+            print("SENDING SOCIAL SITUATION")
+            await self.send(prep_outgoing_message(self.agent.id, "Who are you going to eat with?"))
+            system_social_situations = get_social_situation()
+            keyboard_message = prep_keyboard_message(self.agent.id, [{"label": social_situation.title(), "action": social_situation} for social_situation in system_social_situations])
+            
+            await self.send(keyboard_message)
+            
+            social = []
+            message = await self.receive(REPLY_TIMEOUT)
+            while message.body != "CONTINUE" and message.body != "NONE":
+                if message.body in system_social_situations:
+                    social.append(message.body)
+                    break
+                message = await self.receive(REPLY_TIMEOUT)
+
+            print("Meal type: ", social)
+
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
+                user_dict = pickle.load(file)
+            
+            if len(social) > 0:
+                user_dict["social_situation_of_meal_consumption"] = social[0]
+            else:
+                user_dict["social_situation_of_meal_consumption"] = "alone"
+
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
+                pickle.dump(user_dict, file)
+            self.set_next_state("askTimeState")
+        except:
+            traceback.print_exc()
+            
+class AskTimeState(State):
+    def __init__(self) -> None:
+        super().__init__()
+        
+    async def run(self) -> None:
+        await asyncio.sleep(3)
+        
+        try:
+            print("SENDING TIME")
+            await self.send(prep_outgoing_message(self.agent.id, "What time are you going to eat?"))
+            system_times = get_time_options()
+            keyboard_message = prep_keyboard_message(self.agent.id, [{"label": time.title(), "action": time} for time in system_times])
+            
+            await self.send(keyboard_message)
+            
+            time_option = []
+            message = await self.receive(REPLY_TIMEOUT)
+            while message.body != "CONTINUE" and message.body != "NONE":
+                if message.body in system_times:
+                    time_option.append(message.body)
+                    break
+                message = await self.receive(REPLY_TIMEOUT)
+                
+            if len(time_option) > 0:
+                if time_option[0] == "other time":
+                    meal_time = await self.send(prep_outgoing_message(self.agent.id, "Please enter the hour (Hour:minute am/pm)."))
+                    message = await self.receive(REPLY_TIMEOUT)
+                    text = message.body
+                    text = text.lower()
+                    meal_time = get_hour_from_text(text)
+                    if "pm" in text:
+                        meal_time += 12
+                elif time_option[0] == "in one hour":
+                    time_delta = dt.timedelta(hours=1)
+                    meal_time = float((dt.datetime.now()+time_delta).strftime("%H.%M"))
+                elif time_option[0] == "in two hours":
+                    time_delta = dt.timedelta(hours=2)
+                    meal_time = float((dt.datetime.now()+time_delta).strftime("%H.%M"))
+            else:
+                # default time now 
+                meal_time = float(dt.datetime.now().strftime("%H.%M"))
+                
+
+            print("Meal time: ", meal_time)
+
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
+                user_dict = pickle.load(file)
+            
+            user_dict['time_of_meal_consumption'] = meal_time
+
+
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
+                pickle.dump(user_dict, file)
+            self.set_next_state("askRecommendationsState")
+        except:
+            traceback.print_exc()
+            
+class AskRecommendationsState(State):
+    def __init__(self) -> None:
+        super().__init__()
+        
+    async def run(self) -> None:
+        await asyncio.sleep(3)
+        
+        try:
+            print("SENDING RECOMMENDATIONS")
+            reco = RecommenderService("dota")
+            dataset = pd.read_csv("./modules/nvcbot/data/df_recipes.csv", index_col=0, sep="|")
+            await self.send(prep_outgoing_message(self.agent.id, "Based on your profile, preferences, and context, here are some recipes for you."))
+            system_recipes = reco.recommended_recipes(dataset)
+            system_recipes.reset_index(drop=True, inplace=True)
+            buttons = [{"label": recipe['name'].title(), "action": recipe["recipeId"]} for i, recipe in system_recipes.iterrows()]
+            keyboard_message = prep_keyboard_message(self.agent.id, buttons)
+            
+            await self.send(keyboard_message)
+            
+            recipe_option = []
+            message = await self.receive(REPLY_TIMEOUT)
+            while message.body != "CONTINUE" and message.body != "NONE":
+                if message.body in system_recipes:
+                    recipe_option.append(message.body)
+                    #TODO: show details of the recipe
+                    break
+                message = await self.receive(REPLY_TIMEOUT)
+            self.set_next_state("finalState")
+        except:
+            traceback.print_exc()
+
+# old states ---------------------------------------------------------------
 class IngredientPreferenceState(State):
     preference_type: str
 
@@ -422,21 +704,23 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
     def setup(self):
         super().setup()
 
-        self.add_state(name="eatingHabitsState",
-                       state=EatingHabitsState(),
+        self.add_state(name="askAllergiesState",
+                       state=AskAllergiesState(),
                        initial=True)
-        self.add_state(name="allergyState",
-                       state=AllergyState())
-        self.add_state(name="dislikedItemsState",
-                       state=DislikedItemsState())
-        self.add_state(name="likedItemsState",
-                       state=LikedItemsState())
-        self.add_state(name="internalCalculationsState",
-                       state=InternalCalculationsState())
-        self.add_state(name="recommendationState",
-                       state=RecommendationState())
-        self.add_state(name="denyState",
-                       state=DenyState())
+        self.add_state(name="askCulturalFactorState",
+                       state=AskCulturalFactorState())
+        self.add_state(name="askMealTypeState",
+                       state=AskMealTypeState())
+        self.add_state(name="askFlexiObservantState",
+                       state=AskFlexiObservantState())
+        self.add_state(name="askPlaceState",
+                       state=AskPlaceState())
+        self.add_state(name="askSocialSituationState",
+                       state=AskSocialSituationState())
+        self.add_state(name="askTimeState",
+                       state=AskTimeState())
+        self.add_state(name="askRecommendationsState",
+                       state=AskRecommendationsState())
         self.add_state(name="recipeFeedbackState",
                        state=RecipeFeedbackState())
         self.add_state(name="explanationFeedbackState",
@@ -444,11 +728,17 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
         self.add_state(name="finalState",
                        state=FinalState())
         
-        self.add_transition("eatingHabitsState", "allergyState")
-        self.add_transition("allergyState", "dislikedItemsState")
-        self.add_transition("dislikedItemsState", "likedItemsState")
-        self.add_transition("likedItemsState", "internalCalculationsState")
-        self.add_transition("internalCalculationsState", "recommendationState")
+        self.add_transition("askAllergiesState", "askCulturalFactorState")
+        self.add_transition("askCulturalFactorState", "askMealTypeState")
+        self.add_transition("askCulturalFactorState", "askFlexiObservantState")
+        self.add_transition("askFlexiObservantState", "askMealTypeState")
+        self.add_transition("askMealTypeState", "askPlaceState")
+        self.add_transition("askPlaceState", "askSocialSituationState")
+        self.add_transition("askSocialSituationState", "askTimeState")
+        self.add_transition("askTimeState", "askRecommendationsState")
+        self.add_transition("askRecommendationsState", "finalState")
+        self.add_transition("finalState", "askRecommendationsState")
+        
 
         self.add_transition("recommendationState", "finalState")
         self.add_transition("recommendationState", "denyState")
@@ -472,38 +762,33 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
         try: 
             persistence_service: PryvPersistenceService = self.agent.persistence_service
             pryv_profile = json.loads(persistence_service.get_profile())
-            dataset = pd.read_csv("./modules/nvcbot/data/df_final_7000_with_classes.csv", index_col=0)
+            # load recipes dataset
+            dataset = pd.read_csv("./modules/nvcbot/data/df_recipes.csv", index_col=0, sep="|")
+            print("dataset loaded with shape: ", dataset.shape)
             print("pryv: ", pryv_profile)
             user_data = {
+                "user_name": pryv_profile["name"],
+                "gender": pryv_profile["gender"],
+                "age": int(pryv_profile["age"]),
                 "weight": int(pryv_profile["weight"]),
                 "height": int(pryv_profile["height"]),
-                "age": int(pryv_profile["age"]),
-                "gender": pryv_profile["gender"],
-                "sports": pryv_profile["sports"],
-                "mealtype": "dinner", # Always dinner for now. TO DO: Think about this.
+                "working_status": pryv_profile["working_status"],
+                "marital_status": pryv_profile["marital_status"],
+                "life_style": pryv_profile["life_style"],
+                "nutritional_goal": pryv_profile["nutritional_goal"], 
             }
-
-            health_module = HealthModule(user_data)
-
-            user_bmr = health_module.bmr()
-            user_amr = health_module.amr()
-            target_profile = {
-                "carbs": 0.2,
-                "fiber": 0.35,
-                "fat": 0.1,
-                "protein": 0.35,
-                "calories": 1
-            }
-            health_scores = health_module.calculate_scores(dataset, target_profile)
-            user_data["healthscores"] = health_scores.to_json()
-            user_data["bmr"] = user_bmr
-            user_data["amr"] = user_amr
-
-            persistence_service.save_data(user_data, "healthscores")
-
-            user_dict = {"explanation_pref": pryv_profile["explanation_pref"]}
+            # load user data model and process data 
+            user_profiler = UserProfile(user_data)
+            user_profiler.calculate_bmi()
+            user_profiler.basal_metabolic_rate()
+            user_profiler.current_daily_calories = user_profiler.calculate_daily_calorie_needs(
+                user_profiler.bmr,
+                user_profiler.life_style
+                )  
+            user_profiler.projected_daily_calories = user_profiler.calculate_projected_calorie_needs()                                                       
+            complete_user_data = vars(user_profiler)
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
-                pickle.dump(user_dict, file)
+                pickle.dump(complete_user_data, file)
 
         except Exception as exe:
             traceback.print_exc()
