@@ -80,31 +80,31 @@ class ActivityLevel(str, Enum):
 def format_gender(gender_str: str) -> Gender:
     gender = gender_str.lower()
     if gender == "male" or gender == "m":
-        return Gender.male
+        return Gender.male.value
     else:
-        return Gender.female
+        return Gender.female.value
 def format_activity_level(activity_level_str: str) -> ActivityLevel:
     activity_level = activity_level_str.lower()
     if activity_level == "sedentary":
-        return ActivityLevel.sedentary
+        return ActivityLevel.sedentary.value
     elif activity_level == "lightly active":
-        return ActivityLevel.light_active
+        return ActivityLevel.light_active.value
     elif activity_level == "moderately active":
-        return ActivityLevel.moderate_active
+        return ActivityLevel.moderate_active.value
     elif activity_level == "very active":
-        return ActivityLevel.very_active
+        return ActivityLevel.very_active.value
     else:
-        return ActivityLevel.sedentary
+        return str(ActivityLevel.sedentary)
 def format_working_status(working_status_str: str) -> str:
     ws = working_status_str.lower()
     if ws == "employed":
-        return "employed"
+        return "Full-time-worker"
     elif ws == "unemployed":
-        return "unemployed"
+        return "Unemployed"
     elif ws == "retired":
-        return "unemployed"
+        return "Unemployed"
     elif ws == "student":
-        return "unemployed"
+        return "Unemployed"
 
 def format_marital_status(marital_status_str: str) -> str:
     ms = marital_status_str.lower()
@@ -118,32 +118,32 @@ def format_marital_status(marital_status_str: str) -> str:
         return "Single"
 def format_nutritional_goal(nutrition_goal_str: str) -> str:
     if nutrition_goal_str.lower() == "lose_weight":
-        return NutritionGoals.lose_weight
+        return NutritionGoals.lose_weight.value
     elif nutrition_goal_str.lower() == "maintain_fit":
-        return NutritionGoals.maintain_fit
+        return NutritionGoals.maintain_fit.value
     elif nutrition_goal_str.lower() == "gain_weight":
-        return NutritionGoals.gain_weight
+        return NutritionGoals.gain_weight.value
         
 class UserProfile:
     def __init__(self, user_data_dict: Dict[str, Any]) -> None:
         self.user_name = user_data_dict.get("user_name", "User")
-        self.gender = format_gender(user_data_dict.get("gender", Gender.male))
+        self.gender = format_gender(user_data_dict.get("gender", Gender.male.value))
         self.age = user_data_dict.get("age", 25)
         self.weight = user_data_dict.get("weight", 70)
         self.height = user_data_dict.get("height", 175)
-        self.working_status = format_working_status(user_data_dict.get("working_status", "unemployed"))
-        self.marital_status = format_marital_status(user_data_dict.get("marital_status", "single"))
-        self.ethnicity = user_data_dict.get("ethnicity", "Caucasian")
-        self.life_style = format_activity_level(user_data_dict.get("life_style", "sedentary"))
-        self.nutrition_goal = format_nutritional_goal(user_data_dict.get("nutrition_goal", NutritionGoals.maintain_fit))
+        self.working_status = format_working_status(user_data_dict.get("working_status", "Unemployed"))
+        self.marital_status = format_marital_status(user_data_dict.get("marital_status", "Single"))
+        self.ethnicity = user_data_dict.get("ethnicity", "White")
+        self.life_style = format_activity_level(user_data_dict.get("life_style", "Sedentary"))
+        self.nutrition_goal = format_nutritional_goal(user_data_dict.get("nutrition_goal", NutritionGoals.maintain_fit.value))
         self.current_daily_calories = user_data_dict.get("current_daily_calories", 0.0)
         self.projected_daily_calories = user_data_dict.get("projected_daily_calories", 0.0)
-        self.current_bmi = user_data_dict.get("current_bmi", None)
-        self.next_bmi = user_data_dict.get("next_bmi", None)
-        self.cultural_diet = user_data_dict.get("cultural_diet", None)
-        self.allergies = user_data_dict.get("allergies", [])
-        self.numeric_bmi = user_data_dict.get("numeric_bmi", None)
-        self.bmr = user_data_dict.get("bmr", None)
+        self.current_bmi = user_data_dict.get("current_bmi", BMI_constants.healthy.value)
+        self.next_bmi = user_data_dict.get("next_bmi", BMI_constants.healthy.value)
+        self.cultural_diet = user_data_dict.get("cultural_diet", "NotRestriction")
+        self.allergies = user_data_dict.get("allergies", "NotAllergy")
+        self.numeric_bmi = user_data_dict.get("numeric_bmi", 0.0)
+        self.bmr = user_data_dict.get("bmr", 0.0)
         
     def calculate_bmi(self) -> Tuple[float, BMI_constants]:
         self.numeric_bmi = self.weight / ((self.height / 100) ** 2)

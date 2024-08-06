@@ -7,6 +7,8 @@ import typing as t
 import requests
 import datetime as dt
 import re
+import numpy as np
+import requests
 
 from spade.message import Message
 from spade.behaviour import State
@@ -26,6 +28,8 @@ from modules.nvcbot.recommendations import (generate_custom_recipes,
                                             get_social_situation,
                                             get_time_options)
 
+import modules.nvcbot.recommendations.data_columns as data_cols
+
 from modules.nvcbot.recommendations.preferences_module import process_ingredients_specs
 from modules.nvcbot.recommendations.recommender_service import RecommenderService
 from modules.nvcbot.db.models import *
@@ -35,6 +39,20 @@ from bs4 import BeautifulSoup
 from modules.nvcbot.recommendations.user_profile import UserProfile
 
 
+def get_age_range(age: int):
+    age_dict = {
+        "18-29": 0.10,
+        "30-39": 0.10,
+        "40-49": 0.10,
+        "50-59": 0.20,
+        "60-69": 0.20,
+        "70-79": 0.10,
+        "80-89": 0.10,
+        "90-100": 0.10
+    }
+    for k in age_dict.keys():
+        if int(k.split("-")[0]) <= age <= int(k.split("-")[1]):
+            return k
 def get_google_image(query):
     url = f"https://www.google.com/search?q={query}&tbm=isch" 
     response = requests.get(url) 
@@ -91,7 +109,6 @@ class AskAllergiesState(State):
         
     async def run(self) -> None:
         await asyncio.sleep(3)
-        
         try:
             print("SENDING ALLERGIES")
             await self.send(prep_outgoing_message(self.agent.id, "Please state your allergies."))
@@ -110,7 +127,7 @@ class AskAllergiesState(State):
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
                 user_dict = pickle.load(file)
                 
-            user_dict["allergies"] = allergies
+            user_dict["allergy"] = ";".join(allergies)
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
                 pickle.dump(user_dict, file)
 
@@ -150,9 +167,9 @@ class AskCulturalFactorState(State):
                 user_dict = pickle.load(file)
             
             if len(user_cultural_factors) > 0:
-                user_dict["cultural_diet"] = user_cultural_factors[0]
+                user_dict["cultural_factor"] = user_cultural_factors[0]
             else:
-                user_dict["cultural_diet"] = "NotRestriction"
+                user_dict["cultural_factor"] = "NotRestriction"
 
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
                 pickle.dump(user_dict, file)
@@ -236,9 +253,9 @@ class AskMealTypeState(State):
                 user_dict = pickle.load(file)
             
             if len(meal_type) > 0:
-                user_dict["meal_type"] = meal_type[0]
+                user_dict["meal_type_y"] = meal_type[0]
             else:
-                user_dict["meal_type"] = "lunch"
+                user_dict["meal_type_y"] = "lunch"
 
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
                 pickle.dump(user_dict, file)
@@ -390,27 +407,199 @@ class AskRecommendationsState(State):
         
         try:
             print("SENDING RECOMMENDATIONS")
-            reco = RecommenderService("dota")
-            dataset = pd.read_csv("./modules/nvcbot/data/df_recipes.csv", index_col=0, sep="|")
+            food_dataset = pd.read_csv("./modules/nvcbot/data/df_recipes.csv", index_col=0, sep="|")
+            # get user_features and transform it into  dataframe 
+            if os.path.exists(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl"):
+                with open(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl", "rb") as fp:
+                    selected = pickle.load(fp)
+                print(f"received: {selected}")
+            user_dict = {}
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
+                user_dict = pickle.load(file)
+            print(f"User Dict: {user_dict}")
+            if user_dict is not None:    
+                user_data = {'nutrition_goal':user_dict.get("nutritional_goal", "maintain_fit"), 
+                            'clinical_gender':user_dict.get("gender", "M"), 
+                            'age_range': get_age_range(user_dict.get("age", 25)), 
+                            'life_style':user_dict.get("life_style", "Very active"), 
+                            'weight':user_dict.get("weight", 70),  
+                            'height':user_dict.get("height", 170), 
+                            'projected_daily_calories':user_dict.get("projected_daily_calories", 2000), 
+                            'current_daily_calories': user_dict.get("current_daily_calories", 1700),
+                            'cultural_factor': user_dict.get("cultural_factor", "NotRestriction"),  
+                            'allergy': user_dict.get("allergy", "NotAllergy"), 
+                            'current_working_status': user_dict.get("current_working_status", "Full-time-worker"), 
+                            'marital_status': user_dict.get("marital_status", "Single"),  
+                            'ethnicity': user_dict.get("ethnicity", "White"), 
+                            'BMI': user_dict.get("BMI", "healthy"),  
+                            'next_BMI':user_dict.get("next_BMI", "healthy")}  
+            # get context features 
+            context_features = {
+                'day_number': user_dict.get("day_number", 0), 
+                'meal_type_y': user_dict.get("meal_type_y", "lunch"),
+                'time_of_meal_consumption': user_dict.get("time_of_meal_consumption", 12.0), 
+                'place_of_meal_consumption': user_dict.get("place_of_meal_consumption", "restaurant"), 
+                'social_situation_of_meal_consumption': user_dict.get("social_situation_of_meal_consumption", "alone")
+            }
+            prepare_data = {
+                "profile": user_data,
+                "context": context_features
+            }
+            print(f"send_data: %s" % prepare_data)
+            url = "http://localhost:8500/recommendation/"
+            ans = requests.post(url, json=prepare_data)
+            print(f"Ans: {ans.json()}")
+            # process answer 
+            answer = ans.json()
+            # save answer
+            with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "wb") as fp:
+                pickle.dump(answer, fp)
+            recommendations = answer["recommendations"]
+            print(f"recommendations: {recommendations}")
+            # recommended food 
+            selected_recipes = food_dataset[food_dataset["recipeId"].isin(recommendations)]
+            # get recommendation
             await self.send(prep_outgoing_message(self.agent.id, "Based on your profile, preferences, and context, here are some recipes for you."))
-            system_recipes = reco.recommended_recipes(dataset)
-            system_recipes.reset_index(drop=True, inplace=True)
-            buttons = [{"label": recipe['name'].title(), "action": recipe["recipeId"]} for i, recipe in system_recipes.iterrows()]
+            print(f"System Recipes: {selected_recipes}")
+            buttons = [{"label": recipe['name'].title(), "action": recipe['recipeId']} for i, recipe in selected_recipes.iterrows()]
+            buttons += [{"label": f"Explain: {recipe['name'].title()}", "action": f"explain_{recipe['recipeId']}"} for i, recipe in selected_recipes.iterrows()]
+            buttons += [{"label": "Get more recommendations", "action": "more_recommendations"}]
             keyboard_message = prep_keyboard_message(self.agent.id, buttons)
-            
             await self.send(keyboard_message)
             
-            recipe_option = []
             message = await self.receive(REPLY_TIMEOUT)
-            while message.body != "CONTINUE" and message.body != "NONE":
-                if message.body in system_recipes:
-                    recipe_option.append(message.body)
-                    #TODO: show details of the recipe
-                    break
+            if message.body == "more_recommendations":
+                self.set_next_state("askRecommendationsState")
+                return
+            elif message.body in [f"explain_{recipe['recipeId']}" for i, recipe in selected_recipes.iterrows()]:
+                self.set_next_state("displayExplanationState")
+                with open(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl", "wb") as fp:
+                    pickle.dump(message.body, fp)
+                return
+            elif message.body in [recipe['recipeId'] for i, recipe in selected_recipes.iterrows()]:
+                self.set_next_state("displayRecipeInfoState")
+                with open(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl", "wb") as fp:
+                    pickle.dump(message.body, fp)
+                return
             message = await self.receive(REPLY_TIMEOUT)
             self.set_next_state("finalState")
         except:
             traceback.print_exc()
+            await self.send(prep_outgoing_message(self.agent.id, "Something went wrong less try again."))
+            self.set_next_state("finalState")
+
+class DisplayRecipeState(State):
+    def __init__(self) -> None:
+        super().__init__()
+    
+    async def run(self) -> None:
+        # show recipe info 
+        await asyncio.sleep(3)
+        try:
+            # load recipes 
+            food_dataset = pd.read_csv("./modules/nvcbot/data/df_recipes.csv", index_col=0, sep="|")
+            # load answer 
+            with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "rb") as fp:
+                answer = pickle.load(fp)
+            # load chosen selection 
+            with open(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl", "rb") as fp:
+                selected = pickle.load(fp)
+            selected_recipe = food_dataset[food_dataset["recipeId"] == selected]
+            print(f"Recipe: {selected_recipe}")
+            msg = f"Title: {selected_recipe['name']}\n {selected_recipe['ingredients']}\n {selected_recipe['instructions']}\n"
+            await self.send(prep_outgoing_message(self.agent.id,
+                                            msg
+                                            ))
+            buttons = [{"label": "Give Feedback", "action": "feedback"}, {"label": "Back", "action": "back"}]
+            keyboard_message = prep_keyboard_message(self.agent.id, buttons)
+            await self.send(keyboard_message)
+            message = await self.receive(REPLY_TIMEOUT)
+            if message.body == "feedback":
+                self.set_next_state("askFeedbackState")
+                return 
+            elif message.body == "back":
+                self.set_next_state("askRecommendedState")
+                with open(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl", "wb") as fp:
+                    pickle.dump(message.body, fp)
+                return 
+            self.set_next_state("finalState")
+        except:
+            traceback.format_exc()
+
+class DisplayExplanationState(State):
+    def __init__(self) -> None:
+        super().__init__()
+        
+    async def run(self) -> None:
+        try:
+            # load answer 
+            with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "rb") as fp:
+                answer = pickle.load(fp)
+            print(answer)
+            # load chosen selection 
+            with open(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl", "rb") as fp:
+                selected = pickle.load(fp)
+            print(selected)
+            id = selected.split("_")[-1]
+            recommendations = answer["recommendations"]
+            index = 0
+            for i in range(len(recommendations)):
+                if id == recommendations[i]:
+                    index = i
+                    break
+            await self.send(prep_outgoing_message(self.agent.id, "Select the kind of explanation desired:"))
+            buttons = [{"label": "Give Feedback", "action": "feedback"},
+                       {"label": "Back", "action": "back"}, 
+                       {"label": "Rule Based", "action": "rule"},
+                       {"label": "Probabilistic", "action": "probabilistic"},]
+            keyboard_message = prep_keyboard_message(self.agent.id, buttons)
+            await self.send(keyboard_message)
+            message = await self.receive(REPLY_TIMEOUT)
+            
+            if message.body == "feedback":
+                self.set_next_state("askFeedbackState")
+                return 
+            elif message.body == "back":
+                self.set_next_state("askRecommendedState")
+                with open(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl", "wb") as fp:
+                    pickle.dump(message.body, fp)
+                return 
+            elif message.body == "rule":
+                expa = answer["rule_based_explanation"][index]
+                await self.send(prep_outgoing_message(self.agent.id, expa))
+                with open(CACHE_DIR / "interactive" / f"{self.agent.id}_xai.pkl", "wb") as fp:
+                    pickle.dump({"xai_type":message.body, "xai_text": expa}, fp)
+                self.set_next_state("askFeedbackState")
+                return
+            elif message.body == "probabilistic":
+                expa = answer["probabilistic_explanation"][index]
+                await self.send(prep_outgoing_message(self.agent.id, expa))
+                with open(CACHE_DIR / "interactive" / f"{self.agent.id}_xai.pkl", "wb") as fp:
+                    pickle.dump({"xai_type":message.body, "xai_text": expa}, fp)
+                self.set_next_state("askFeedbackState")
+                return
+            self.set_next_state("finalState")
+        except:
+            traceback.format_exc()
+            
+class AskFeedBack(State):
+    def __init__(self) -> None:
+        super().__init__()
+        
+    async def run(self) -> None:
+        await asyncio.sleep(3)
+        try:
+            with open(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl", "rb") as fp:
+                selected = pickle.load(fp)
+            print(selected)
+            await self.send(prep_outgoing_message(self.agent.id, "would you like to provide feedback:"))
+            message = await self.receive(REPLY_TIMEOUT)
+            with open(CACHE_DIR / "interactive" / f"{self.agent.id}_feedback.pkl", "wb") as fp:
+                pickle.dump({"feedback_text": message.body, "recipe": selected}, fp)
+            self.set_next_state("finalState")
+        except:
+            traceback.format_exc()
+        
 
 # old states ---------------------------------------------------------------
 class IngredientPreferenceState(State):
@@ -729,6 +918,12 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
                        state=ExplanationFeedbackState())
         self.add_state(name="finalState",
                        state=FinalState())
+        self.add_state(name="displayRecipeState",
+                       state=DisplayRecipeState())
+        self.add_state(name="displayExplanationState",
+                       state=DisplayExplanationState())
+        self.add_state(name="askFeedbackState",
+                       state=AskFeedBack())
         
         self.add_transition("askAllergiesState", "askCulturalFactorState")
         self.add_transition("askCulturalFactorState", "askMealTypeState")
@@ -739,9 +934,18 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
         self.add_transition("askSocialSituationState", "askTimeState")
         self.add_transition("askTimeState", "askRecommendationsState")
         self.add_transition("askRecommendationsState", "finalState")
+        self.add_transition("askRecommendationsState", "displayRecipeState")
+        self.add_transition("askRecommendationsState", "displayExplanationState")
+        self.add_transition("displayRecipeState", "askRecommendationsState")
+        self.add_transition("displayExplanationState", "askRecommendationsState")
+        self.add_transition("displayRecipeState", "askFeedbackState")
+        self.add_transition("displayExplanationState", "askFeedbackState")
+        self.add_transition("displayRecipeState", "finalState")
+        self.add_transition("displayExplanationState", "finalState")
+        self.add_transition("askFeedbackState", "finalState")
+        self.add_transition("askRecommendationsState", "askRecommendationsState")
         self.add_transition("finalState", "askRecommendationsState")
         
-
         self.add_transition("recommendationState", "finalState")
         self.add_transition("recommendationState", "denyState")
 
@@ -791,7 +995,6 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
             complete_user_data = vars(user_profiler)
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
                 pickle.dump(complete_user_data, file)
-
         except Exception as exe:
             traceback.print_exc()
 

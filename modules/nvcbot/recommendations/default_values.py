@@ -78,4 +78,12 @@ time_options = {
     "in two hours": 2.5,
     "other time": 0.0
 }
-    
+
+user_entity = {
+    "current_working_status": ["Half-time-worker", "Full-time-worker", "Self-employee", "Unemployed"],
+    "marital_status": ["Single", "Married"],
+    "life_style": ["Sedentary", "Lightly active", "Moderately active", "Very active"],
+    "weight": [],
+    "ethnicity": ["White", "Black", "Latino", "Asian"],
+    "height": []
+}

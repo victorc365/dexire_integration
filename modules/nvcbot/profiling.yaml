@@ -69,3 +69,13 @@ states:
         - maintain_current_weight
         - gain_weight
         - lose_weight
+      transition: question_10
+  - question_10:
+      text: What is your ethnicity?
+      field: ethnicity
+      answer_type: options
+      answers:
+      - White
+      - Black                   
+      - Latino   
+      - Asian                               

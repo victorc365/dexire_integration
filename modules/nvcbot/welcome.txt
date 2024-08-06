@@ -1,3 +1,3 @@
 Hello. My name is nvcbot.
-I am a bot specifically made to repeat everything that you tell to me.
-As it is the first time that we see each other, I will start by asking you some question.
+I am a nutritional virtual coach (NVC) and my aim is help you to adopt 
+healthier eating habits using recommendations and explanations.
