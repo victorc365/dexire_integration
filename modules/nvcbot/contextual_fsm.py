@@ -1,4 +1,3 @@
-import asyncio
 import json
 import traceback
 import pickle
@@ -7,30 +6,11 @@ import typing as t
 import requests
 import datetime as dt
 import re
-import numpy as np
 import requests
-
-from spade.message import Message
-from spade.behaviour import State
-from http import HTTPStatus
 
 from core.src.mas.agents.personal_agent.behaviours.contextual_fsm import AbstractContextualFSMBehaviour
 from core.src.services.persistence_service import PryvPersistenceService
 
-from modules.nvcbot.explanations import get_explanations
-from modules.nvcbot.recommendations import (generate_custom_recipes,
-                                            get_allergies, 
-                                            get_meals, 
-                                            get_recipe_classes, 
-                                            get_cultural_factors, 
-                                            get_flexi_diet, 
-                                            get_places,
-                                            get_social_situation,
-                                            get_time_options)
-
-import modules.nvcbot.recommendations.data_columns as data_cols
-
-from modules.nvcbot.recommendations.preferences_module import process_ingredients_specs
 from modules.nvcbot.db.models import *
 from modules.nvcbot import CACHE_DIR, USER_PROFILES_DIR
 from bs4 import BeautifulSoup
@@ -41,54 +21,6 @@ from modules.nvcbot.states.nvc_states import (HomeState, AskAllergiesState, AskC
                                               AskSocialSituationState, AskTimeState, AskRecommendationsState,
                                               DisplayExplanationState, DisplayRecipeState, AskFeedBack,
                                               FinalState)
-
-
-def get_age_range(age: int):
-    age_dict = {
-        "18-29": 0.10,
-        "30-39": 0.10,
-        "40-49": 0.10,
-        "50-59": 0.20,
-        "60-69": 0.20,
-        "70-79": 0.10,
-        "80-89": 0.10,
-        "90-100": 0.10
-    }
-    for k in age_dict.keys():
-        if int(k.split("-")[0]) <= age <= int(k.split("-")[1]):
-            return k
-def get_google_image(query):
-    url = f"https://www.google.com/search?q={query}&tbm=isch" 
-    response = requests.get(url) 
-    soup = BeautifulSoup(response.text, "html.parser") 
-
-    img_tag = soup.find("img", {"class": "yWs4tf"})
-    if img_tag is not None:
-        img_link = img_tag.get("src")
-        return img_link
-    else:
-        return "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Good_Food_Display_-_NCI_Visuals_Online.jpg/1920px-Good_Food_Display_-_NCI_Visuals_Online.jpg"
-
-REPLY_TIMEOUT = 600
-
-def get_user_dict(agent_id) -> t.Dict:
-    with open(USER_PROFILES_DIR /  f'{agent_id}.pkl', 'rb') as file:
-        user_dict = pickle.load(file)
-    return user_dict
-
-def set_user_dict(agent_id, user_dict) -> None:
-    with open(USER_PROFILES_DIR /  f'{agent_id}.pkl', 'wb') as file:
-        pickle.dump(user_dict, file)
-        
-def get_hour_from_text(text: str) -> float:
-    time = dt.datetime.now().strftime("%H.%M")
-    try:
-        result = re.search(r'\d+:\d+', text, re.IGNORECASE)
-        groups = result.groups()
-        time = f"{groups[0]}.{groups[1]}"
-    except:
-        print("Error processing hour from text: ", text)
-    return float(time)
 
 # Contextual fsm 
 class ContextualFSM(AbstractContextualFSMBehaviour):

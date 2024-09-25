@@ -6,6 +6,7 @@ class TextMessage extends StatelessWidget {
   final String text;
   final bool isUser;
 
+  //TODO: Add enrich text features
   @override
   Widget build(BuildContext context) {
     return Container(

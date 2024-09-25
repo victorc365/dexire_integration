@@ -33,7 +33,6 @@ from modules.nvcbot.recommendations.preferences_module import process_ingredient
 from modules.nvcbot.recommendations.recommender_service import RecommenderService
 from modules.nvcbot.db.models import *
 
-
 REPLY_TIMEOUT = 600
 
 # Functions utilities 
@@ -88,7 +87,6 @@ def get_hour_from_text(text: str) -> float:
     except:
         print("Error processing hour from text: ", text)
     return float(time)
-
 
 
 class HomeState(State):
@@ -527,6 +525,60 @@ class AskTimeState(State):
             self.set_next_state(AskRecommendationsState.get_state_name())
         except:
             traceback.print_exc()
+            await self.send(prep_outgoing_message(self.agent.id, "Something went wrong less try again."))
+            self.set_next_state(HomeState.get_state_name())
+            return
+            
+class AskTextQueryInsideDatabase(State):
+    state_name = 'askTextQueryInsideDatabase'
+    def __init__(self) -> None:
+        super().__init__()
+        
+    @classmethod
+    def get_state_name(cls):
+        return cls.state_name
+    
+    async def run(self) -> None:
+        await asyncio.sleep(3)
+        
+        try:
+            #TODO: implement this state and join into the main structure
+            print("SENDING TEXT QUERY")
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
+                user_dict = pickle.load(file)
+            if user_dict is not None:
+                meal_time = user_dict.get('time_of_meal_consumption')
+                place = user_dict.get('place_of_meal_consumption')
+                social = user_dict.get('social_situation_of_meal_consumption')
+                print(f"meal_time: {meal_time}, place: {place}, social: {social}")
+        except Exception as e:
+            traceback.print_exc()
+            await self.send(prep_outgoing_message(self.agent.id, "Something went wrong less try again."))
+            self.set_next_state(HomeState.get_state_name())
+            return
+        
+class AskRecommendationWithOpenText(State):
+    
+    state_name = "askRecommendationWithOpenText"
+    def __init__(self) -> None:
+        super().__init__()
+        
+    @classmethod
+    def get_state_name(cls):
+        return cls.state_name
+    
+    async def run(self) -> None:
+        await asyncio.sleep(3)
+        
+        try:
+            print("SENDING RECOMMENDATIONS")
+            #TODO: Implement open recommendations
+            pass
+        except Exception as e:
+            traceback.print_exc()
+            await self.send(prep_outgoing_message(self.agent.id, "Something went wrong less try again."))
+            self.set_next_state(HomeState.get_state_name())
+            return
             
 class AskRecommendationsState(State):
     
@@ -654,7 +706,9 @@ class DisplayRecipeState(State):
             # load chosen selection 
             with open(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl", "rb") as fp:
                 selected = pickle.load(fp)
-            selected_recipe = food_dataset[food_dataset["recipeId"] == selected].to_dict('dict')
+            selected_recipe = food_dataset[food_dataset["recipeId"] == selected]
+            selected_recipe.reset_index(drop=True, inplace=True)
+            selected_recipe = selected_recipe.iloc[0].to_dict()
             print(f"Recipe: {selected_recipe}")
             
             msg = f"Title: {selected_recipe['name']}"
@@ -807,7 +861,7 @@ class AskFeedBack(State):
             with open(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl", "rb") as fp:
                 selected = pickle.load(fp)
             print(selected)
-            with open(CACHE_DIR / "interactive" / f"{self.agent.id}_pre_feed.pkl", "wb") as fp:
+            with open(CACHE_DIR / "interactive" / f"{self.agent.id}_pre_feed.pkl", "rb") as fp:
                 feedback_data = pickle.load(fp)
             type = "recipe"
             if feedback_data["feed_type"] == "recipe":
@@ -860,12 +914,16 @@ class FinalState(State):
         await self.send(keyboard_message)
 
         reply = await self.receive(REPLY_TIMEOUT)
-        if reply.body == "YES":
+        if reply is not None and reply.body == "YES":
             self.set_next_state(HomeState.get_state_name())
             return  
         else:
             self.set_next_state(FinalState.get_state_name())
             return  
+
+
+
+
 
 # old states ---------------------------------------------------------------
 class IngredientPreferenceState(State):
