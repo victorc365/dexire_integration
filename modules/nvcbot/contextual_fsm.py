@@ -20,7 +20,7 @@ from modules.nvcbot.states.nvc_states import (HomeState, AskAllergiesState, AskC
                                               AskFlexiObservantState, AskMealTypeState, AskPlaceState,
                                               AskSocialSituationState, AskTimeState, AskRecommendationsState,
                                               DisplayExplanationState, DisplayRecipeState, AskFeedBack,
-                                              FinalState)
+                                              FinalState, CheckRecipeCompatibilityState)
 
 # Contextual fsm 
 class ContextualFSM(AbstractContextualFSMBehaviour):
@@ -60,6 +60,8 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
                        state=AskFeedBack())
         self.add_state(name=FinalState.get_state_name(),
                        state=FinalState())
+        self.add_state(name=CheckRecipeCompatibilityState.get_state_name(),
+                       state=CheckRecipeCompatibilityState())
         
         # Add transitions
         self.add_transition(HomeState.get_state_name(), HomeState.get_state_name())
@@ -73,10 +75,13 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
         self.add_transition(AskPlaceState.get_state_name(), AskSocialSituationState.get_state_name())
         self.add_transition(AskSocialSituationState.get_state_name(), AskTimeState.get_state_name())
         self.add_transition(AskTimeState.get_state_name(), AskRecommendationsState.get_state_name())
+        self.add_transition(AskTimeState.get_state_name(), CheckRecipeCompatibilityState.get_state_name())
         self.add_transition(AskRecommendationsState.get_state_name(), FinalState.get_state_name())
         self.add_transition(AskRecommendationsState.get_state_name(), AskRecommendationsState.get_state_name())
         self.add_transition(AskRecommendationsState.get_state_name(), DisplayRecipeState.get_state_name())
         self.add_transition(AskRecommendationsState.get_state_name(), DisplayExplanationState.get_state_name())
+        self.add_transition(CheckRecipeCompatibilityState.get_state_name(), DisplayRecipeState.get_state_name())
+        self.add_transition(CheckRecipeCompatibilityState.get_state_name(), DisplayExplanationState.get_state_name())
         self.add_transition(DisplayRecipeState.get_state_name(), AskFeedBack.get_state_name())
         self.add_transition(DisplayExplanationState.get_state_name(), AskFeedBack.get_state_name())
         self.add_transition(DisplayRecipeState.get_state_name(), FinalState.get_state_name())
@@ -96,6 +101,7 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
         self.add_transition(AskSocialSituationState.get_state_name(), HomeState.get_state_name())
         self.add_transition(AskTimeState.get_state_name(), HomeState.get_state_name())
         self.add_transition(AskRecommendationsState.get_state_name(), HomeState.get_state_name())
+        self.add_transition(CheckRecipeCompatibilityState.get_state_name(), HomeState.get_state_name())
         self.add_transition(FinalState.get_state_name(), FinalState.get_state_name())
         self.add_transition(FinalState.get_state_name(), HomeState.get_state_name())
         self.add_transition(DisplayRecipeState.get_state_name(), HomeState.get_state_name())

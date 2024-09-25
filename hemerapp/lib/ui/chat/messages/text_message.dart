@@ -20,6 +20,7 @@ class TextMessage extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Text(
             text,
+            maxLines: 20,
             style: const TextStyle(fontSize: 15),
           ),
         ),

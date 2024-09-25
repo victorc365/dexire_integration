@@ -103,7 +103,7 @@ class HomeState(State):
         await asyncio.sleep(3)
         try:
             def services_options():
-                return["Give me a recommendation", "Check recipe compatibility", "Free text query"]
+                return["Give me a recommendation", "Recommend based on ingredients"]
             print("SENDING Options:")
             await self.send(prep_outgoing_message(self.agent.id, "Here are the services that I can provide:"))
             system_cultural_factors = services_options()
@@ -111,23 +111,27 @@ class HomeState(State):
             await self.send(keyboard_message)
             message = await self.receive(REPLY_TIMEOUT)
             print(f"received {message}")
+            selection = {}
             if message is not None and message.body == system_cultural_factors[0]:
                 print(f"move to {message}")
+                selection["text"] =  message.body
+                selection["index"] = 0
                 self.set_next_state(AskAllergiesState.get_state_name())
-                return
             elif message is not None and message.body == system_cultural_factors[1]:
-                self.set_next_state(CheckRecipeCompatibilityState.get_state_name())
-                return 
-            elif message is not None and message.body == system_cultural_factors[2]:
-                self.set_next_state(GetFreeTextRecommendation.get_state_name())
-                return
+                selection["text"] =  message.body
+                selection["index"] = 1
+                self.set_next_state(AskAllergiesState.get_state_name())            
             elif message is not None and message.body == "HOME":
                 self.set_next_state(HomeState.get_state_name())
                 return
             else:
-                print("The choice is still not implemented.")
-                self.set_next_state("HomeState")
+                print("Please choose an option from the list.")
+                self.set_next_state(HomeState.get_state_name())
                 return
+            # Save user selection
+            with open(CACHE_DIR / "interactive" / f"{self.agent.id}_reco_type.pkl", "wb") as fp:
+                pickle.dump(selection, fp)
+            return
         except:
             traceback.print_exc()
             self.set_next_state("HomeState")
@@ -145,17 +149,101 @@ class CheckRecipeCompatibilityState(State):
     async def run(self):
         await asyncio.sleep(3)
         try:
-            print("SENDING RECIPE COMPATIBILITY")
-            await self.send(prep_outgoing_message(self.agent.id, "Please provide me a recipe name:"))
+            food_dataset = pd.read_csv("./modules/nvcbot/data/df_recipes.csv", index_col=0, sep="|")
+            print("Query by ingredients...")
+            # get user_features and transform it into  data frame 
+            user_dict = {}
+            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
+                user_dict = pickle.load(file)
+            print(f"User Dict: {user_dict}")
+            if user_dict is not None:    
+                user_data = {'nutrition_goal':user_dict.get("nutritional_goal", "maintain_fit"), 
+                            'clinical_gender':user_dict.get("gender", "M"), 
+                            'age_range': get_age_range(user_dict.get("age", 25)), 
+                            'life_style':user_dict.get("life_style", "Very active"), 
+                            'weight':user_dict.get("weight", 70),  
+                            'height':user_dict.get("height", 170), 
+                            'projected_daily_calories':user_dict.get("projected_daily_calories", 2000), 
+                            'current_daily_calories': user_dict.get("current_daily_calories", 1700),
+                            'cultural_factor': user_dict.get("cultural_factor", "NotRestriction"),  
+                            'allergy': user_dict.get("allergy", "NotAllergy"), 
+                            'current_working_status': user_dict.get("current_working_status", "Full-time-worker"), 
+                            'marital_status': user_dict.get("marital_status", "Single"),  
+                            'ethnicity': user_dict.get("ethnicity", "White"), 
+                            'BMI': user_dict.get("BMI", "healthy"),  
+                            'next_BMI':user_dict.get("next_BMI", "healthy")}  
+            # get context features 
+            context_features = {
+                'day_number': user_dict.get("day_number", 0), 
+                'meal_type_y': user_dict.get("meal_type_y", "lunch"),
+                'time_of_meal_consumption': user_dict.get("time_of_meal_consumption", 12.0), 
+                'place_of_meal_consumption': user_dict.get("place_of_meal_consumption", "restaurant"), 
+                'social_situation_of_meal_consumption': user_dict.get("social_situation_of_meal_consumption", "alone")
+            }
+            # get ingredient list from the user 
+            await self.send(prep_outgoing_message(self.agent.id, "Please write the ingredients separated by commas:"))
             message = await self.receive(REPLY_TIMEOUT)
-            if message is not None and message.body == "HOME":
+            ingredients = ""
+            if message is not None and message.body != "HOME":
+                ingredients = message.body
+            elif message is not None and message.body == "HOME":
                 self.set_next_state(HomeState.get_state_name())
                 return
             # quey recipes in db and answer 
             print(f"received {message}")
+            prepare_data = {
+                "profile": user_data,
+                "context": context_features,
+                "ingredients": ingredients
+            }
+            print(f"send_data: %s" % prepare_data)
+            url = "http://localhost:8500/recommendByProximity/"
+            ans = requests.post(url, json=prepare_data)
+            print(f"Ans: {ans.json()}")
+            # process answer 
+            answer = ans.json()
+            # save answer
+            with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "wb") as fp:
+                pickle.dump(answer, fp)
+            recommendations = answer["recommendations"]
+            print(f"recommendations: {recommendations}")
+            # recommended food 
+            selected_recipes = food_dataset[food_dataset["recipeId"].isin(recommendations)]
+            selected_recipes = selected_recipes.reset_index(drop=True)
+            # get recommendation
+            await self.send(prep_outgoing_message(self.agent.id, "Based on your profile, preferences, and context, here are some recipes for you."))
+            print(f"System Recipes: {selected_recipes}")
+            buttons = []
+            for i, recipe in selected_recipes.iterrows():
+                await self.send(prep_outgoing_message(self.agent.id, f"option:{i} - {recipe['name'].title()}"))
+                buttons += [{"label": f"See option: {i}", "action": recipe['recipeId']}]
+                buttons += [{"label": f"Explain option: {i}", "action": f"explain_{recipe['recipeId']}"}]
+            buttons += [{"label": "Get more recommendations", "action": "more_recommendations"}]
+            keyboard_message = prep_keyboard_message(self.agent.id, buttons)
+            await self.send(keyboard_message)
+            
+            message = await self.receive(REPLY_TIMEOUT)
+            while message.body != "CONTINUE" and message.body != "NONE":
+                if message.body == "more_recommendations":
+                    self.set_next_state(AskRecommendationsState.get_state_name())
+                    print("next more recommendations")
+                    break
+                elif message.body in [f"explain_{recipe['recipeId']}" for i, recipe in selected_recipes.iterrows()]:
+                    self.set_next_state(DisplayExplanationState.get_state_name())
+                    print(f"next state explanation")
+                    with open(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl", "wb") as fp:
+                        pickle.dump(message.body, fp)
+                    break
+                elif message.body in [recipe['recipeId'] for i, recipe in selected_recipes.iterrows()]:
+                    self.set_next_state(DisplayRecipeState.get_state_name())
+                    print(f"next state detail")
+                    with open(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl", "wb") as fp:
+                        pickle.dump(message.body, fp)
+                    break
         except:
-            traceback.print_exc()
+            await self.send(prep_outgoing_message(self.agent.id, "Something went wrong let's try again."))
             self.set_next_state(HomeState.get_state_name())
+            print(traceback.print_exc())
             
 class GetFreeTextRecommendation(State):
     state_name = "GetFreeTextRecommendation"
@@ -522,7 +610,25 @@ class AskTimeState(State):
 
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
                 pickle.dump(user_dict, file)
-            self.set_next_state(AskRecommendationsState.get_state_name())
+                
+            # load user selection and use it to choose 
+            selection = None
+            path = CACHE_DIR / "interactive" / f"{self.agent.id}_reco_type.pkl"
+            if os.path.exists(path):
+                print("Path selection exits, loading...")
+                with open(path, "rb") as fp:
+                    selection = pickle.load(fp)
+                if selection is not None:
+                    if selection["index"] == 0:
+                        self.set_next_state(AskRecommendationsState.get_state_name())
+                    else:
+                        self.set_next_state(CheckRecipeCompatibilityState.get_state_name())
+                    return
+                else:
+                    self.set_next_state(AskRecommendationsState.get_state_name())
+            else:
+                # default selection
+                self.set_next_state(AskRecommendationsState.get_state_name())
         except:
             traceback.print_exc()
             await self.send(prep_outgoing_message(self.agent.id, "Something went wrong less try again."))
