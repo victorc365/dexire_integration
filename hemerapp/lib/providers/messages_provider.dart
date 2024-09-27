@@ -70,6 +70,7 @@ class MessagesProvider with ChangeNotifier {
                     default:
                       _messages.add(messageModel);
                       currentContext = context;
+                      botKeyboard = null;
                       break;
                   }
 

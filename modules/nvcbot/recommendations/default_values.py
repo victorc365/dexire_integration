@@ -73,10 +73,10 @@ social_situation_proba_dict = {
 }
 
 time_options = {
-    "now": 0.5,
-    "in one hour": 1.0,
-    "in two hours": 2.5,
-    "other time": 0.0
+    "now": "time_now",
+    "in one hour": "time_in_one_hour",
+    "in two hours": "time_in_two_hours",
+    "other time": "other_time"
 }
 
 user_entity = {

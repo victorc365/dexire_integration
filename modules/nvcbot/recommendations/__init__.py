@@ -31,7 +31,7 @@ def get_social_situation():
     return list(social_situation_proba_dict.keys())
 
 def get_time_options():
-    return list(time_options.keys())
+    return time_options
 
 
 # old versions

@@ -127,6 +127,7 @@ class ChatRouteState extends State<ChatRoute> {
                           var message = messages[index];
                           developer.log(message.toJson().toString());
                           String format = message.metadata?['body_format'];
+                          developer.log('format: $format');
                           bool isUser = message.to == username.toLowerCase();
                           switch (format) {
                             case 'text_to_speech':
@@ -155,17 +156,17 @@ class ChatRouteState extends State<ChatRoute> {
                   ),
                 ),
                 CustomKeyboard(
-                  textController: _textController,
-                  handleSubmitted: _handleSubmitted,
-                  messagesProvider: value,
-                  botKeyboard: botKeyboard == null
-                      ? null
-                      : BotKeyboard(
-                          items: botKeyboard!['items'],
-                        ),
-                  options: null,
-                  onRecordingEnded: (String message) => _handleSubmitted(message, value),
-                )
+                    textController: _textController,
+                    handleSubmitted: _handleSubmitted,
+                    messagesProvider: value,
+                    botKeyboard: botKeyboard == null
+                        ? null
+                        : BotKeyboard(
+                      items: botKeyboard!['items'],
+                    ),
+                    options: null,
+                    onRecordingEnded: (String message) => _handleSubmitted(message, value),
+                  ),
               ],
             );
           },

@@ -51,6 +51,23 @@ def get_age_range(age: int):
         if int(k.split("-")[0]) <= age <= int(k.split("-")[1]):
             return k
 
+def get_time_from_text(text: str) -> float:
+    try:
+        pattern = r'\d+:\d+'
+        time_str_list = re.findall(pattern, text)
+        if len(time_str_list) >= 1:
+            temp_str = time_str_list[0].split(':')
+            hour = int(temp_str[0])
+            minute = int(temp_str[1])
+        else:
+            now = datetime.datetime.now()
+            hour = int(now.hour)
+            minute = int(now.minute)
+    except Exception as e:
+        print(f"Error while parsing time: {traceback.format_exc()}")
+        return 0.0
+    return float(f"{hour}.{minute}")
+
 def prep_keyboard_message(agent_id, buttons: list) -> Message:
     keyboard_message = prep_outgoing_message(agent_id, json.dumps({"items": buttons}), "keyboard")
     return keyboard_message
@@ -77,16 +94,6 @@ def get_google_image(query):
         return img_link
     else:
         return "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Good_Food_Display_-_NCI_Visuals_Online.jpg/1920px-Good_Food_Display_-_NCI_Visuals_Online.jpg"
-
-def get_hour_from_text(text: str) -> float:
-    time = dt.datetime.now().strftime("%H.%M")
-    try:
-        result = re.search(r'\d+:\d+', text, re.IGNORECASE)
-        groups = result.groups()
-        time = f"{groups[0]}.{groups[1]}"
-    except:
-        print("Error processing hour from text: ", text)
-    return float(time)
 
 
 class HomeState(State):
@@ -221,7 +228,7 @@ class CheckRecipeCompatibilityState(State):
             buttons += [{"label": "Get more recommendations", "action": "more_recommendations"}]
             keyboard_message = prep_keyboard_message(self.agent.id, buttons)
             await self.send(keyboard_message)
-            
+            # wait for an answer
             message = await self.receive(REPLY_TIMEOUT)
             while message.body != "CONTINUE" and message.body != "NONE":
                 if message.body == "more_recommendations":
@@ -566,48 +573,36 @@ class AskTimeState(State):
             print("SENDING TIME")
             await self.send(prep_outgoing_message(self.agent.id, "What time are you going to eat?"))
             system_times = get_time_options()
-            keyboard_message = prep_keyboard_message(self.agent.id, [{"label": time.title(), "action": time} for time in system_times])
+            keyboard_message = prep_keyboard_message(self.agent.id, [{"label": time.title(), "action": system_times[time]} for time in 
+            system_times.keys()])
             
             await self.send(keyboard_message)
             meal_time = 0.0
             time_option = []
             message = await self.receive(REPLY_TIMEOUT)
-            while message.body != "CONTINUE" and message.body != "NONE":
-                if message.body in system_times:
-                    time_option.append(message.body)
-                    break
-            message = await self.receive(REPLY_TIMEOUT)
-                
-            if len(time_option) > 0:
-                if time_option[0] == "other time":
-                    meal_time = await self.send(prep_outgoing_message(self.agent.id, "Please enter the hour (Hour:minute am/pm)."))
-                    message = await self.receive(REPLY_TIMEOUT)
-                    text = message.body
-                    text = text.lower()
-                    meal_time = get_hour_from_text(text)
-                    if "pm" in text:
-                        meal_time += 12
-                elif time_option[0] == "now":
-                    meal_time = float(dt.datetime.now().strftime("%H.%M"))
-                elif time_option[0] == "in one hour":
-                    time_delta = dt.timedelta(hours=1)
-                    meal_time = float((dt.datetime.now()+time_delta).strftime("%H.%M"))
-                elif time_option[0] == "in two hours":
-                    time_delta = dt.timedelta(hours=2)
-                    meal_time = float((dt.datetime.now()+time_delta).strftime("%H.%M"))
+            # process message 
+            if message is not None and message.body.startswith('time:'):
+                meal_time_str = message.body
+                meal_time = get_time_from_text(meal_time_str)
+                print(f"Captured meal time from front: {meal_time}")
+            elif message is not None and message.body == system_times['other time']:
+                meal_time = await self.send(prep_outgoing_message(self.agent.id, "Please enter the hour with this format (Hour:minute am/pm)."))
+                message = await self.receive(REPLY_TIMEOUT)
+                text = message.body
+                text = text.lower()
+                meal_time = get_time_from_text(text)
+                if "pm" in text:
+                    meal_time += 12
+                print(f"Obtained time from user: {meal_time}")
             else:
-                # default time now 
-                meal_time = float(dt.datetime.now().strftime("%H.%M"))
-                
-
+                print(f"Option not valid or empty string")
             print("Meal time: ", meal_time)
-
+            # load user profile and data 
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
                 user_dict = pickle.load(file)
-            
+            # save current date time to use in the recommendation
             user_dict['time_of_meal_consumption'] = meal_time
-
-
+            # save the current state
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
                 pickle.dump(user_dict, file)
                 
@@ -630,7 +625,7 @@ class AskTimeState(State):
                 # default selection
                 self.set_next_state(AskRecommendationsState.get_state_name())
         except:
-            traceback.print_exc()
+            print(traceback.print_exc())
             await self.send(prep_outgoing_message(self.agent.id, "Something went wrong less try again."))
             self.set_next_state(HomeState.get_state_name())
             return
@@ -829,11 +824,14 @@ class DisplayRecipeState(State):
             await self.send(prep_outgoing_message(self.agent.id,
                                             msg
                                             ))
-            msg = f"Calories: {selected_recipe['calories']}"
+            msg = f"Calories: {selected_recipe['calories']}\nFiber: {selected_recipe['fiber']}\n"
+            msg += f"Carbohydrates: {selected_recipe['carbohydrates']}\nFat: {selected_recipe['fat']}\n"
+            msg += f"Taste profile: {selected_recipe['taste']}\nPrice: {int(selected_recipe['price'])*'$'}"
+            print(f"Message to send: {msg}")
             await self.send(prep_outgoing_message(self.agent.id,
                                             msg
                                             ))
-
+            await self.send(prep_outgoing_message(self.agent.id, get_google_image(selected_recipe['name']), body_format="image"))
             buttons = [{"label": "Accept recipe", "action": "accept"}, {"label": "Reject recipe", "action": "reject"},
                        {"label": "See Explanation", "action": "explain"}]
             keyboard_message = prep_keyboard_message(self.agent.id, buttons)
@@ -864,9 +862,10 @@ class DisplayRecipeState(State):
                 return 
             self.set_next_state(FinalState.get_state_name())
         except:
-            traceback.format_exc()
+            print(traceback.format_exc())
             self.set_next_state(HomeState.get_state_name())
 
+#TODO: Save user feedback in sql database
 class DisplayExplanationState(State):
     
     state_name = "displayExplanationState"
@@ -979,9 +978,20 @@ class AskFeedBack(State):
                        {"label": "No", "action": "no"}]
             keyboard_message = prep_keyboard_message(self.agent.id, buttons)
             await self.send(keyboard_message)
-            await self.send(prep_outgoing_message(self.agent.id, "Please complement the feedback with a short explanation:"))
+            # receive the user feedback 
+            feedback_message = await self.receive(REPLY_TIMEOUT)
+            if feedback_message is not None and feedback_message.body == "yes":
+                #TODO: positive feedback 
+                pass
+            elif feedback_message is not None and feedback_message.body == "no":
+                #TODO: negative feedback
+                pass
+            # ask for free text feedback 
+            await self.send(prep_outgoing_message(self.agent.id, "Please complement your feedback with a short explanation on your decision:"))
             message = await self.receive(REPLY_TIMEOUT)
-            feedback_data.update({"type": type, "message": message.body, "recipe": selected})
+            now_time = dt.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            feedback_data.update({"date": now_time,"type": type, "message": message.body, "recipe": selected, 
+                                  "binary_feedback": feedback_data})
             if os.path.exists(CACHE_DIR / "interactive" / f"{self.agent.id}_feedback.pkl"):
                 with open(CACHE_DIR / "interactive" / f"{self.agent.id}_feedback.pkl", "rb") as fp:
                     f_dict_list = pickle.load(fp)

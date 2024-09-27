@@ -167,7 +167,30 @@ class CustomPad extends StatelessWidget {
           shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
         ),
         onPressed: () {
-          buttonAction(action);
+          // get local time on the phone
+          switch(action){
+            case 'time_now':{
+              DateTime now = DateTime.now();
+              buttonAction("time: ${now.hour.toString()}:${now.minute.toString()}");
+            }
+            break;
+            case 'time_in_one_hour':{
+              DateTime now = DateTime.now();
+              final oneHourLater = now.add(const Duration(hours: 1));
+              buttonAction("time: ${oneHourLater.hour.toString()}:${oneHourLater.minute.toString()}");
+            }
+            break;
+            case 'time_in_two_hours':{
+              DateTime now = DateTime.now();
+              final twoHourLater = now.add(const Duration(hours: 2));
+              buttonAction("time: ${twoHourLater.hour.toString()}:${twoHourLater.minute.toString()}");
+            }
+            break;
+            default: {
+              buttonAction(action);
+            }
+            break;
+          }
         },
         child: iconName == null ? Text(label): Icon(_categories[iconName]));
   }
