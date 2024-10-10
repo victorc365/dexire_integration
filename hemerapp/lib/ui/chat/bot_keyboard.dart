@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
 class BotKeyboard extends StatefulWidget {
-  const BotKeyboard({super.key, required this.items});
+  const BotKeyboard({super.key, required this.items, this.type});
 
   final List<dynamic>? items;
+  final String? type;
 
   @override
   State<BotKeyboard> createState() => _BotKeyboardState();

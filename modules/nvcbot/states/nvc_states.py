@@ -68,6 +68,11 @@ def get_time_from_text(text: str) -> float:
         return 0.0
     return float(f"{hour}.{minute}")
 
+def prep_slider_message(agent_id, min_val: float, max_val: float):
+    buttons = [{"label": min_val, "action": ""}, {"label": max_val, "action": ""}]
+    slider_message = prep_outgoing_message(agent_id, json.dumps({"items": buttons, "type": "slider"}), "keyboard")
+    return slider_message
+
 def prep_keyboard_message(agent_id, buttons: list) -> Message:
     keyboard_message = prep_outgoing_message(agent_id, json.dumps({"items": buttons}), "keyboard")
     return keyboard_message
@@ -182,7 +187,7 @@ class CheckRecipeCompatibilityState(State):
             # get context features 
             context_features = {
                 'day_number': user_dict.get("day_number", 0), 
-                'meal_type_y': user_dict.get("meal_type_y", "lunch"),
+                'meal_type_x': user_dict.get("meal_type_x", "lunch"),
                 'time_of_meal_consumption': user_dict.get("time_of_meal_consumption", 12.0), 
                 'place_of_meal_consumption': user_dict.get("place_of_meal_consumption", "restaurant"), 
                 'social_situation_of_meal_consumption': user_dict.get("social_situation_of_meal_consumption", "alone")
@@ -229,24 +234,28 @@ class CheckRecipeCompatibilityState(State):
             keyboard_message = prep_keyboard_message(self.agent.id, buttons)
             await self.send(keyboard_message)
             # wait for an answer
-            message = await self.receive(REPLY_TIMEOUT)
-            while message.body != "CONTINUE" and message.body != "NONE":
-                if message.body == "more_recommendations":
+            while True:
+                message = await self.receive(REPLY_TIMEOUT)
+                print(f"Received message from user: {message}")
+                if message is not None and message.body == "HOME":
+                    self.set_next_state(HomeState.get_state_name())
+                    return
+                if message is not None and message.body == "more_recommendations":
                     self.set_next_state(AskRecommendationsState.get_state_name())
                     print("next more recommendations")
-                    break
-                elif message.body in [f"explain_{recipe['recipeId']}" for i, recipe in selected_recipes.iterrows()]:
+                    return 
+                elif message is not None and message.body in [f"explain_{recipe['recipeId']}" for i, recipe in selected_recipes.iterrows()]:
                     self.set_next_state(DisplayExplanationState.get_state_name())
                     print(f"next state explanation")
                     with open(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl", "wb") as fp:
                         pickle.dump(message.body, fp)
-                    break
+                    return
                 elif message.body in [recipe['recipeId'] for i, recipe in selected_recipes.iterrows()]:
                     self.set_next_state(DisplayRecipeState.get_state_name())
                     print(f"next state detail")
                     with open(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl", "wb") as fp:
                         pickle.dump(message.body, fp)
-                    break
+                    return
         except:
             await self.send(prep_outgoing_message(self.agent.id, "Something went wrong let's try again."))
             self.set_next_state(HomeState.get_state_name())
@@ -456,9 +465,9 @@ class AskMealTypeState(State):
                 user_dict = pickle.load(file)
             
             if len(meal_type) > 0:
-                user_dict["meal_type_y"] = meal_type[0]
+                user_dict["meal_type_x"] = meal_type[0]
             else:
-                user_dict["meal_type_y"] = "lunch"
+                user_dict["meal_type_x"] = "lunch"
 
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'wb') as file:
                 pickle.dump(user_dict, file)
@@ -724,7 +733,7 @@ class AskRecommendationsState(State):
             # get context features 
             context_features = {
                 'day_number': user_dict.get("day_number", 0), 
-                'meal_type_y': user_dict.get("meal_type_y", "lunch"),
+                'meal_type_x': user_dict.get("meal_type_x", "lunch"),
                 'time_of_meal_consumption': user_dict.get("time_of_meal_consumption", 12.0), 
                 'place_of_meal_consumption': user_dict.get("place_of_meal_consumption", "restaurant"), 
                 'social_situation_of_meal_consumption': user_dict.get("social_situation_of_meal_consumption", "alone")
@@ -758,9 +767,11 @@ class AskRecommendationsState(State):
             buttons += [{"label": "Get more recommendations", "action": "more_recommendations"}]
             keyboard_message = prep_keyboard_message(self.agent.id, buttons)
             await self.send(keyboard_message)
-            
+            print("Waiting for user answer...")
             message = await self.receive(REPLY_TIMEOUT)
-            while message.body != "CONTINUE" and message.body != "NONE":
+            print(f"Received message {message}")
+            while True:
+                message = await self.receive(REPLY_TIMEOUT)
                 if message.body == "more_recommendations":
                     self.set_next_state(AskRecommendationsState.get_state_name())
                     print("next more recommendations")
@@ -777,7 +788,6 @@ class AskRecommendationsState(State):
                     with open(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl", "wb") as fp:
                         pickle.dump(message.body, fp)
                     break
-                
         except:
             traceback.print_exc()
             await self.send(prep_outgoing_message(self.agent.id, "Something went wrong less try again."))
@@ -970,14 +980,17 @@ class AskFeedBack(State):
                 feedback_data = pickle.load(fp)
             type = "recipe"
             if feedback_data["feed_type"] == "recipe":
-                await self.send(prep_outgoing_message(self.agent.id, "Did you like the recipe recommended?"))
+                await self.send(prep_outgoing_message(self.agent.id, "Please choose in the scale how much did you liked the recipe."))
+                slider_message = prep_slider_message(self.agent.id,
+                                                     min_val=0.0, max_val=100.0)
+                await self.send(slider_message)
             else:
                 await self.send(prep_outgoing_message(self.agent.id, "Did you like the explanation recommended?"))
                 type = "xai"
-            buttons = [{"label": "Yes", "action": "yes"},
+                buttons = [{"label": "Yes", "action": "yes"},
                        {"label": "No", "action": "no"}]
-            keyboard_message = prep_keyboard_message(self.agent.id, buttons)
-            await self.send(keyboard_message)
+                keyboard_message = prep_keyboard_message(self.agent.id, buttons)
+                await self.send(keyboard_message)
             # receive the user feedback 
             feedback_message = await self.receive(REPLY_TIMEOUT)
             if feedback_message is not None and feedback_message.body == "yes":

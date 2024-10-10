@@ -163,6 +163,7 @@ class ChatRouteState extends State<ChatRoute> {
                         ? null
                         : BotKeyboard(
                       items: botKeyboard!['items'],
+                      type: botKeyboard!['type'],
                     ),
                     options: null,
                     onRecordingEnded: (String message) => _handleSubmitted(message, value),

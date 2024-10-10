@@ -1,9 +1,14 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:hemerapp/providers/messages_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:hemerapp/ui/chat/bot_keyboard.dart';
 import 'package:hemerapp/ui/chat/erebot_recording_button.dart';
 import 'package:collection/collection.dart';
+import 'package:hemerapp/ui/components/feed_back_slider.dart';
+
+import 'dart:developer' as developer;
 
 class CustomKeyboard extends StatelessWidget {
   final TextEditingController textController;
@@ -89,8 +94,10 @@ class CustomKeyboard extends StatelessWidget {
                 )
               ],
             ),
-            if (botKeyboard != null && botKeyboard!.items != null)
+            if (botKeyboard != null && botKeyboard!.items != null && botKeyboard!.type == null)
               CustomPad(botKeyboard: botKeyboard!, buttonAction: _handleButton),
+            if (botKeyboard != null && botKeyboard!.items != null && botKeyboard!.type != null)
+              FeedBackSlider(minValue: 0.0, maxValue: 100, buttonAction: _handleButton),
           ],
         ),
       ),
