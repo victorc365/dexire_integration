@@ -17,7 +17,7 @@ from bs4 import BeautifulSoup
 
 from modules.nvcbot.recommendations.user_profile import UserProfile
 from modules.nvcbot.states.nvc_states import (HomeState, AskAllergiesState, AskCulturalFactorState,
-                                              AskFlexiObservantState, AskMealTypeState, AskPlaceState,
+                                              AskMealTypeState, AskPlaceState,
                                               AskSocialSituationState, AskTimeState, AskRecommendationsState,
                                               DisplayExplanationState, DisplayRecipeState, AskFeedBack,
                                               FinalState, CheckRecipeCompatibilityState)
@@ -38,8 +38,6 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
                        state=AskAllergiesState())
         self.add_state(name=AskCulturalFactorState.get_state_name(),
                        state=AskCulturalFactorState())
-        self.add_state(name=AskFlexiObservantState.get_state_name(),
-                       state=AskFlexiObservantState())
         # contextual state
         self.add_state(name=AskMealTypeState.get_state_name(),
                        state=AskMealTypeState())
@@ -68,9 +66,7 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
         self.add_transition(HomeState.get_state_name(), AskAllergiesState.get_state_name())
     
         self.add_transition(AskAllergiesState.get_state_name(), AskCulturalFactorState.get_state_name())
-        self.add_transition(AskCulturalFactorState.get_state_name(), AskFlexiObservantState.get_state_name())
         self.add_transition(AskCulturalFactorState.get_state_name(), AskMealTypeState.get_state_name())
-        self.add_transition(AskFlexiObservantState.get_state_name(), AskMealTypeState.get_state_name())
         self.add_transition(AskMealTypeState.get_state_name(), AskPlaceState.get_state_name())
         self.add_transition(AskPlaceState.get_state_name(), AskSocialSituationState.get_state_name())
         self.add_transition(AskSocialSituationState.get_state_name(), AskTimeState.get_state_name())
@@ -95,7 +91,6 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
         self.add_transition(AskAllergiesState.get_state_name(), HomeState.get_state_name())
         self.add_transition(AskCulturalFactorState.get_state_name(), HomeState.get_state_name())
         self.add_transition(AskCulturalFactorState.get_state_name(), HomeState.get_state_name())
-        self.add_transition(AskFlexiObservantState.get_state_name(), HomeState.get_state_name())
         self.add_transition(AskMealTypeState.get_state_name(), HomeState.get_state_name())
         self.add_transition(AskPlaceState.get_state_name(), HomeState.get_state_name())
         self.add_transition(AskSocialSituationState.get_state_name(), HomeState.get_state_name())
@@ -114,9 +109,7 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
         self.add_transition(AskAllergiesState.get_state_name(), HomeState.get_state_name())
     
         self.add_transition(AskCulturalFactorState.get_state_name(), AskAllergiesState.get_state_name())
-        self.add_transition(AskFlexiObservantState.get_state_name(), AskCulturalFactorState.get_state_name())
         self.add_transition(AskMealTypeState.get_state_name(), AskCulturalFactorState.get_state_name())
-        self.add_transition(AskMealTypeState.get_state_name(), AskFlexiObservantState.get_state_name())
         self.add_transition(AskPlaceState.get_state_name(), AskMealTypeState.get_state_name())
         self.add_transition(AskSocialSituationState.get_state_name(), AskPlaceState.get_state_name())
         self.add_transition(AskTimeState.get_state_name(), AskSocialSituationState.get_state_name())

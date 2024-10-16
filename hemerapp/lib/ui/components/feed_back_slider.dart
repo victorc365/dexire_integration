@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:developer' as developer;
 
+import 'package:flutter_chat_ui/flutter_chat_ui.dart';
+
 
 class FeedBackSlider extends StatefulWidget {
   final double minValue;
@@ -39,7 +41,9 @@ class _FeedBackSliderState extends State<FeedBackSlider>{
           value: _currentSliderValue,
           min: widget.minValue,
           max: widget.maxValue,
-          divisions: 5,
+          divisions: 10,
+          activeColor: Colors.blue,
+          inactiveColor: Colors.white,
           label: _currentSliderValue.round().toString(),
           onChanged: (value) {
             setState(() {
@@ -47,13 +51,35 @@ class _FeedBackSliderState extends State<FeedBackSlider>{
             });
           },
         ),
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Icon(
+              Icons.thumb_down,
+              size: 30,
+              color: Colors.red,
+            ),
+            Icon(
+              Icons.thumb_up,
+              size: 30,
+              color: Colors.green
+            )
+          ],
+        ),
         const SizedBox(height: 10),
         OutlinedButton(
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.white,
+            backgroundColor: Colors.blue,
+            padding: const EdgeInsets.all(10.0),
+            textStyle: const TextStyle(fontSize: 20),
+            shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          ),
           onPressed: (){
             developer.log("Elevated button pressed");
             widget.buttonAction(_currentSliderValue.toString());
           },
-          child: Text("Send Feedback"),
+          child: const Text("Send Feedback"),
         ),
       ],
     ),

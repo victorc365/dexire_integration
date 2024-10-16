@@ -18,6 +18,26 @@ class JSONField(TextField):
 class BaseModel(Model):
     class Meta:
         database = db
+        
+# save the recommendation query
+class RecommendationQuery(BaseModel):
+    id = AutoField()
+    agent_id = CharField()
+    json_query = JSONField()
+    query_date = DateTimeField(default=datetime.datetime.now)
+    recommendation_type = CharField()
+    
+class AnswerQuery(BaseModel):
+    id = AutoField()
+    answer = JSONField()
+    answer_date = DateTimeField(default=datetime.datetime.now)
+    query = ForeignKeyField(RecommendationQuery, backref='answer_query')
+    
+class UserFeedback(BaseModel):
+    id = AutoField()
+    answer = ForeignKeyField(AnswerQuery, backref='user_feedback')
+    feedback_type = CharField()
+    feedback = JSONField()
 
 class UserSpecificationLogs(BaseModel):
     uuid = CharField()
@@ -43,7 +63,7 @@ class RoundSummary(BaseModel):
 
 
 if not os.path.exists(str(pathlib.Path(__file__).parent / 'logs.sqlite3')):
-    db.create_tables([UserSpecificationLogs, OfferRoundLogs, FeedbackLogs, RoundSummary])
+    db.create_tables([RecommendationQuery, AnswerQuery, UserFeedback])
 
 if __name__ == "__main__":
-    db.create_tables([UserSpecificationLogs, OfferRoundLogs, FeedbackLogs, RoundSummary])
+    db.create_tables([RecommendationQuery, AnswerQuery, UserFeedback])

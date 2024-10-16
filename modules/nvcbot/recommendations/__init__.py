@@ -19,7 +19,7 @@ def get_meals():
     return list(meals_calorie_dict.keys())
 
 def get_cultural_factors():
-    return list(cultural_factors.keys())
+    return cultural_factors
 
 def get_flexi_diet():
     return list(flexi_probabilities_dict.keys())

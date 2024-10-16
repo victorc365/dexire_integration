@@ -10,12 +10,15 @@ allergies_queries_dict = {'tree nuts': ['tree', 'nuts', 'nut', 'tree nuts'],
                           "NotAllergy": []}
 
 cultural_factors = {
-    "vegan_observant": [True, False],
-    "vegetarian_observant": [True, False],
-    "halal_observant": [True, False],
-    "kosher_observant": [True, False],
-    "flexi_observant": [True, False],
-    "NotRestriction": []
+    'Vegan': 'vegan_observant', 
+    'Omnivore': 'NotRestriction', 
+    'Kosher': 'kosher_observant',
+    'Vegetarian': 'vegetarian_observant', 
+    'Halal': 'halal_observant', 
+    'Flexi Kosher': 'flexi_kosher',
+    'Flexi Halal': 'flexi_halal', 
+    'Flexi Vegetarian': 'flexi_vegetarian', 
+    'Flexi Vegan':'flexi_vegan'
 }
 
 # Calorie distribution across meals
