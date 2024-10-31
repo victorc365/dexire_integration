@@ -50,6 +50,7 @@ class MessagesProvider with ChangeNotifier {
                       MessageModel.fromJson(jsonDecode(event));
                   developer.log(messageModel.body!);
                   String context = messageModel.metadata?['context'];
+                  String? answers = messageModel.metadata?['answers'];
 
                   switch (context) {
                     case 'history':
@@ -66,6 +67,16 @@ class MessagesProvider with ChangeNotifier {
                       break;
                     case 'keyboard':
                       botKeyboard = jsonDecode(messageModel.body!);
+                      break;
+                    case 'profiling':
+                      _messages.add(messageModel);
+                      currentContext = context;
+                      if (answers != null){
+                        botKeyboard = jsonDecode(answers);
+                      }
+                      else {
+                        botKeyboard = null;
+                      }
                       break;
                     default:
                       _messages.add(messageModel);

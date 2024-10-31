@@ -44,7 +44,11 @@ class DynamicState(State):
             MessageMetadata.BODY_FORMAT.value: MessageBodyFormat.TEXT.value
         }
         if self.answers is not None:
-            metadata[MessageMetadata.ANSWERS.value] = json.dumps(self.answers)
+            buttons = []
+            for answer in self.answers:
+                buttons.append({'label': answer.replace('_', ' ').title(), 'action': answer})
+            print(f"Buttons: {buttons}")
+            metadata[MessageMetadata.ANSWERS.value] = json.dumps({"items": buttons})
 
         send_message = self.text
         answer = None
