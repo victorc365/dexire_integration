@@ -107,15 +107,22 @@ class ContextualFSM(AbstractContextualFSMBehaviour):
         
         # ADD BACK transitions
         self.add_transition(AskAllergiesState.get_state_name(), HomeState.get_state_name())
-    
         self.add_transition(AskCulturalFactorState.get_state_name(), AskAllergiesState.get_state_name())
         self.add_transition(AskMealTypeState.get_state_name(), AskCulturalFactorState.get_state_name())
         self.add_transition(AskPlaceState.get_state_name(), AskMealTypeState.get_state_name())
         self.add_transition(AskSocialSituationState.get_state_name(), AskPlaceState.get_state_name())
         self.add_transition(AskTimeState.get_state_name(), AskSocialSituationState.get_state_name())
         self.add_transition(AskRecommendationsState.get_state_name(), AskTimeState.get_state_name())
+        self.add_transition(CheckRecipeCompatibilityState.get_state_name(), AskTimeState.get_state_name())
+        self.add_transition(DisplayRecipeState.get_state_name(), AskRecommendationsState.get_state_name())
+        self.add_transition(DisplayExplanationState.get_state_name(), AskRecommendationsState.get_state_name())
+        self.add_transition(DisplayRecipeState.get_state_name(), CheckRecipeCompatibilityState.get_state_name())
+        self.add_transition(DisplayExplanationState.get_state_name(), CheckRecipeCompatibilityState.get_state_name())
+        self.add_transition(DisplayExplanationState.get_state_name(), DisplayRecipeState.get_state_name())
         self.add_transition(FinalState.get_state_name(), AskRecommendationsState.get_state_name())
         self.add_transition(FinalState.get_state_name(), HomeState.get_state_name())
+        self.add_transition(FinalState.get_state_name(), AskRecommendationsState.get_state_name())
+        self.add_transition(FinalState.get_state_name(), CheckRecipeCompatibilityState.get_state_name())
 
 
     async def on_start(self):

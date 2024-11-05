@@ -106,14 +106,18 @@ def get_last_answer_by_agent(agent_id):
 def get_local_thumbnail(df_recipes:pd.DataFrame, recipe_id: str, thumbnail_column:str="thumbnail"):
     default_image_id = "1cDbjBUKWfV5Iu-1-hzPxPYGMzmYksKyP"
     default_image = f"https://drive.google.com/thumbnail?id={default_image_id}"
-    default_image = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Good_Food_Display_-_NCI_Visuals_Online.jpg/1920px-Good_Food_Display_-_NCI_Visuals_Online.jpg"
+    #default_image = "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Good_Food_Display_-_NCI_Visuals_Online.jpg/1920px-Good_Food_Display_-_NCI_Visuals_Online.jpg"
     try:
         if thumbnail_column in df_recipes.columns:
             # find the recipe id in the dataframe
             thumbnail = df_recipes.loc[df_recipes['recipeId'] == recipe_id][thumbnail_column].to_list()
-            if thumbnail is not None:
-                print(f"type of thumbnail {thumbnail}")
-                return thumbnail[0]
+            
+            if thumbnail is not None and len(thumbnail) > 0:
+                print(f"type of thumbnail {thumbnail[0]}")
+                if not pd.isnull(thumbnail[0]):
+                    return thumbnail[0]
+                else:
+                    return default_image
             else:
                 return default_image
         else:
@@ -242,73 +246,93 @@ class CheckRecipeCompatibilityState(State):
         try:
             #TODO: check if they come back to this state
             food_dataset = pd.read_csv("./modules/nvcbot/data/df_recipes_thumbnails.csv", index_col=0, sep="|")
-            print("Query by ingredients...")
-            # get user_features and transform it into  data frame 
-            user_dict = {}
-            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
-                user_dict = pickle.load(file)
-            print(f"User Dict: {user_dict}")
-            if user_dict is not None:    
-                user_data = {'nutrition_goal':user_dict.get("nutritional_goal", "maintain_fit"), 
-                            'clinical_gender':user_dict.get("gender", "M"), 
-                            'age_range': get_age_range(user_dict.get("age", 25)), 
-                            'life_style':user_dict.get("life_style", "Very active"), 
-                            'weight':user_dict.get("weight", 70),  
-                            'height':user_dict.get("height", 170), 
-                            'projected_daily_calories':user_dict.get("projected_daily_calories", 2000), 
-                            'current_daily_calories': user_dict.get("current_daily_calories", 1700),
-                            'cultural_factor': user_dict.get("cultural_factor", "NotRestriction"),  
-                            'allergy': user_dict.get("allergy", "NotAllergy"), 
-                            'current_working_status': user_dict.get("current_working_status", "Full-time-worker"), 
-                            'marital_status': user_dict.get("marital_status", "Single"),  
-                            'ethnicity': user_dict.get("ethnicity", "White"), 
-                            'BMI': user_dict.get("BMI", "healthy"),  
-                            'next_BMI':user_dict.get("next_BMI", "healthy")}  
-            # get context features 
-            context_features = {
-                'day_number': user_dict.get("day_number", 0), 
-                'meal_type_x': user_dict.get("meal_type_x", "lunch"),
-                'time_of_meal_consumption': user_dict.get("time_of_meal_consumption", 12.0), 
-                'place_of_meal_consumption': user_dict.get("place_of_meal_consumption", "restaurant"), 
-                'social_situation_of_meal_consumption': user_dict.get("social_situation_of_meal_consumption", "alone")
-            }
-            # get ingredient list from the user 
-            await self.send(prep_outgoing_message(self.agent.id, "Please write the ingredients separated by commas:"))
-            message = await self.receive(REPLY_TIMEOUT)
-            ingredients = ""
-            if message is not None and message.body != "HOME":
-                ingredients = message.body
-            elif message is not None and message.body == "HOME":
-                self.set_next_state(HomeState.get_state_name())
-                return
-            # quey recipes in db and answer 
-            print(f"received {message}")
-            prepare_data = {
-                "profile": user_data,
-                "context": context_features,
-                "ingredients": ingredients
-            }
-            # save query 
-            recommendation_persistence = RecommendationQuery(**{
-                    "agent_id": str(self.agent.id),
-                    "json_query": prepare_data,
-                    "recommendation_type": "recommendation_by_proximity"
-            })
-            recommendation_persistence.save()
-            # send query to recommendation service
-            print(f"send_data: %s" % prepare_data)
-            url = "http://localhost:8500/recommendByProximity/"
-            ans = requests.post(url, json=prepare_data)
-            print(f"Ans: {ans.json()}")
-            # process answer 
-            answer = ans.json()
-            # save the answer
-            answer_persistence = AnswerQuery(
-                **{"answer": answer,
-                   "query": recommendation_persistence
+            back_flag = False
+            interactive_session = None
+            if os.path.exists(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl"):
+                with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "rb") as fp:
+                    interactive_session = pickle.load(fp)
+                print(f"received: {interactive_session}")
+                if interactive_session is not None and interactive_session.get("direction") == "BACK":
+                    back_flag = True
+                    # update the direction to avoid infinite loop
+                    interactive_session["direction"] = "forward"
+                    interactive_session["action"] = ""
+                    interactive_session["state_name_stack"].append(self.get_state_name())
+                    with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "wb") as fp:
+                        pickle.dump(interactive_session, fp)
+                else:
+                    back_flag = False
+            if not back_flag:
+                await self.send(prep_outgoing_message(self.agent.id, "I am searching a recipe for you..."))
+                print("Query by ingredients...")
+                # get user_features and transform it into  data frame 
+                user_dict = {}
+                with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
+                    user_dict = pickle.load(file)
+                print(f"User Dict: {user_dict}")
+                if user_dict is not None:    
+                    user_data = {'nutrition_goal':user_dict.get("nutritional_goal", "maintain_fit"), 
+                                'clinical_gender':user_dict.get("gender", "M"), 
+                                'age_range': get_age_range(user_dict.get("age", 25)), 
+                                'life_style':user_dict.get("life_style", "Very active"), 
+                                'weight':user_dict.get("weight", 70),  
+                                'height':user_dict.get("height", 170), 
+                                'projected_daily_calories':user_dict.get("projected_daily_calories", 2000), 
+                                'current_daily_calories': user_dict.get("current_daily_calories", 1700),
+                                'cultural_factor': user_dict.get("cultural_factor", "NotRestriction"),  
+                                'allergy': user_dict.get("allergy", "NotAllergy"), 
+                                'current_working_status': user_dict.get("current_working_status", "Full-time-worker"), 
+                                'marital_status': user_dict.get("marital_status", "Single"),  
+                                'ethnicity': user_dict.get("ethnicity", "White"), 
+                                'BMI': user_dict.get("BMI", "healthy"),  
+                                'next_BMI':user_dict.get("next_BMI", "healthy")}  
+                # get context features 
+                context_features = {
+                    'day_number': user_dict.get("day_number", 0), 
+                    'meal_type_x': user_dict.get("meal_type_x", "lunch"),
+                    'time_of_meal_consumption': user_dict.get("time_of_meal_consumption", 12.0), 
+                    'place_of_meal_consumption': user_dict.get("place_of_meal_consumption", "restaurant"), 
+                    'social_situation_of_meal_consumption': user_dict.get("social_situation_of_meal_consumption", "alone")
                 }
-            )
-            answer_persistence.save()
+                # get ingredient list from the user 
+                await self.send(prep_outgoing_message(self.agent.id, "Please write the ingredients separated by commas:"))
+                message = await self.receive(REPLY_TIMEOUT)
+                ingredients = ""
+                if message is not None and message.body != "HOME":
+                    ingredients = message.body
+                elif message is not None and message.body == "HOME":
+                    self.set_next_state(HomeState.get_state_name())
+                    return
+                # quey recipes in db and answer 
+                print(f"received {message}")
+                prepare_data = {
+                    "profile": user_data,
+                    "context": context_features,
+                    "ingredients": ingredients
+                }
+                # save query 
+                recommendation_persistence = RecommendationQuery(**{
+                        "agent_id": str(self.agent.id),
+                        "json_query": prepare_data,
+                        "recommendation_type": "recommendation_by_proximity"
+                })
+                recommendation_persistence.save()
+                # send query to recommendation service
+                print(f"send_data: %s" % prepare_data)
+                url = "http://localhost:8500/recommendByProximity/"
+                ans = requests.post(url, json=prepare_data)
+                print(f"Ans: {ans.json()}")
+                # process answer 
+                answer = ans.json()
+                # save the answer
+                answer_persistence = AnswerQuery(
+                    **{"answer": answer,
+                    "query": recommendation_persistence
+                    }
+                )
+                answer_persistence.save()
+            else:
+                answer = interactive_session.get("answer", None)
             # process recommendations
             recommendations = answer["recommendations"]
             print(f"recommendations: {recommendations}")
@@ -376,36 +400,6 @@ class CheckRecipeCompatibilityState(State):
             self.set_next_state(HomeState.get_state_name())
             # save answer in case of an error
             return
-            
-class GetFreeTextRecommendation(State):
-    state_name = "GetFreeTextRecommendation"
-    
-    def __init__(self):
-        super().__init__()
-        
-    @classmethod
-    def get_state_name(cls):
-        return cls.state_name
-        
-    async def run(self):
-        await asyncio.sleep(3)
-        try:
-            print("SENDING FreeTextRecommendation")
-            await self.send(prep_outgoing_message(self.agent.id, "Please provide recipe details:"))
-            message = await self.receive(REPLY_TIMEOUT)
-            if message is not None and message.body == "HOME":
-                self.set_next_state(HomeState.get_state_name())
-                return
-            #TODO: preprocess text to send to back end.
-            print(f"received {message}")
-            await self.send(prep_outgoing_message(self.agent.id, "This function will be available soon."))
-            self.set_next_state(HomeState.get_state_name())
-        except Exception as e:
-            print(f"An error has occurred in {self.get_state_name()}, error: {e}")
-            print(traceback.print_exc())
-            await self.send(prep_outgoing_message(self.agent.id, "Something went wrong less try again."))
-            self.set_next_state(HomeState.get_state_name())
-            return
 
 # Define the state machine behaviour
 class AskAllergiesState(State):
@@ -431,7 +425,13 @@ class AskAllergiesState(State):
             while message.body != "CONTINUE":
                 if message.body in system_allergies:
                     allergies.append(message.body)
-
+                elif message is not None and message.body == "HOME":
+                    self.set_next_state(HomeState.get_state_name())
+                    print("Going home...")
+                    return
+                elif message is not None and message.body == "BACK":
+                    self.set_next_state(HomeState.get_state_name())
+                    return
                 message = await self.receive(REPLY_TIMEOUT)
 
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
@@ -481,9 +481,14 @@ class AskCulturalFactorState(State):
                 if message is not None and message.body == "HOME":
                     self.set_next_state(HomeState.get_state_name())
                     return
-                await self.send(prep_outgoing_message(self.agent.id, "Incorrect option. Please choose one option from the menu")) # send message
-                await self.send(keyboard_message)
-                
+                elif message is not None and message.body == "BACK":
+                    self.set_next_state(AskAllergiesState.get_state_name())
+                    print(f"Going back to {AskAllergiesState.get_state_name()}")
+                    return
+                else:
+                    await self.send(prep_outgoing_message(self.agent.id, "Incorrect option. Please choose one option from the menu")) # send message
+                    await self.send(keyboard_message)
+                    
             print("CULTURAL FACTORS: ", user_cultural_factor)
 
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
@@ -539,8 +544,13 @@ class AskMealTypeState(State):
                 if message is not None and message.body == "HOME":
                     self.set_next_state(HomeState.get_state_name())
                     return
-                await self.send(prep_outgoing_message(self.agent.id, "Incorrect option. Please choose one option from the menu"))# send message
-                await self.send(keyboard_message)
+                elif message is not None and message.body == "BACK":
+                    self.set_next_state(AskCulturalFactorState.get_state_name())
+                    print(f"Going back to {AskCulturalFactorState.get_state_name()}")
+                    return
+                else:
+                    await self.send(prep_outgoing_message(self.agent.id, "Incorrect option. Please choose one option from the menu"))# send message
+                    await self.send(keyboard_message)
             print("Meal type: ", meal_type)
 
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
@@ -591,8 +601,13 @@ class AskPlaceState(State):
                 if message is not None and message.body == "HOME":
                     self.set_next_state(HomeState.get_state_name())
                     return
-                await self.send(prep_outgoing_message(self.agent.id, "Incorrect option. Please choose one option from the menu"))
-                await self.send(keyboard_message)
+                elif message is not None and message.body == "BACK":
+                    self.set_next_state(AskMealTypeState.get_state_name())
+                    print(f"Going back to {AskMealTypeState.get_state_name()}")
+                    return
+                else:
+                    await self.send(prep_outgoing_message(self.agent.id, "Incorrect option. Please choose one option from the menu"))
+                    await self.send(keyboard_message)
             print("Meal type: ", place)
 
             with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
@@ -642,8 +657,13 @@ class AskSocialSituationState(State):
                 if message is not None and message.body == "HOME":
                     self.set_next_state(HomeState.get_state_name())
                     return
-                await self.send(prep_outgoing_message(self.agent.id, "Incorrect option. Please choose one option from the menu"))
-                await self.send(keyboard_message)
+                elif message is not None and message.body == "BACK":
+                    self.set_next_state(AskPlaceState.get_state_name())
+                    print(f"Going back to to {AskPlaceState.get_state_name()}")
+                    return
+                else:
+                    await self.send(prep_outgoing_message(self.agent.id, "Incorrect option. Please choose one option from the menu"))
+                    await self.send(keyboard_message)
 
             print("Social_situation: ", social_situation)
 
@@ -705,6 +725,10 @@ class AskTimeState(State):
                         meal_time += 12
                     print(f"Obtained time from user: {meal_time}")
                     break
+                elif message is not None and message.body == "BACK":
+                    self.set_next_state(AskSocialSituationState.get_state_name())
+                    print(f"Going back to {AskSocialSituationState.get_state_name()}")
+                    return
                 else:
                     print(f"Option not valid or empty string")
                     await self.send(prep_outgoing_message(self.agent.id, 
@@ -738,32 +762,10 @@ class AskTimeState(State):
             else:
                 # default selection
                 self.set_next_state(AskRecommendationsState.get_state_name())
+            await self.send(prep_outgoing_message(self.agent.id, "I am searching a recipe for you..."))
         except Exception as e:
             print(f"An error has occurred in {self.get_state_name()}, error: {e}")
             print(traceback.print_exc())
-            await self.send(prep_outgoing_message(self.agent.id, "Something went wrong less try again."))
-            self.set_next_state(HomeState.get_state_name())
-            return
-        
-class AskRecommendationWithOpenText(State):
-    
-    state_name = "askRecommendationWithOpenText"
-    def __init__(self) -> None:
-        super().__init__()
-        
-    @classmethod
-    def get_state_name(cls):
-        return cls.state_name
-    
-    async def run(self) -> None:
-        await asyncio.sleep(3)
-        
-        try:
-            print("SENDING RECOMMENDATIONS")
-            #TODO: Implement open recommendations
-            pass
-        except Exception as e:
-            traceback.print_exc()
             await self.send(prep_outgoing_message(self.agent.id, "Something went wrong less try again."))
             self.set_next_state(HomeState.get_state_name())
             return
@@ -785,65 +787,81 @@ class AskRecommendationsState(State):
             # load food dataset
             food_dataset = pd.read_csv("./modules/nvcbot/data/df_recipes_thumbnails.csv", index_col=0, sep="|")
             # get user_features and transform it into  dataframe 
-            if os.path.exists(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl"):
-                with open(CACHE_DIR / "interactive" / f"{self.agent.id}_state.pkl", "rb") as fp:
-                    selected = pickle.load(fp)
-                print(f"received: {selected}")
-            user_dict = {}
-            with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
-                user_dict = pickle.load(file)
-            print(f"User Dict: {user_dict}")
-            if user_dict is not None:    
-                user_data = {'nutrition_goal':user_dict.get("nutritional_goal", "maintain_fit"), 
-                            'clinical_gender':user_dict.get("gender", "M"), 
-                            'age_range': get_age_range(user_dict.get("age", 25)), 
-                            'life_style':user_dict.get("life_style", "Very active"), 
-                            'weight':user_dict.get("weight", 70),  
-                            'height':user_dict.get("height", 170), 
-                            'projected_daily_calories':user_dict.get("projected_daily_calories", 2000), 
-                            'current_daily_calories': user_dict.get("current_daily_calories", 1700),
-                            'cultural_factor': user_dict.get("cultural_factor", "NotRestriction"),  
-                            'allergy': user_dict.get("allergy", "NotAllergy"), 
-                            'current_working_status': user_dict.get("current_working_status", "Full-time-worker"), 
-                            'marital_status': user_dict.get("marital_status", "Single"),  
-                            'ethnicity': user_dict.get("ethnicity", "White"), 
-                            'BMI': user_dict.get("BMI", "healthy"),  
-                            'next_BMI':user_dict.get("next_BMI", "healthy")}  
-            # get context features 
-            context_features = {
-                'day_number': user_dict.get("day_number", 0), 
-                'meal_type_x': user_dict.get("meal_type_x", "lunch"),
-                'time_of_meal_consumption': user_dict.get("time_of_meal_consumption", 12.0), 
-                'place_of_meal_consumption': user_dict.get("place_of_meal_consumption", "restaurant"), 
-                'social_situation_of_meal_consumption': user_dict.get("social_situation_of_meal_consumption", "alone")
-            }
-            prepare_data = {
-                "profile": user_data,
-                "context": context_features
-            }
-            # save query 
-            recommendation_persistence = RecommendationQuery(**{
-                    "agent_id": self.agent.id,
-                    "json_query": prepare_data,
-                    "recommendation_type": "general_recommendation"
-            })
-            recommendation_persistence.save()
-            print(f"send_data: %s" % prepare_data)
-            url = "http://localhost:8500/recommendation/"
-            ans = requests.post(url, json=prepare_data)
-            print(f"Ans: {ans.json()}")
-            # process answer 
-            answer = ans.json()
-            # save answer 
-            answer_persistence = AnswerQuery(
-                **{"answer": answer,
-                   "query": recommendation_persistence
+            back_flag = False
+            interactive_session = None
+            if os.path.exists(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl"):
+                with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "rb") as fp:
+                    interactive_session = pickle.load(fp)
+                print(f"received: {interactive_session}")
+                if interactive_session is not None and interactive_session.get("direction", "") == "BACK":
+                    print(f"Back state detected")
+                    back_flag = True
+                    # update the direction to avoid infinite loop
+                    interactive_session["direction"] = "forward"
+                    interactive_session["state_name_stack"].append(self.get_state_name())
+                    with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "wb") as fp:
+                        pickle.dump(interactive_session, fp)
+                else:
+                    back_flag = False
+            print(f"Back flag {back_flag}")
+            if not back_flag:
+                user_dict = {}
+                with open(USER_PROFILES_DIR /  f'{self.agent.id}.pkl', 'rb') as file:
+                    user_dict = pickle.load(file)
+                print(f"User Dict: {user_dict}")
+                if user_dict is not None:    
+                    user_data = {'nutrition_goal':user_dict.get("nutritional_goal", "maintain_fit"), 
+                                'clinical_gender':user_dict.get("gender", "M"), 
+                                'age_range': get_age_range(user_dict.get("age", 25)), 
+                                'life_style':user_dict.get("life_style", "Very active"), 
+                                'weight':user_dict.get("weight", 70),  
+                                'height':user_dict.get("height", 170), 
+                                'projected_daily_calories':user_dict.get("projected_daily_calories", 2000), 
+                                'current_daily_calories': user_dict.get("current_daily_calories", 1700),
+                                'cultural_factor': user_dict.get("cultural_factor", "NotRestriction"),  
+                                'allergy': user_dict.get("allergy", "NotAllergy"), 
+                                'current_working_status': user_dict.get("current_working_status", "Full-time-worker"), 
+                                'marital_status': user_dict.get("marital_status", "Single"),  
+                                'ethnicity': user_dict.get("ethnicity", "White"), 
+                                'BMI': user_dict.get("BMI", "healthy"),  
+                                'next_BMI':user_dict.get("next_BMI", "healthy")}  
+                # get context features 
+                context_features = {
+                    'day_number': user_dict.get("day_number", 0), 
+                    'meal_type_x': user_dict.get("meal_type_x", "lunch"),
+                    'time_of_meal_consumption': user_dict.get("time_of_meal_consumption", 12.0), 
+                    'place_of_meal_consumption': user_dict.get("place_of_meal_consumption", "restaurant"), 
+                    'social_situation_of_meal_consumption': user_dict.get("social_situation_of_meal_consumption", "alone")
                 }
-            )
-            answer_persistence.save()
-            # save answer
-            with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "wb") as fp:
-                pickle.dump(answer, fp)
+                prepare_data = {
+                    "profile": user_data,
+                    "context": context_features
+                }
+                # save query 
+                recommendation_persistence = RecommendationQuery(**{
+                        "agent_id": self.agent.id,
+                        "json_query": prepare_data,
+                        "recommendation_type": "general_recommendation"
+                })
+                
+                recommendation_persistence.save()
+                print(f"send_data: %s" % prepare_data)
+                url = "http://localhost:8500/recommendation/"
+                ans = requests.post(url, json=prepare_data)
+                print(f"Ans: {ans.json()}")
+                # process answer 
+                answer = ans.json()
+                # save answer 
+                answer_persistence = AnswerQuery(
+                    **{"answer": answer,
+                    "query": recommendation_persistence
+                    }
+                )
+                answer_persistence.save()
+            else:
+                answer = interactive_session["answer"]
+            print("answer: {answer}")
+            # visualize answer
             recommendations = answer["recommendations"]
             print(f"recommendations: {recommendations}")
             # recommended food 
@@ -869,12 +887,16 @@ class AskRecommendationsState(State):
                     self.set_next_state(AskRecommendationsState.get_state_name())
                     print("next more recommendations")
                     action = message.body
-                    break
+                    return
+                if message is not None and message.body == "BACK":
+                    self.set_next_sate(AskTimeState.get_state_name())
+                    print("next state time")
+                    return
                 elif message is not None and message.body == "HOME":
                     self.set_next_state(HomeState.get_state_name())
                     print("next state home")
                     action = message.body
-                    break
+                    return
                 elif message is not None and message.body in [f"explain_{recipe['recipeId']}" for i, recipe in selected_recipes.iterrows()]:
                     self.set_next_state(DisplayExplanationState.get_state_name())
                     print(f"next state explanation")
@@ -893,7 +915,7 @@ class AskRecommendationsState(State):
                     pass
             # create a model of object to save in the interactive session 
             interactive_session = {
-                "query_type": "recommendation_by_proximity",
+                "query_type": "general_recommendation",
                 "state_name_stack": [self.get_state_name()],
                 "answer": answer,
                 "action": action,
@@ -921,11 +943,30 @@ class DisplayRecipeState(State):
         return cls.state_name
     
     async def run(self) -> None:
+        #TODO: Add back support from the explanation state
         # show recipe info 
         try:
             print(f"DISPLAY RECIPE")
             # load recipes 
             food_dataset = pd.read_csv("./modules/nvcbot/data/df_recipes_thumbnails.csv", index_col=0, sep="|")
+            # check if it is back from the explanation state. 
+            back_flag = False
+            interactive_session = None
+            if os.path.exists(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl"):
+                with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "rb") as fp:
+                    interactive_session = pickle.load(fp)
+                print(f"received: {interactive_session}")
+                if interactive_session is not None and interactive_session.get("direction", "") == "BACK":
+                    print(f"Back state detected")
+                    back_flag = True
+                    # update the direction to avoid infinite loop
+                    interactive_session["direction"] = "forward"
+                    interactive_session["state_name_stack"].append(self.get_state_name())
+                    with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "wb") as fp:
+                        pickle.dump(interactive_session, fp)
+                else:
+                    back_flag = False
+            print(f"Back flag {back_flag}")
             # load previous data and check if path exists 
             path = CACHE_DIR / "interactive" / f"{self.agent.id}.pkl"
             if os.path.exists(path):
@@ -969,7 +1010,8 @@ class DisplayRecipeState(State):
             await self.send(prep_outgoing_message(self.agent.id, thumbnail, body_format="image"))
             # give options and feedback
             buttons = [{"label": "Give feedback", "action": "feedback"},
-                       {"label": "See Explanation", "action": "explain"}]
+                       {"label": "See Explanation", "action": "explain"},
+                       {"label": "Back to recommendations", "action": "BACK"}]
             keyboard_message = prep_keyboard_message(self.agent.id, buttons)
             await self.send(keyboard_message)
             
@@ -985,6 +1027,16 @@ class DisplayRecipeState(State):
                     action = message.body
                     print("going home...")
                     break
+                elif message is not None and message.body == "BACK":
+                    next_state = interactive_session["state_name_stack"].pop()
+                    print(f"going back... {next_state}")
+                    interactive_session["action"] = "back"
+                    interactive_session["direction"] = "BACK"
+                    interactive_session["state_name_stack"].append(self.get_state_name())
+                    self.set_next_state(next_state)
+                    with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "wb") as fp:
+                        pickle.dump(interactive_session, fp)
+                    return
                 elif message is not None and message.body == "feedback":
                     # send feedback
                     self.set_next_state(AskFeedBack.get_state_name())
@@ -1027,6 +1079,7 @@ class DisplayExplanationState(State):
             # load answer 
             print(f"EXPLAIN RECIPE")
             # load previous data and check if path exists 
+            interactive_session = None
             path = CACHE_DIR / "interactive" / f"{self.agent.id}.pkl"
             if os.path.exists(path):
                 print("Session file found")
@@ -1056,11 +1109,20 @@ class DisplayExplanationState(State):
                     self.set_next_state(HomeState.get_state_name())
                     print("Next state: Home")
                     action = message.body
+                    interactive_session["action"] = action
+                    interactive_session["state_name_stack"].append(self.get_state_name())
+                    interactive_session["direction"] = "forward"
+                    with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "wb") as fp:
+                        pickle.dump(interactive_session, fp)
                     break
                 elif message is not None and message.body == "leave":
                     self.set_next_state(HomeState.get_state_name())
                     print("Next state: Home")
                     action = message.body
+                    interactive_session["state_name_stack"].append(self.get_state_name())
+                    interactive_session["direction"] = "forward"
+                    with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "wb") as fp:
+                        pickle.dump(interactive_session, fp)
                     break
                 elif message is not None and message.body == "probabilistic":
                     # Show probabilistic explanation and the menu again
@@ -1079,16 +1141,26 @@ class DisplayExplanationState(State):
                     # Send feedback
                     self.set_next_state(AskFeedBack.get_state_name())
                     print(f"Next state: Feedback")
+                    interactive_session["state_name_stack"].append(self.get_state_name())
+                    interactive_session["direction"] = "forward"
+                    with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "wb") as fp:
+                        pickle.dump(interactive_session, fp)
                     break
+                elif message is not None and message.body == "BACK" and interactive_session is not None:
+                    next_state = interactive_session["state_name_stack"].pop()
+                    print(f"going back... {next_state}")
+                    interactive_session["action"] = "back"
+                    interactive_session["direction"] = "BACK"
+                    interactive_session["state_name_stack"].append(self.get_state_name())
+                    self.set_next_state(next_state)
+                    with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "wb") as fp:
+                        pickle.dump(interactive_session, fp)
+                    return
                 else:
                     print(f"Unknown option {message}")
                     await self.send(prep_outgoing_message(self.agent.id, "I couldn't understand this option. Please try again"))
                     await self.send(prep_outgoing_message(self.agent.id, "To see a detailed explanation of the decision, please select one of the options:"))
                     await self.send(keyboard_message)
-            interactive_session["action"] = action
-            interactive_session["state_name_stack"].append(self.get_state_name())
-            with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "wb") as fp:
-                pickle.dump(interactive_session, fp)
             print("Outside of the state.")
         except Exception as e:
             print(f"Error in state: {self.get_state_name()}, error:{e}")
@@ -1187,6 +1259,7 @@ class AskFeedBack(State):
                         await self.send(prep_outgoing_message(self.agent.id, "Thank you so much for your feedback."))
                         break
             interactive_session["action"] = action
+            interactive_session["direction"] = "forward"
             interactive_session["state_name_stack"].append(self.get_state_name())
             with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "wb") as fp:
                 pickle.dump(interactive_session, fp)
@@ -1209,6 +1282,12 @@ class FinalState(State):
         
     async def run(self) -> None:
         try:
+            interactive_session = None
+            path = CACHE_DIR / "interactive" / f"{self.agent.id}.pkl"
+            if os.path.exists(path):
+                print("Session file found")
+                with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "rb") as fp:
+                    interactive_session = pickle.load(fp)
             await self.send(prep_outgoing_message(self.agent.id, "Thanks! I hope you will enjoy this recipe.")) # send message
             await self.send(prep_outgoing_message(self.agent.id, "Would you like to receive another recipe?")) # send message
 
@@ -1225,15 +1304,35 @@ class FinalState(State):
                 reply = await self.receive(REPLY_TIMEOUT)
                 if reply is not None and reply.body == "YES":
                     self.set_next_state(HomeState.get_state_name())
-                    action = "get_more_recommendations"
+                    if interactive_session is not None:
+                        interactive_session["direction"] = "forward"
+                        interactive_session["action"] = "home"
+                        with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "rb") as fp:
+                            interactive_session = pickle.load(fp)
                     print("moving to home")
                     return  
                 elif reply is not None and reply.body == "HOME":
                     self.set_next_state(HomeState.get_state_name())
-                    action = "home"
+                    if interactive_session is not None:
+                        interactive_session["direction"] = "forward"
+                        interactive_session["action"] = "home"
+                        with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "rb") as fp:
+                            interactive_session = pickle.load(fp)
                     print("moving to home")
                     return
+                elif reply is not None and reply.body == "NO" and interactive_session is not None:
+                    state_name_stack = interactive_session.get("state_name_stack", None)
+                    if state_name_stack is not None and len(state_name_stack) > 0:
+                        await self.send(prep_outgoing_message(self.agent.id, "I will return to the recommendation state."))
+                        print(f"Final state going to: {state_name_stack[0]}")
+                        self.set_next_state(state_name_stack[0])
+                        interactive_session["action"] = "back"
+                        interactive_session["direction"] = "BACK"
+                        with open(CACHE_DIR / "interactive" / f"{self.agent.id}.pkl", "rb") as fp:
+                            interactive_session = pickle.load(fp)
+                    return
                 else:
+                    await self.send(prep_outgoing_message(self.agent.id, "I'm sorry, I didn't understand that. Please try again."))
                     self.set_next_state(FinalState.get_state_name())
                     await self.send(keyboard_message)
                 return  
